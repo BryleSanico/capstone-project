@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ticket as TicketIcon } from 'lucide-react-native';
+import Icon from "react-native-vector-icons/Ionicons";
 import TicketCard from '@/components/TicketCard';
 import { useTickets } from '@/hooks/tickets-store';
 import { Ticket } from '@/types/event';
@@ -41,7 +41,7 @@ export default function TicketsScreen() {
       <View style={styles.content}>
         {tickets.length === 0 ? (
           <View style={styles.emptyState}>
-            <TicketIcon size={64} color="#ccc" />
+            <Icon name="ticket-outline" size={64} color="#ccc" />
             <Text style={styles.emptyTitle}>No Tickets Yet</Text>
             <Text style={styles.emptySubtitle}>
               Your purchased tickets will appear here

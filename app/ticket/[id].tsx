@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Share } from 'react-na
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Calendar, MapPin, Share2, Download } from 'lucide-react-native';
+import Icon from "react-native-vector-icons/Ionicons";
 import QRCode from 'react-native-qrcode-svg';
 import { useTickets } from '@/hooks/tickets-store';
 
@@ -60,10 +60,10 @@ export default function TicketDetailsScreen() {
           headerRight: () => (
             <View style={styles.headerButtons}>
               <TouchableOpacity style={styles.headerButton} onPress={handleShareTicket}>
-                <Share2 size={20} color="#6366f1" />
+                <Icon name="share-outline" size={20} color="#6366f1" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.headerButton} onPress={handleDownloadTicket}>
-                <Download size={20} color="#6366f1" />
+                <Icon name="download-outline" size={20} color="#6366f1" />
               </TouchableOpacity>
             </View>
           )
@@ -82,7 +82,7 @@ export default function TicketDetailsScreen() {
           
           <View style={styles.eventDetails}>
             <View style={styles.detailRow}>
-              <Calendar size={18} color="rgba(255,255,255,0.8)" />
+              <Icon name="calendar-outline" size={18} color="rgba(255,255,255,0.8)" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Date & Time</Text>
                 <Text style={styles.detailText}>
@@ -93,7 +93,7 @@ export default function TicketDetailsScreen() {
             </View>
             
             <View style={styles.detailRow}>
-              <MapPin size={18} color="rgba(255,255,255,0.8)" />
+              <Icon name="pin-outline" size={18} color="rgba(255,255,255,0.8)" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Location</Text>
                 <Text style={styles.detailText}>{ticket.eventLocation}</Text>

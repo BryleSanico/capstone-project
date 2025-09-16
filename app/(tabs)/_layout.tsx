@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Search, Ticket, User } from "lucide-react-native";
+import Icon from "react-native-vector-icons/Ionicons";
 import React from "react";
 
 export default function TabLayout() {
@@ -28,21 +28,21 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Discover",
-          tabBarIcon: ({ color, size }) => <Search size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Icon name="search-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="tickets"
         options={{
           title: "My Tickets",
-          tabBarIcon: ({ color, size }) => <Ticket size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Icon name="ticket-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Icon name="user-outline" size={size} color={color} />,
         }}
       />
     </Tabs>

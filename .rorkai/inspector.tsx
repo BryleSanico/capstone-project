@@ -1,4 +1,3 @@
-
 /*
 The code here will is moved to our infrastructure (with ctrl+c ctrl+v)
  where we add it in _layout.tsx as it is.
@@ -17,7 +16,7 @@ import {
   EventSubscription,
   requireOptionalNativeModule,
 } from "expo-modules-core";
-import { X } from "lucide-react-native";
+import Icon from "react-native-vector-icons/Ionicons";
 import type { PropsWithChildren } from "react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { ViewStyle } from "react-native";
@@ -82,7 +81,7 @@ export function sendBridgeMessage(
     | "merge-inspector-state"
     | "runtime-ready"
     | "runtime-error",
-  data?: Record<string, any>,
+  data?: Record<string, any>
 ) {
   if (data) {
     return BridgeModule?.sendMessage({ type, data: JSON.stringify(data) });
@@ -92,7 +91,7 @@ export function sendBridgeMessage(
 }
 
 export function addBridgeListener(
-  listener: (data: Record<string, any>) => void,
+  listener: (data: Record<string, any>) => void
 ): EventSubscription {
   return BridgeModule?.addListener("onMessage", (data: any) => {
     if (typeof data !== "object") return;
@@ -138,7 +137,7 @@ export function BundleInspector(props: BundleInspectorProps) {
     useState<InspectedElement | null>(null);
 
   const [lastPayload, setLastPayload] = useState<Record<string, any> | null>(
-    null,
+    null
   );
 
   useEffect(() => {
@@ -149,7 +148,7 @@ export function BundleInspector(props: BundleInspectorProps) {
 
   useSubscribeToDebuggingOverlayRegistry(
     appContainerRootViewRef,
-    debuggingOverlayRef,
+    debuggingOverlayRef
   );
 
   const handleInspectedElementChange = useCallback(
@@ -167,7 +166,7 @@ export function BundleInspector(props: BundleInspectorProps) {
         setLastPayload(payload);
       }
     },
-    [],
+    []
   );
 
   const onTouchPoint = (locationX: number, locationY: number) => {
@@ -179,7 +178,7 @@ export function BundleInspector(props: BundleInspectorProps) {
         setPanelPosition(
           viewData.pointerY > Dimensions.get("window").height * 0.8
             ? "top"
-            : "bottom",
+            : "bottom"
         );
 
         setInspectedElement({
@@ -190,7 +189,7 @@ export function BundleInspector(props: BundleInspectorProps) {
         handleInspectedElementChange(viewData);
 
         return false;
-      },
+      }
     );
   };
 
@@ -254,7 +253,7 @@ export function BundleInspector(props: BundleInspectorProps) {
                     style={styles.cancelButton}
                     onPress={disableInspector}
                   >
-                    <X size={18} color="#808080" strokeWidth={2.5} />
+                    <Icon name="close" size={18} color="#808080" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -604,4 +603,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
-

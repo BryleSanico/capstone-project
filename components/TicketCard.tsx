@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Calendar, MapPin, QrCode } from 'lucide-react-native';
+import Icon from "react-native-vector-icons/Ionicons";
 import { Ticket } from '@/types/event';
 
 interface TicketCardProps {
@@ -33,20 +33,20 @@ export default function TicketCard({ ticket, onPress }: TicketCardProps) {
             <Text style={styles.quantity}>{ticket.quantity} ticket{ticket.quantity > 1 ? 's' : ''}</Text>
           </View>
           <View style={styles.qrIcon}>
-            <QrCode size={24} color="#fff" />
+            <Icon name="qr-code-outline" size={24} color="#fff" />
           </View>
         </View>
         
         <View style={styles.details}>
           <View style={styles.detailRow}>
-            <Calendar size={16} color="rgba(255,255,255,0.8)" />
+            <Icon name="calendar-outline" size={16} color="rgba(255,255,255,0.8)" />
             <Text style={styles.detailText}>
               {formatDate(ticket.eventDate)} • {ticket.eventTime}
             </Text>
           </View>
           
           <View style={styles.detailRow}>
-            <MapPin size={16} color="rgba(255,255,255,0.8)" />
+            <Icon name="pin-outline" size={16} color="rgba(255,255,255,0.8)" />
             <Text style={styles.detailText} numberOfLines={1}>
               {ticket.eventLocation}
             </Text>

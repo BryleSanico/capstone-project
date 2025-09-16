@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Heart, MapPin, Calendar, Users } from 'lucide-react-native';
+import Icon from "react-native-vector-icons/Ionicons";
 import { Event } from '@/types/event';
 import { useTickets } from '@/hooks/tickets-store';
 
@@ -44,10 +44,10 @@ export default function EventCard({ event, onPress }: EventCardProps) {
             onPress={handleFavoritePress}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Heart 
-              size={20} 
-              color={isEventFavorite ? '#ff4757' : '#fff'} 
-              fill={isEventFavorite ? '#ff4757' : 'transparent'}
+            <Icon
+              name={isEventFavorite ? "heart" : "heart-outline"}
+              size={20}
+              color={isEventFavorite ? "#ff4757" : "#fff"}
             />
           </TouchableOpacity>
           <View style={styles.categoryBadge}>
@@ -59,19 +59,19 @@ export default function EventCard({ event, onPress }: EventCardProps) {
           <Text style={styles.title} numberOfLines={2}>{event.title}</Text>
           
           <View style={styles.infoRow}>
-            <Calendar size={14} color="#666" />
+            <Icon name="calendar-outline" size={14} color="#666" />
             <Text style={styles.infoText}>
               {formatDate(event.date)} • {event.time}
             </Text>
           </View>
           
           <View style={styles.infoRow}>
-            <MapPin size={14} color="#666" />
+            <Icon name="pin-outline" size={14} color="#666" />
             <Text style={styles.infoText} numberOfLines={1}>{event.location}</Text>
           </View>
           
           <View style={styles.infoRow}>
-            <Users size={14} color="#666" />
+            <Icon name="people-outline" size={14} color="#666" />
             <Text style={styles.infoText}>{event.attendees} attending</Text>
           </View>
           

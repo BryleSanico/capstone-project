@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
-import { Search, SlidersHorizontal } from 'lucide-react-native';
+import Icon from "react-native-vector-icons/Ionicons";
 
 interface SearchBarProps {
   value: string;
@@ -12,7 +12,7 @@ export default function SearchBar({ value, onChangeText, onFilterPress }: Search
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
-        <Search size={20} color="#666" style={styles.searchIcon} />
+        <Icon name="search-outline" size={20} color="#666" style={styles.searchIcon} />
         <TextInput
           style={styles.input}
           placeholder="Search events..."
@@ -22,7 +22,7 @@ export default function SearchBar({ value, onChangeText, onFilterPress }: Search
         />
       </View>
       <TouchableOpacity style={styles.filterButton} onPress={onFilterPress}>
-        <SlidersHorizontal size={20} color="#6366f1" />
+        <Icon name="swap-horizontal" size={20} color="#6366f1" />
       </TouchableOpacity>
     </View>
   );
