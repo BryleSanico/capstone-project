@@ -11,6 +11,8 @@ import { Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
+import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
+import MaterialIcon from "react-native-vector-icons/MaterialIcons";
 import { getIconComponent } from "../utils/iconLoader";
 import { MenuItem } from "../types/menu";
 import { useTickets } from "@/hooks/tickets-store";
@@ -31,13 +33,13 @@ export default function ProfileScreen() {
 
   const menuItems: MenuItem[] = [
     {
-      icon: { name: "notifications-outline", library: "Ionicons" },
+      icon: { name: "bell-o", library: "FontAwesome" },
       title: "Notifications",
       subtitle: "Manage your event reminders",
       onPress: () => console.log("Notifications"),
     },
     {
-      icon: { name: "heart-outline", library: "Ionicons" },
+      icon: { name: "heart-o", library: "FontAwesome" },
       title: "Favorite Events",
       subtitle: `${favorites.length} events saved`,
       onPress: () => console.log("Favorites"),
@@ -74,7 +76,7 @@ export default function ProfileScreen() {
           end={{ x: 1, y: 1 }}
         >
           <View style={styles.avatarContainer}>
-            <Icon name="bell-outline" size={40} color="#fff" />
+            <FontAwesomeIcon name="user" size={40} color="#fff" />
           </View>
           <Text style={styles.userName}>John Doe</Text>
           <Text style={styles.userEmail}>john.doe@example.com</Text>
@@ -88,7 +90,7 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Icon name="heart-outline" size={24} color="#ff4757" />
+            <FontAwesomeIcon name="heart-o" size={24} color="#ff4757" />
             <Text style={styles.statNumber}>{favorites.length}</Text>
             <Text style={styles.statLabel}>Favorites</Text>
           </View>
@@ -120,7 +122,7 @@ export default function ProfileScreen() {
         </View>
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Icon name="log-out-outine" size={20} color="#ff4757" />
+          <MaterialIcon name="logout" size={20} color="#ff4757" />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </ScrollView>

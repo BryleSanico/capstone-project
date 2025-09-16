@@ -1,5 +1,6 @@
 import { Tabs } from "expo-router";
 import Icon from "react-native-vector-icons/Ionicons";
+import Icon2 from "react-native-vector-icons/FontAwesome";
 import React from "react";
 
 export default function TabLayout() {
@@ -42,7 +43,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, size }) => <Icon name="user-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Icon2 name="user-o" size={size} color={color} />,
         }}
       />
     </Tabs>
