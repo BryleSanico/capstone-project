@@ -72,7 +72,7 @@ export default function TicketCard({ ticket, onPress }: TicketCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
+    marginHorizontal: 5,
     marginBottom: 5,
   },
   card: {
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 12,
     padding: 8,
-    marginRight: 25
+    marginRight: 30
   },
   details: {
     marginBottom: 16,
@@ -146,12 +146,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255,255,255,0.7)',
     fontStyle: 'italic',
-    paddingRight: 50
+    paddingRight: 30
   },
   ticketHoles: {
     position: 'absolute',
     right: 12,
-    top: '50%',
+    top: '40%',
     transform: [{ translateY: -40 }],
     gap: 8,
   },

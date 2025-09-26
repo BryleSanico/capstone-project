@@ -169,6 +169,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 12,
+    
   },
   eventTitle: {
     fontSize: 24,
@@ -177,17 +178,19 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     lineHeight: 32,
     margin: 15,
+    marginLeft: 25,
+    marginTop: 25
   },
   quantity: {
     fontSize: 16,
     color: 'rgba(255,255,255,0.8)',
     fontWeight: '500',
-    marginBottom: 0,
-    margin: 15,
+    marginBottom: 20,
+    marginLeft: 25,
   },
   eventDetails: {
-    marginBottom: 24,
-    margin: 15,
+    marginBottom: 0,
+    marginLeft: 30,
   },
   detailRow: {
     flexDirection: 'row',
@@ -216,9 +219,9 @@ const styles = StyleSheet.create({
   },
   priceSection: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.2)',
+    borderTopColor: 'rgba(255, 255, 255, 0.2)',
     paddingTop: 16,
-    paddingBottom:16
+    margin: 25
   },
   totalPaid: {
     fontSize: 18,
