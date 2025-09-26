@@ -1,11 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
+import SplashScreen from "react-native-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { TicketsProvider } from "@/hooks/tickets-store";
-
-SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
@@ -21,7 +19,7 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   useEffect(() => {
-    SplashScreen.hideAsync();
+    SplashScreen.hide();
   }, []);
 
   return (
