@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Share } from 'react-native';
+import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Alert, Share } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
 import QRCode from 'react-native-qrcode-svg';
 import { useTickets } from '@/hooks/tickets-store';
@@ -69,7 +69,10 @@ export default function TicketDetailsScreen() {
           )
         }} 
       />
-      
+      <ScrollView
+              style={styles.scrollView}
+              showsVerticalScrollIndicator={false}
+            >
       <View style={styles.content}>
         <LinearGradient
           colors={['#6366f1', '#8b5cf6']}
@@ -132,6 +135,8 @@ export default function TicketDetailsScreen() {
           </Text>
         </View>
       </View>
+</ScrollView> 
+
     </SafeAreaView>
   );
 }
@@ -140,6 +145,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+    
+  },
+    scrollView: {
+    flex: 1,
   },
   content: {
     flex: 1,
@@ -154,13 +163,13 @@ const styles = StyleSheet.create({
   },
   ticketCard: {
     borderRadius: 20,
-    padding: 24,
-    marginBottom: 32,
+    marginBottom: 20,
     shadowColor: '#6366f1',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 12,
+    
   },
   eventTitle: {
     fontSize: 24,
@@ -168,15 +177,20 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 8,
     lineHeight: 32,
+    margin: 15,
+    marginLeft: 25,
+    marginTop: 25
   },
   quantity: {
     fontSize: 16,
     color: 'rgba(255,255,255,0.8)',
     fontWeight: '500',
-    marginBottom: 24,
+    marginBottom: 20,
+    marginLeft: 25,
   },
   eventDetails: {
-    marginBottom: 24,
+    marginBottom: 0,
+    marginLeft: 30,
   },
   detailRow: {
     flexDirection: 'row',
@@ -205,8 +219,9 @@ const styles = StyleSheet.create({
   },
   priceSection: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.2)',
+    borderTopColor: 'rgba(255, 255, 255, 0.2)',
     paddingTop: 16,
+    margin: 25
   },
   totalPaid: {
     fontSize: 18,

@@ -15,14 +15,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.rork.eventdiscoveryticketing"
+      "bundleIdentifier": "app.eventdiscoveryticketing"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.eventdiscoveryticketing",
+      "package": "app.eventdiscoveryticketing",
       "permissions": [
         "android.permission.VIBRATE"
       ]
@@ -32,10 +32,7 @@
     },
     "plugins": [
       [
-        "expo-router",
-        {
-          "origin": "https://rork.com/"
-        }
+        "expo-router"
       ]
     ],
     "experiments": {
