@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
 import { Ticket } from '@/types/event';
 
@@ -73,11 +73,11 @@ export default function TicketCard({ ticket, onPress }: TicketCardProps) {
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 5,
   },
   card: {
     borderRadius: 16,
-    padding: 20,
+    padding: 10,
     position: 'relative',
     shadowColor: '#6366f1',
     shadowOffset: { width: 0, height: 8 },
@@ -90,6 +90,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 16,
+    marginLeft: 8,
+    marginTop: 8
   },
   ticketInfo: {
     flex: 1,
@@ -111,9 +113,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 12,
     padding: 8,
+    marginRight: 25
   },
   details: {
     marginBottom: 16,
+    marginLeft: 8,
   },
   detailRow: {
     flexDirection: 'row',
@@ -130,20 +134,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 25,
   },
   price: {
     fontSize: 20,
     fontWeight: '700',
     color: '#fff',
+    marginLeft: 8,
   },
   tapToView: {
     fontSize: 12,
     color: 'rgba(255,255,255,0.7)',
     fontStyle: 'italic',
+    paddingRight: 50
   },
   ticketHoles: {
     position: 'absolute',
-    right: -8,
+    right: 12,
     top: '50%',
     transform: [{ translateY: -40 }],
     gap: 8,

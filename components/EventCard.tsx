@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+    import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
 import { Event } from '@/types/event';
 import { useTickets } from '@/hooks/tickets-store';

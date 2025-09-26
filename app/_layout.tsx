@@ -1,5 +1,3 @@
-import { BundleInspector } from '../.rorkai/inspector';
-import { RorkErrorBoundary } from '../.rorkai/rork-error-boundary';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -17,7 +15,6 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="event/[id]" options={{ headerShown: true }} />
       <Stack.Screen name="ticket/[id]" options={{ headerShown: true }} />
-      <Stack.Screen name="modal" options={{ presentation: "modal" }} />
     </Stack>
   );
 }
@@ -31,7 +28,7 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <TicketsProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <BundleInspector><RorkErrorBoundary><RootLayoutNav /></RorkErrorBoundary></BundleInspector>
+          <RootLayoutNav />
         </GestureHandlerRootView>
       </TicketsProvider>
     </QueryClientProvider>

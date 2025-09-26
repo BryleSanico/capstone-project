@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { Stack, useLocalSearchParams, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
 import * as Haptics from "expo-haptics";
 import { MOCK_EVENTS } from "@/constants/events";

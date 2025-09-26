@@ -3,7 +3,7 @@ import { Event } from '@/types/event';
 export const MOCK_EVENTS: Event[] = [
   {
     id: '1',
-    title: 'Summer Music Festival 2024',
+    title: 'Summer Music Festival Celebration 2024',
     description: 'Join us for an unforgettable night of music featuring top artists from around the world. Experience live performances, food trucks, and amazing vibes under the stars.',
     imageUrl: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&h=600&fit=crop',
     date: '2024-07-15',

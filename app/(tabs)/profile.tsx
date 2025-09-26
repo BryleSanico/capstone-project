@@ -9,12 +9,12 @@ import {
 } from "react-native";
 import { Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
 import MaterialIcon from "react-native-vector-icons/MaterialIcons";
-import { getIconComponent } from "../utils/iconLoader";
-import { MenuItem } from "../types/menu";
+import { getIconComponent } from "../../utils/iconLoader";
+import { MenuItem } from "../../types/menu";
 import { useTickets } from "@/hooks/tickets-store";
 
 export default function ProfileScreen() {
@@ -140,8 +140,8 @@ const styles = StyleSheet.create({
   },
   profileHeader: {
     alignItems: "center",
-    padding: 32,
-    margin: 16,
+    padding: 7,
+    margin: 7,
     borderRadius: 20,
     shadowColor: "#6366f1",
     shadowOffset: { width: 0, height: 8 },
@@ -157,6 +157,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
+    marginTop:25
   },
   userName: {
     fontSize: 24,
@@ -167,6 +168,7 @@ const styles = StyleSheet.create({
   userEmail: {
     fontSize: 16,
     color: "rgba(255,255,255,0.8)",
+    marginBottom: 25
   },
   statsContainer: {
     flexDirection: "row",
