@@ -1,26 +1,41 @@
-import React from 'react';
+// src/screens/TicketsScreen.tsx
+import React, { useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
-import { Stack, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from "react-native-vector-icons/Ionicons";
-import TicketCard from '@/components/TicketCard';
-import { useTickets } from '@/hooks/tickets-store';
-import { Ticket } from '@/types/event';
+import TicketCard from '@/src/components/TicketCard';
+import { useTickets } from '@/src/hooks/tickets-store';
+import { Ticket } from '@/src/types/event';
+import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '@/src/navigation/AppNavigator';
+import { TabParamList } from '../navigation/TabNavigator';
+
+type TicketsScreenNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'My Tickets'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 export default function TicketsScreen() {
+  const navigation = useNavigation<TicketsScreenNavigationProp>();
   const { tickets, isLoading } = useTickets();
 
-  const handleTicketPress = (ticket: Ticket) => {
-    router.push({
-      pathname: '/ticket/[id]',
-      params: { id: ticket.id }
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: 'My Tickets',
+      headerStyle: { backgroundColor: '#fff' },
+      headerTitleStyle: { fontWeight: '700', fontSize: 20 },
     });
+  }, [navigation]);
+
+  const handleTicketPress = (ticket: Ticket) => {
+    navigation.navigate('TicketDetails', { id: ticket.id });
   };
 
-  if (isLoading) {
+   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <Stack.Screen options={{ title: 'My Tickets' }} />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading tickets...</Text>
         </View>
@@ -30,14 +45,6 @@ export default function TicketsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Stack.Screen 
-        options={{ 
-          title: 'My Tickets',
-          headerStyle: { backgroundColor: '#fff' },
-          headerTitleStyle: { fontWeight: '700', fontSize: 20 }
-        }} 
-      />
-      
       <View style={styles.content}>
         {tickets.length === 0 ? (
           <View style={styles.emptyState}>

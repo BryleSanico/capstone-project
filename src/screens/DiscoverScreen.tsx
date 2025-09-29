@@ -1,16 +1,38 @@
-import React, { useState, useMemo } from 'react';
+// src/screens/DiscoverScreen.tsx
+import React, { useState, useMemo, useLayoutEffect } from 'react';
 import { View, StyleSheet, FlatList, Text } from 'react-native';
-import { Stack, router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import EventCard from '@/components/EventCard';
-import SearchBar from '@/components/SearchBar';
-import CategoryFilter from '@/components/CategoryFilter';
-import { MOCK_EVENTS } from '@/constants/events';
-import { Event } from '@/types/event';
+// import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import EventCard from '@/src/components/EventCard';
+import SearchBar from '@/src/components/SearchBar';
+import CategoryFilter from '@/src/components/CategoryFilter';
+import { MOCK_EVENTS } from '@/src/constants/events';
+import { Event } from '@/src/types/event';
+import { RootStackParamList } from '@/src/navigation/AppNavigator';
+import { TabParamList } from '../navigation/TabNavigator';
 
+
+// Define the navigation prop type for this screen
+type DiscoverScreenNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'Discover'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 export default function DiscoverScreen() {
+  const navigation = useNavigation<DiscoverScreenNavigationProp>();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: 'Discover Events',
+      headerStyle: { backgroundColor: '#fff' },
+      headerTitleStyle: { fontWeight: '700', fontSize: 20 },
+      headerShadowVisible: false, // Optional: for a cleaner look
+    });
+  }, [navigation]);
+
 
   const filteredEvents = useMemo(() => {
     return MOCK_EVENTS.filter((event: Event) => {
@@ -25,27 +47,16 @@ export default function DiscoverScreen() {
   }, [searchQuery, selectedCategory]);
 
   const handleEventPress = (event: Event) => {
-    router.push({
-      pathname: '/event/[id]',
-      params: { id: event.id }
-    });
+    // CHANGE: Use navigation.navigate instead of router.push
+    navigation.navigate('EventDetails', { id: event.id });
   };
 
   const handleFilterPress = () => {
-    // TODO: Implement filter modal
     console.log('Filter pressed');
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <Stack.Screen 
-        options={{ 
-          title: 'Discover Events',
-          headerStyle: { backgroundColor: '#fff' },
-          headerTitleStyle: { fontWeight: '700', fontSize: 20 }
-        }} 
-      />
-      
+    <View style={styles.container}>
       <View style={styles.content}>
         <SearchBar
           value={searchQuery}
@@ -77,9 +88,10 @@ export default function DiscoverScreen() {
           }
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
