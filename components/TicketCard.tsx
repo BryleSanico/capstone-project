@@ -159,6 +159,6 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
   },
 });

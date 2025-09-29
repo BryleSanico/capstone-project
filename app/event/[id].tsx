@@ -14,7 +14,7 @@ import { Stack, useLocalSearchParams, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
-import * as Haptics from "expo-haptics";
+import HapticFeedback from "react-native-haptic-feedback";
 import { MOCK_EVENTS } from "@/constants/events";
 import { useTickets } from "@/hooks/tickets-store";
 import { Ticket } from "@/types/event";
@@ -49,12 +49,19 @@ export default function EventDetailsScreen() {
     });
   };
 
-  const handleFavoritePress = async () => {
-    if (Platform.OS !== "web") {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    toggleFavorite(event.id);
-  };
+const handleFavoritePress = () => { 
+  if (Platform.OS !== "web") {
+    // Optional configuration for the trigger
+    const options = {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false
+    };
+    
+    // Trigger the haptic feedback
+    HapticFeedback.trigger("impactLight", options);
+  }
+  toggleFavorite(event.id);
+};
 
   const handleSharePress = async () => {
     try {
