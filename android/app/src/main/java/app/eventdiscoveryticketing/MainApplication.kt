@@ -1,4 +1,4 @@
-package app.rork.eventdiscoveryticketing
+package app.eventdiscoveryticketing
 
 import android.app.Application
 import android.content.res.Configuration
