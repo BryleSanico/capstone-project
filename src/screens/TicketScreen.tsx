@@ -1,5 +1,5 @@
 // src/screens/TicketsScreen.tsx
-import React, { useLayoutEffect } from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from "react-native-vector-icons/Ionicons";
@@ -19,7 +19,12 @@ type TicketsScreenNavigationProp = CompositeNavigationProp<
 
 export default function TicketsScreen() {
   const navigation = useNavigation<TicketsScreenNavigationProp>();
-  const { tickets, isLoading } = useTickets();
+  const { tickets, isLoading, loadTickets, loadFavorites } = useTickets();
+  
+    useEffect(() => {
+    loadTickets();
+    loadFavorites();
+  }, [loadTickets, loadFavorites]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -114,3 +119,6 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
 });
+
+useTickets.getState().loadTickets();
+useTickets.getState().loadFavorites();

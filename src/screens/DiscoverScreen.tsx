@@ -1,7 +1,6 @@
 // src/screens/DiscoverScreen.tsx
 import React, { useState, useMemo, useLayoutEffect } from 'react';
 import { View, StyleSheet, FlatList, Text } from 'react-native';
-// import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -12,24 +11,25 @@ import { MOCK_EVENTS } from '@/src/constants/events';
 import { Event } from '@/src/types/event';
 import { RootStackParamList } from '@/src/navigation/AppNavigator';
 import { TabParamList } from '../navigation/TabNavigator';
-
+import { useTickets } from '@/src/hooks/tickets-store'; 
 
 // Define the navigation prop type for this screen
 type DiscoverScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Discover'>,
   NativeStackNavigationProp<RootStackParamList>
 >;
+
 export default function DiscoverScreen() {
   const navigation = useNavigation<DiscoverScreenNavigationProp>();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-
+  
   useLayoutEffect(() => {
     navigation.setOptions({
       title: 'Discover Events',
       headerStyle: { backgroundColor: '#fff' },
       headerTitleStyle: { fontWeight: '700', fontSize: 20 },
-      headerShadowVisible: false, // Optional: for a cleaner look
+      headerShadowVisible: false,
     });
   }, [navigation]);
 
@@ -47,9 +47,16 @@ export default function DiscoverScreen() {
   }, [searchQuery, selectedCategory]);
 
   const handleEventPress = (event: Event) => {
-    // CHANGE: Use navigation.navigate instead of router.push
-    navigation.navigate('EventDetails', { id: event.id });
+    // Get the latest state directly from the store right now
+    const currentFavorites = useTickets.getState().favorites;
+    const isFavorite = currentFavorites.includes(event.id);
+
+    navigation.navigate('EventDetails', {
+      id: event.id,
+      initialIsFavorite: isFavorite, // Pass current state as a parameter
+    });
   };
+
 
   const handleFilterPress = () => {
     console.log('Filter pressed');

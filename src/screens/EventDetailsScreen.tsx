@@ -1,5 +1,5 @@
 // src/screens/EventDetailsScreen.tsx
-import React, { useState, useLayoutEffect } from 'react';
+import React, { useState, useLayoutEffect, useEffect } from 'react';
 import {
   View,
   Text,
@@ -30,38 +30,73 @@ export default function EventDetailsScreen() {
   const route = useRoute<EventDetailsScreenRouteProp>();
   const navigation = useNavigation<EventDetailsScreenNavigationProp>();
   
-  const { id } = route.params; // Get id from route params
+  //  Get the ID and the initial favorite status from the params
+  const { id, initialIsFavorite } = route.params; 
+  
   const [ticketQuantity, setTicketQuantity] = useState(1);
-  const { addTicket, toggleFavorite, isFavorite } = useTickets();
+
+  console.log(`[Details Screen] Received param 'initialIsFavorite':`, initialIsFavorite); 
+  const { favorites, addTicket, toggleFavorite } = useTickets();
+  console.log('[Details Screen] Reading live favorites from store:', favorites); 
+  
+  // Get current favorite status from the global store
+  const isFavorite = favorites.includes(id);
+
+  // Local state for the header icon, initialized with the param to prevent the flicker
+  const [headerFavorite, setHeaderFavorite] = useState(initialIsFavorite);
+
+  // Syncs local header state with the current global state
+  useEffect(() => {
+    setHeaderFavorite(isFavorite);
+  }, [isFavorite]);
 
   const event = MOCK_EVENTS.find((e) => e.id === id);
 
-  // Use useLayoutEffect to set header options, as it depends on component state (isFavorite)
   useLayoutEffect(() => {
-    const isEventFavorite = isFavorite(event!.id);
+    if (!event) return;
+
+    const handleFavoritePress = () => {
+        if (Platform.OS !== "web") {
+    const options = {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false
+    };
     
+    HapticFeedback.trigger("impactLight", options);
+  }
+      // When pressed, toggle the global state. The useEffect above will handle the UI update.
+      toggleFavorite(event.id);
+    };
+
     navigation.setOptions({
-      title: '',
+      title: "",
       headerTransparent: true,
-      headerTintColor: '#fff',
+      headerTintColor: "#fff",
       headerRight: () => (
         <View style={styles.headerButtons}>
-          <TouchableOpacity style={styles.headerButton} onPress={handleSharePress}>
-            <Icon name="share-outline" size={20} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton} onPress={handleFavoritePress}>
+          <TouchableOpacity
+                  style={styles.headerButton}
+                  onPress={handleSharePress}
+                >
+                  <Icon name="share-outline" size={20} color="#fff" />
+                </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={handleFavoritePress}
+          >
             <Icon
-              name={isEventFavorite ? 'heart' : 'heart-outline'}
+              name={headerFavorite ? "heart" : "heart-outline"} // Use local state for the icon
               size={20}
-              color={isEventFavorite ? '#ff4757' : '#fff'}
+              color={headerFavorite ? "#ff4757" : "#fff"}   // Use local state for the color
             />
           </TouchableOpacity>
         </View>
       ),
     });
-  }, [navigation, event, isFavorite]);
+    // The effect now depends on the local state and the event
+  }, [navigation, event, headerFavorite, toggleFavorite]);
+
     if (!event) {
-    // This also tells TypeScript that 'event' must exist for the code below.
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
@@ -79,20 +114,6 @@ export default function EventDetailsScreen() {
       day: "numeric",
     });
   };
-
-const handleFavoritePress = () => { 
-  if (Platform.OS !== "web") {
-    // Optional configuration for the trigger
-    const options = {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false
-    };
-    
-    // Trigger the haptic feedback
-    HapticFeedback.trigger("impactLight", options);
-  }
-  toggleFavorite(event.id);
-};
 
   const handleSharePress = async () => {
     try {

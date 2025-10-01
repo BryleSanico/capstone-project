@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
-    import LinearGradient from 'react-native-linear-gradient';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
-import { Event } from '@/types/event';
-import { useTickets } from '@/hooks/tickets-store';
+import { Event } from '@/src/types/event';
+import { useTickets } from '@/src/hooks/tickets-store';
 
 interface EventCardProps {
   event: Event;
@@ -14,8 +14,9 @@ const { width } = Dimensions.get('window');
 const cardWidth = width - 32;
 
 export default function EventCard({ event, onPress }: EventCardProps) {
-  const { toggleFavorite, isFavorite } = useTickets();
-  const isEventFavorite = isFavorite(event.id);
+
+  const { toggleFavorite, favorites } = useTickets();
+  const isEventFavorite = favorites.includes(event.id);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -26,7 +27,7 @@ export default function EventCard({ event, onPress }: EventCardProps) {
   };
 
   const handleFavoritePress = (e: any) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevents the main onPress from firing
     toggleFavorite(event.id);
   };
 
@@ -84,6 +85,7 @@ export default function EventCard({ event, onPress }: EventCardProps) {
     </TouchableOpacity>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

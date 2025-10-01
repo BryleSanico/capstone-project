@@ -12,7 +12,7 @@ import TicketDetailsScreen from '../screens/TicketDetailsScreen';
 // This is the heart of your type-safe navigation
 export type RootStackParamList = {
   Main: NavigatorScreenParams<TabParamList>;
-  EventDetails: { id: string };
+  EventDetails: { id: string; initialIsFavorite: boolean};
   TicketDetails: { id: string };
 };
 
