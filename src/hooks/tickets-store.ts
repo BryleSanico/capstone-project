@@ -1,87 +1,59 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import createContextHook from '@nkzw/create-context-hook';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
-import { Ticket } from '@/types/event';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { create } from "zustand";
+import { Ticket } from "@/src/types/event";
 
-const TICKETS_STORAGE_KEY = 'user_tickets';
-const FAVORITES_STORAGE_KEY = 'favorite_events';
+const TICKETS_STORAGE_KEY = "user_tickets";
+const FAVORITES_STORAGE_KEY = "favorite_events";
 
-export const [TicketsProvider, useTickets] = createContextHook(() => {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const queryClient = useQueryClient();
+type TicketsState = {
+  tickets: Ticket[];
+  favorites: string[];
+  isLoading: boolean;
+  addTicket: (ticket: Ticket) => Promise<void>;
+  toggleFavorite: (eventId: string) => Promise<void>;
+  loadTickets: () => Promise<void>;
+  loadFavorites: () => Promise<void>;
+};
 
-  const ticketsQuery = useQuery({
-    queryKey: ['tickets'],
-    queryFn: async () => {
+export const useTickets = create<TicketsState>((set, get) => ({
+  tickets: [],
+  favorites: [],
+  isLoading: true,
+
+  loadTickets: async () => {
+    try {
       const stored = await AsyncStorage.getItem(TICKETS_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
+      const parsed: Ticket[] = stored ? JSON.parse(stored) : [];
+      set({ tickets: parsed, isLoading: false });
+    } catch (err) {
+      console.error("Failed to load tickets:", err);
+      set({ isLoading: false });
     }
-  });
+  },
 
-  const favoritesQuery = useQuery({
-    queryKey: ['favorites'],
-    queryFn: async () => {
+  loadFavorites: async () => {
+    try {
       const stored = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
+      const parsed: string[] = stored ? JSON.parse(stored) : [];
+      set({ favorites: parsed });
+    } catch (err) {
+      console.error("Failed to load favorites:", err);
     }
-  });
+  },
 
-  const saveTicketsMutation = useMutation({
-    mutationFn: async (tickets: Ticket[]) => {
-      await AsyncStorage.setItem(TICKETS_STORAGE_KEY, JSON.stringify(tickets));
-      return tickets;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-    }
-  });
+  addTicket: async (ticket: Ticket) => {
+    const updated = [...get().tickets, ticket];
+    set({ tickets: updated });
+    await AsyncStorage.setItem(TICKETS_STORAGE_KEY, JSON.stringify(updated));
+  },
 
-  const saveFavoritesMutation = useMutation({
-    mutationFn: async (favorites: string[]) => {
-      await AsyncStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
-      return favorites;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['favorites'] });
-    }
-  });
-
-  useEffect(() => {
-    if (ticketsQuery.data) {
-      setTickets(ticketsQuery.data);
-    }
-  }, [ticketsQuery.data]);
-
-  useEffect(() => {
-    if (favoritesQuery.data) {
-      setFavorites(favoritesQuery.data);
-    }
-  }, [favoritesQuery.data]);
-
-  const addTicket = (ticket: Ticket) => {
-    const updated = [...tickets, ticket];
-    setTickets(updated);
-    saveTicketsMutation.mutate(updated);
-  };
-
-  const toggleFavorite = (eventId: string) => {
+  toggleFavorite: async (eventId: string) => {
+    const { favorites } = get();
     const updated = favorites.includes(eventId)
-      ? favorites.filter(id => id !== eventId)
+      ? favorites.filter((id) => id !== eventId)
       : [...favorites, eventId];
-    setFavorites(updated);
-    saveFavoritesMutation.mutate(updated);
-  };
-
-  const isFavorite = (eventId: string) => favorites.includes(eventId);
-
-  return {
-    tickets,
-    favorites,
-    addTicket,
-    toggleFavorite,
-    isFavorite,
-    isLoading: ticketsQuery.isLoading || favoritesQuery.isLoading
-  };
-});
+     console.log('[Zustand Store] Favorites updated to:', updated);
+    set({ favorites: updated });
+    await AsyncStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(updated));
+  },
+}));
