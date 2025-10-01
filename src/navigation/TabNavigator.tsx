@@ -1,15 +1,28 @@
-import { Tabs } from "expo-router";
+// src/navigation/TabNavigator.tsx
+import React from 'react';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from "react-native-vector-icons/Ionicons";
 import Icon2 from "react-native-vector-icons/FontAwesome";
-import React from "react";
 
-export default function TabLayout() {
+// Import your new screen components
+import DiscoverScreen from '../screens/DiscoverScreen';
+import TicketsScreen from '../screens/TicketScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+
+export type TabParamList = {
+  Discover: undefined;
+  'My Tickets': undefined;
+  Profile: undefined;
+};
+const Tab = createBottomTabNavigator<TabParamList>(); 
+
+export default function TabNavigator() {
   return (
-    <Tabs
+    <Tab.Navigator
       screenOptions={{
         tabBarActiveTintColor: '#6366f1',
         tabBarInactiveTintColor: '#999',
-        headerShown: false,
+        headerShown: true, // Let the stack navigator control the header, or set to false if you want separate headers
         tabBarStyle: {
           backgroundColor: '#fff',
           borderTopWidth: 1,
@@ -25,27 +38,27 @@ export default function TabLayout() {
         },
       }}
     >
-      <Tabs.Screen
-        name="index"
+      <Tab.Screen
+        name="Discover"
+        component={DiscoverScreen}
         options={{
-          title: "Discover",
           tabBarIcon: ({ color, size }) => <Icon name="search-outline" size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="tickets"
+      <Tab.Screen
+        name="My Tickets"
+        component={TicketsScreen}
         options={{
-          title: "My Tickets",
           tabBarIcon: ({ color, size }) => <Icon name="ticket-outline" size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="profile"
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
         options={{
-          title: "Profile",
           tabBarIcon: ({ color, size }) => <Icon2 name="user-o" size={size} color={color} />,
         }}
       />
-    </Tabs>
+    </Tab.Navigator>
   );
 }

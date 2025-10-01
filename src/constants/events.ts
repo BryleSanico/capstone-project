@@ -1,0 +1,112 @@
+import { Event } from '@/types/event';
+
+export const MOCK_EVENTS: Event[] = [
+  {
+    id: '1',
+    title: 'Summer Music Festival Celebration 2024',
+    description: 'Join us for an unforgettable night of music featuring top artists from around the world. Experience live performances, food trucks, and amazing vibes under the stars.',
+    imageUrl: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&h=600&fit=crop',
+    date: '2024-07-15',
+    time: '18:00',
+    location: 'Central Park',
+    address: '1234 Park Avenue, New York, NY',
+    price: 89.99,
+    category: 'Music',
+    organizer: 'MusicEvents Co.',
+    capacity: 5000,
+    attendees: 3247,
+    tags: ['outdoor', 'festival', 'live music']
+  },
+  {
+    id: '2',
+    title: 'Tech Innovation Conference',
+    description: 'Discover the latest trends in technology and innovation. Network with industry leaders and learn about cutting-edge developments in AI, blockchain, and more.',
+    imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop',
+    date: '2024-08-22',
+    time: '09:00',
+    location: 'Convention Center',
+    address: '5678 Tech Boulevard, San Francisco, CA',
+    price: 299.99,
+    category: 'Technology',
+    organizer: 'TechForward',
+    capacity: 1000,
+    attendees: 756,
+    tags: ['conference', 'networking', 'innovation']
+  },
+  {
+    id: '3',
+    title: 'Food & Wine Tasting',
+    description: 'Indulge in exquisite cuisine and fine wines from local restaurants and wineries. A perfect evening for food enthusiasts and wine connoisseurs.',
+    imageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop',
+    date: '2024-09-10',
+    time: '19:30',
+    location: 'Grand Hotel Ballroom',
+    address: '9876 Luxury Lane, Los Angeles, CA',
+    price: 125.00,
+    category: 'Food & Drink',
+    organizer: 'Culinary Experiences',
+    capacity: 200,
+    attendees: 145,
+    tags: ['food', 'wine', 'tasting', 'luxury']
+  },
+  {
+    id: '4',
+    title: 'Art Gallery Opening',
+    description: 'Celebrate the opening of our new contemporary art exhibition featuring works from emerging and established artists. Complimentary refreshments included.',
+    imageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop',
+    date: '2024-07-28',
+    time: '17:00',
+    location: 'Modern Art Gallery',
+    address: '2468 Arts District, Chicago, IL',
+    price: 25.00,
+    category: 'Arts & Culture',
+    organizer: 'Gallery Modern',
+    capacity: 300,
+    attendees: 89,
+    tags: ['art', 'gallery', 'culture', 'exhibition']
+  },
+  {
+    id: '5',
+    title: 'Startup Pitch Competition',
+    description: 'Watch innovative startups pitch their ideas to a panel of investors. Network with entrepreneurs and discover the next big thing in business.',
+    imageUrl: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&h=600&fit=crop',
+    date: '2024-08-05',
+    time: '14:00',
+    location: 'Innovation Hub',
+    address: '1357 Startup Street, Austin, TX',
+    price: 45.00,
+    category: 'Business',
+    organizer: 'Startup Alliance',
+    capacity: 500,
+    attendees: 234,
+    tags: ['startup', 'pitch', 'business', 'networking']
+  },
+  {
+    id: '6',
+    title: 'Yoga & Wellness Retreat',
+    description: 'Rejuvenate your mind and body with a full day of yoga, meditation, and wellness activities. All levels welcome. Healthy lunch included.',
+    imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop',
+    date: '2024-09-18',
+    time: '08:00',
+    location: 'Serenity Gardens',
+    address: '7890 Peaceful Path, Sedona, AZ',
+    price: 75.00,
+    category: 'Health & Wellness',
+    organizer: 'Zen Wellness Co.',
+    capacity: 50,
+    attendees: 32,
+    tags: ['yoga', 'wellness', 'meditation', 'retreat']
+  }
+];
+
+export const CATEGORIES = [
+  'All',
+  'Music',
+  'Technology',
+  'Food & Drink',
+  'Arts & Culture',
+  'Business',
+  'Health & Wellness',
+  'Sports',
+  'Education'
+];

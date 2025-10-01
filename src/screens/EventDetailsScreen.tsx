@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// src/screens/EventDetailsScreen.tsx
+import React, { useState, useLayoutEffect, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,35 +11,100 @@ import {
   Share,
   Platform,
 } from "react-native";
-import { Stack, useLocalSearchParams, router } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
-import Icon from "react-native-vector-icons/Ionicons";
+import Icon from 'react-native-vector-icons/Ionicons';
 import HapticFeedback from "react-native-haptic-feedback";
-import { MOCK_EVENTS } from "@/constants/events";
-import { useTickets } from "@/hooks/tickets-store";
-import { Ticket } from "@/types/event";
+import { MOCK_EVENTS } from '@/src/constants/events';
+import { useTickets } from '@/src/hooks/tickets-store';
+import { Ticket } from '@/src/types/event';
+import { RootStackParamList } from '@/src/navigation/AppNavigator';
+
+// Define the types for route and navigation
+type EventDetailsScreenRouteProp = RouteProp<RootStackParamList, 'EventDetails'>;
+type EventDetailsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'EventDetails'>;
 
 export default function EventDetailsScreen() {
-  const { id } = useLocalSearchParams();
+  const route = useRoute<EventDetailsScreenRouteProp>();
+  const navigation = useNavigation<EventDetailsScreenNavigationProp>();
+  
+  //  Get the ID and the initial favorite status from the params
+  const { id, initialIsFavorite } = route.params; 
+  
   const [ticketQuantity, setTicketQuantity] = useState(1);
-  const { addTicket, toggleFavorite, isFavorite } = useTickets();
+
+  console.log(`[Details Screen] Received param 'initialIsFavorite':`, initialIsFavorite); 
+  const { favorites, addTicket, toggleFavorite } = useTickets();
+  console.log('[Details Screen] Reading live favorites from store:', favorites); 
+  
+  // Get current favorite status from the global store
+  const isFavorite = favorites.includes(id);
+
+  // Local state for the header icon, initialized with the param to prevent the flicker
+  const [headerFavorite, setHeaderFavorite] = useState(initialIsFavorite);
+
+  // Syncs local header state with the current global state
+  useEffect(() => {
+    setHeaderFavorite(isFavorite);
+  }, [isFavorite]);
 
   const event = MOCK_EVENTS.find((e) => e.id === id);
 
-  if (!event) {
+  useLayoutEffect(() => {
+    if (!event) return;
+
+    const handleFavoritePress = () => {
+        if (Platform.OS !== "web") {
+    const options = {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false
+    };
+    
+    HapticFeedback.trigger("impactLight", options);
+  }
+      // When pressed, toggle the global state. The useEffect above will handle the UI update.
+      toggleFavorite(event.id);
+    };
+
+    navigation.setOptions({
+      title: "",
+      headerTransparent: true,
+      headerTintColor: "#fff",
+      headerRight: () => (
+        <View style={styles.headerButtons}>
+          <TouchableOpacity
+                  style={styles.headerButton}
+                  onPress={handleSharePress}
+                >
+                  <Icon name="share-outline" size={20} color="#fff" />
+                </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={handleFavoritePress}
+          >
+            <Icon
+              name={headerFavorite ? "heart" : "heart-outline"} // Use local state for the icon
+              size={20}
+              color={headerFavorite ? "#ff4757" : "#fff"}   // Use local state for the color
+            />
+          </TouchableOpacity>
+        </View>
+      ),
+    });
+    // The effect now depends on the local state and the event
+  }, [navigation, event, headerFavorite, toggleFavorite]);
+
+    if (!event) {
     return (
       <SafeAreaView style={styles.container}>
-        <Stack.Screen options={{ title: "Event Not Found" }} />
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Event not found</Text>
         </View>
       </SafeAreaView>
     );
   }
-
-  const isEventFavorite = isFavorite(event.id);
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -48,20 +114,6 @@ export default function EventDetailsScreen() {
       day: "numeric",
     });
   };
-
-const handleFavoritePress = () => { 
-  if (Platform.OS !== "web") {
-    // Optional configuration for the trigger
-    const options = {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false
-    };
-    
-    // Trigger the haptic feedback
-    HapticFeedback.trigger("impactLight", options);
-  }
-  toggleFavorite(event.id);
-};
 
   const handleSharePress = async () => {
     try {
@@ -89,50 +141,21 @@ const handleFavoritePress = () => {
       purchaseDate: new Date().toISOString(),
       qrCode: `EVENT_${event.id}_TICKET_${Date.now()}`,
     };
-
+    
     addTicket(ticket);
 
     Alert.alert(
       "Tickets Purchased!",
-      `You've successfully purchased ${ticketQuantity} ticket(s) for ${event.title}. Check your tickets in the My Tickets tab.`,
+      "You've successfully purchased tickets.",
       [
-        { text: "View Tickets", onPress: () => router.push("/(tabs)/tickets") },
+        { text: "View Tickets", onPress: () => navigation.navigate('Main', { screen: 'My Tickets' }) }, // Navigate to a specific tab
         { text: "OK", style: "default" },
       ]
     );
   };
-
+ 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
-      <Stack.Screen
-        options={{
-          title: "",
-          headerTransparent: true,
-          headerStyle: { backgroundColor: "transparent" },
-          headerTintColor: "#fff",
-          headerRight: () => (
-            <View style={styles.headerButtons}>
-              <TouchableOpacity
-                style={styles.headerButton}
-                onPress={handleSharePress}
-              >
-                <Icon name="share-outline" size={20} color="#fff" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.headerButton}
-                onPress={handleFavoritePress}
-              >
-                <Icon
-                  name={isEventFavorite ? "heart" : "heart-outline"}
-                  size={20}
-                  color={isEventFavorite ? "#ff4757" : "#fff"}
-                />
-              </TouchableOpacity>
-            </View>
-          ),
-        }}
-      />
-
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -191,7 +214,7 @@ const handleFavoritePress = () => {
           <View style={styles.tagsSection}>
             <Text style={styles.sectionTitle}>Tags</Text>
             <View style={styles.tagsContainer}>
-              {event.tags.map((tag, index) => (
+              {event.tags.map((tag: string, index: number) => (
                 <View key={index} style={styles.tag}>
                   <Text style={styles.tagText}>#{tag}</Text>
                 </View>

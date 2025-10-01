@@ -1,4 +1,5 @@
-import React from "react";
+// src/screens/ProfileScreen.tsx
+import React, { useLayoutEffect } from 'react';
 import {
   View,
   Text,
@@ -7,19 +8,29 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import { Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
-import MaterialIcon from "react-native-vector-icons/MaterialIcons";
+import MaterialIcon from "react-native-vector-icons/MaterialCommunityIcons";
 import { getIconComponent } from "../../utils/iconLoader";
 import { MenuItem } from "../../types/menu";
 import { useTickets } from "@/hooks/tickets-store";
+import { useNavigation } from '@react-navigation/native';
 
 export default function ProfileScreen() {
+  const navigation = useNavigation();
   const { tickets, favorites } = useTickets();
+  
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: 'Profile',
+      headerStyle: { backgroundColor: '#fff' },
+      headerTitleStyle: { fontWeight: '700', fontSize: 20 },
+    });
+  }, [navigation]);
 
+ 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
       { text: "Cancel", style: "cancel" },
@@ -59,14 +70,14 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Stack.Screen
+    <View style={styles.container}>
+      {/* <Stack.Screen
         options={{
           title: "Profile",
           headerStyle: { backgroundColor: "#fff" },
           headerTitleStyle: { fontWeight: "700", fontSize: 20 },
         }}
-      />
+      /> */}
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <LinearGradient
@@ -126,7 +137,7 @@ export default function ProfileScreen() {
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

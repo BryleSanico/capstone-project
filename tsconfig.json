@@ -21,9 +21,7 @@
         "./*"
       ]
     },
-    "types": [
-      "expo-router/types"
-    ],
+    "types": [],
     "ignoreDeprecations": "6.0"
   },
   "include": [
