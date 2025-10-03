@@ -15,7 +15,7 @@ type TicketsState = {
   loadFavorites: () => Promise<void>;
 };
 
-export const useTickets = create<TicketsState>((set, get) => ({
+export const useTickets = create<TicketsState>()((set, get) => ({
   tickets: [],
   favorites: [],
   isLoading: true,

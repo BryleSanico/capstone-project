@@ -34,6 +34,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 12,
+    backgroundColor: '#fff'
   },
   searchContainer: {
     flex: 1,

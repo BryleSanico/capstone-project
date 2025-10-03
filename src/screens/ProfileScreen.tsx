@@ -1,5 +1,5 @@
 // src/screens/ProfileScreen.tsx
-import React, { useLayoutEffect } from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 import {
   View,
   Text,
@@ -8,20 +8,29 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
 import MaterialIcon from "react-native-vector-icons/MaterialCommunityIcons";
 import { getIconComponent } from "../../utils/iconLoader";
 import { MenuItem } from "../../types/menu";
-import { useTickets } from "@/hooks/tickets-store";
-import { useNavigation } from '@react-navigation/native';
+import { useTickets } from '@/src/hooks/tickets-store'; 
+import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { TabParamList } from '../navigation/TabNavigator';
+import { RootStackParamList } from '../navigation/AppNavigator';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type ProfileScreenNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'Profile'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 export default function ProfileScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<ProfileScreenNavigationProp>();
   const { tickets, favorites } = useTickets();
-  
+
+
   useLayoutEffect(() => {
     navigation.setOptions({
       title: 'Profile',
@@ -42,6 +51,10 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const handleLogin = () => {
+    navigation.navigate('Login');
+  };
+
   const menuItems: MenuItem[] = [
     {
       icon: { name: "bell-o", library: "FontAwesome" },
@@ -53,7 +66,7 @@ export default function ProfileScreen() {
       icon: { name: "heart-o", library: "FontAwesome" },
       title: "Favorite Events",
       subtitle: `${favorites.length} events saved`,
-      onPress: () => console.log("Favorites"),
+      onPress: () => navigation.navigate('My Favorites'),
     },
     {
       icon: { name: "settings-outline", library: "Ionicons" },
@@ -132,9 +145,9 @@ export default function ProfileScreen() {
           })}
         </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogin}>
           <MaterialIcon name="logout" size={20} color="#ff4757" />
-          <Text style={styles.logoutText}>Logout</Text>
+          <Text style={styles.logoutText}>Login</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

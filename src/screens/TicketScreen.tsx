@@ -19,12 +19,12 @@ type TicketsScreenNavigationProp = CompositeNavigationProp<
 
 export default function TicketsScreen() {
   const navigation = useNavigation<TicketsScreenNavigationProp>();
-  const { tickets, isLoading, loadTickets, loadFavorites } = useTickets();
+  const { tickets, isLoading, loadTickets } = useTickets();
   
-    useEffect(() => {
+  // Mount tickets 
+  useEffect (() => {
     loadTickets();
-    loadFavorites();
-  }, [loadTickets, loadFavorites]);
+  }, [loadTickets]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -119,6 +119,3 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
 });
-
-useTickets.getState().loadTickets();
-useTickets.getState().loadFavorites();
