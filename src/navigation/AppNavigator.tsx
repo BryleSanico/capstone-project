@@ -6,6 +6,8 @@ import type { TabParamList } from './TabNavigator';
 import TabNavigator from './TabNavigator';
 import EventDetailsScreen from '../screens/EventDetailsScreen';
 import TicketDetailsScreen from '../screens/TicketDetailsScreen';
+import LoginScreen from '../screens/LoginScreen';
+import RegisterScreen from '../screens/RegisterScreen';
 // import ModalScreen from '../screens/ModalScreen'; // If you create this
 // import NotFoundScreen from '../screens/NotFoundScreen'; // For handling not found
 
@@ -14,6 +16,8 @@ export type RootStackParamList = {
   Main: NavigatorScreenParams<TabParamList>;
   EventDetails: { id: string; initialIsFavorite: boolean};
   TicketDetails: { id: string };
+  Login: undefined;
+  Register: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -34,6 +38,14 @@ export default function AppNavigator() {
         <Stack.Screen 
           name="TicketDetails" 
           component={TicketDetailsScreen} 
+        />
+        <Stack.Screen 
+          name="Login" 
+          component={LoginScreen} 
+        />
+         <Stack.Screen 
+          name="Register" 
+          component={RegisterScreen} 
         />
         {/*
         <Stack.Screen name="Modal" component={ModalScreen} options={{ presentation: "modal" }} />

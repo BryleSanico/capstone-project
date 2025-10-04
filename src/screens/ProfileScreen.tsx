@@ -20,6 +20,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { TabParamList } from '../navigation/TabNavigator';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useAuth } from '../hooks/auth-store';
 
 type ProfileScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Profile'>,
@@ -29,7 +30,7 @@ type ProfileScreenNavigationProp = CompositeNavigationProp<
 export default function ProfileScreen() {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const { tickets, favorites } = useTickets();
-
+  const { user, signOut } = useAuth();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -41,15 +42,16 @@ export default function ProfileScreen() {
 
  
   const handleLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
+    Alert.alert("Logout", "Are you sure you want to log out?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Logout",
         style: "destructive",
-        onPress: () => console.log("Logout"),
+        onPress: () => signOut(), 
       },
     ]);
   };
+
 
   const handleLogin = () => {
     navigation.navigate('Login');
@@ -102,8 +104,8 @@ export default function ProfileScreen() {
           <View style={styles.avatarContainer}>
             <FontAwesomeIcon name="user" size={40} color="#fff" />
           </View>
-          <Text style={styles.userName}>John Doe</Text>
-          <Text style={styles.userEmail}>john.doe@example.com</Text>
+          <Text style={styles.userName}>{user?.user_metadata.full_name || "Guest"}</Text>
+          <Text style={styles.userEmail}>{user?.user_metadata.email || "guest@example.com"}</Text>
         </LinearGradient>
 
         <View style={styles.statsContainer}>
@@ -145,10 +147,17 @@ export default function ProfileScreen() {
           })}
         </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogin}>
-          <MaterialIcon name="logout" size={20} color="#ff4757" />
-          <Text style={styles.logoutText}>Login</Text>
-        </TouchableOpacity>
+        {/* Conditionally render Login or Logout button */}
+        {user ? (
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <MaterialIcon name="logout" size={20} color="#ff4757" />
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.loginButton} onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.loginButtonText}>Login</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </View>
   );
@@ -285,5 +294,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#ff4757",
+  },
+    loginButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#6366f1",
+    marginHorizontal: 16,
+    marginBottom: 32,
+    padding: 16,
+    borderRadius: 12,
+    gap: 8,
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  loginButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
 });

@@ -3,14 +3,14 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from "react-native-vector-icons/Ionicons";
 import Icon2 from "react-native-vector-icons/FontAwesome";
-
-// Import your new screen components
 import DiscoverScreen from '../screens/DiscoverScreen';
 import TicketsScreen from '../screens/TicketScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import FavoritesScreen from '../screens/FavoritesScreen';
 
 export type TabParamList = {
   Discover: undefined;
+  'My Favorites': undefined;
   'My Tickets': undefined;
   Profile: undefined;
 };
@@ -22,19 +22,25 @@ export default function TabNavigator() {
       screenOptions={{
         tabBarActiveTintColor: '#6366f1',
         tabBarInactiveTintColor: '#999',
-        headerShown: true, // Let the stack navigator control the header, or set to false if you want separate headers
+        headerShown: true, 
         tabBarStyle: {
           backgroundColor: '#fff',
           borderTopWidth: 1,
           borderTopColor: '#f0f0f0',
           paddingTop: 8,
           paddingBottom: 8,
+          paddingLeft: 15,
+          paddingRight: 15,
           height: 88,
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
           marginTop: 4,
+          textAlign: "center"
+        },
+        tabBarItemStyle: {
+          flex: 1,
         },
       }}
     >
@@ -42,13 +48,23 @@ export default function TabNavigator() {
         name="Discover"
         component={DiscoverScreen}
         options={{
+          tabBarLabel: "Discover",
           tabBarIcon: ({ color, size }) => <Icon name="search-outline" size={size} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="My Favorites"
+        component={FavoritesScreen}
+        options={{
+          tabBarLabel: "Favorites",
+          tabBarIcon: ({ color, size }) => <Icon name="heart-outline" size={size} color={color} />,
         }}
       />
       <Tab.Screen
         name="My Tickets"
         component={TicketsScreen}
         options={{
+          tabBarLabel: "My Tickets",
           tabBarIcon: ({ color, size }) => <Icon name="ticket-outline" size={size} color={color} />,
         }}
       />
