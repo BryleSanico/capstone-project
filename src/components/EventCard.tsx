@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
 import { Event } from '@/src/types/event';
@@ -10,19 +10,25 @@ interface EventCardProps {
   onPress: () => void;
 }
 
-const { width } = Dimensions.get('window');
-const cardWidth = width - 32;
-
 export default function EventCard({ event, onPress }: EventCardProps) {
-
   const { toggleFavorite, favorites } = useTickets();
   const isEventFavorite = favorites.includes(event.id);
 
+  // Updated date/time formatting function
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric' 
+    });
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
     });
   };
 
@@ -62,7 +68,8 @@ export default function EventCard({ event, onPress }: EventCardProps) {
           <View style={styles.infoRow}>
             <Icon name="calendar-outline" size={14} color="#666" />
             <Text style={styles.infoText}>
-              {formatDate(event.date)} • {event.time}
+              {/* Use startTime for both date and time */}
+              {formatDate(event.startTime)} • {formatTime(event.startTime)}
             </Text>
           </View>
           
@@ -77,7 +84,7 @@ export default function EventCard({ event, onPress }: EventCardProps) {
           </View>
           
           <View style={styles.footer}>
-            <Text style={styles.price}>${event.price}</Text>
+            <Text style={styles.price}>${event.price.toFixed(2)}</Text>
             <Text style={styles.organizer}>by {event.organizer}</Text>
           </View>
         </View>

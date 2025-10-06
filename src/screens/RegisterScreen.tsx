@@ -19,6 +19,8 @@ import Icon from "react-native-vector-icons/Ionicons";
 import Icon2 from "react-native-vector-icons/FontAwesome";
 import { supabase } from "@/src/lib/supabase"; 
 
+// Define the root stack navigation
+// Note: The screen name here must match the one in AppNavigator.tsx
 type RegisterScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "Register"

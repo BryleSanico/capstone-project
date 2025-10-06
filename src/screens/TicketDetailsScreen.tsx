@@ -15,10 +15,10 @@ import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
 import QRCode from "react-native-qrcode-svg";
 import { useTickets } from "@/src/hooks/tickets-store";
-import { RootStackParamList } from "@/src/navigation/AppNavigator"; // Make sure this path is correct
+import { RootStackParamList } from "@/src/navigation/AppNavigator"; 
 
 // Define the types for route and navigation
-// Note: The screen name here must match the one in your AppNavigator.tsx
+// Note: The screen name here must match the one in AppNavigator.tsx
 type TicketDetailsScreenRouteProp = RouteProp<
   RootStackParamList,
   "TicketDetails" 
@@ -37,12 +37,8 @@ export default function TicketDetailsScreen() {
 
   const ticket = tickets.find((t) => t.id === id);
 
-  // --- FIX STARTS HERE ---
-  // We use useLayoutEffect to set screen options. This runs before the screen is painted,
-  // preventing the header from flickering.
   useLayoutEffect(() => {
     if (ticket) {
-      // If the ticket is found, set the title and the header buttons
       navigation.setOptions({
         title: "My Ticket",
         headerRight: () => (
@@ -69,7 +65,7 @@ export default function TicketDetailsScreen() {
       });
     }
   }, [navigation, ticket]); // Re-run this effect if navigation or ticket changes
-  // --- FIX ENDS HERE ---
+
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -104,11 +100,9 @@ export default function TicketDetailsScreen() {
     );
   };
 
-  // If the ticket is not found, render the error message
   if (!ticket) {
     return (
       <SafeAreaView style={styles.container}>
-        {/* The <Stack.Screen> component is removed from here */}
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Ticket not found</Text>
         </View>
@@ -119,7 +113,6 @@ export default function TicketDetailsScreen() {
   // If the ticket is found, render the ticket details
   return (
     <SafeAreaView style={styles.container}>
-      {/* The <Stack.Screen> component is removed from here */}
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}

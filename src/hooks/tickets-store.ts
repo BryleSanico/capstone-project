@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
-import { Ticket } from "@/src/types/event";
+import { Ticket } from "@/src/types/ticket";
 
 const TICKETS_STORAGE_KEY = "user_tickets";
 const FAVORITES_STORAGE_KEY = "favorite_events";
