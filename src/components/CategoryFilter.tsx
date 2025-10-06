@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { CATEGORIES } from '@/constants/events';
+import { useEvents } from '../hooks/event-store'; 
 
 interface CategoryFilterProps {
   selectedCategory: string;
@@ -8,6 +8,9 @@ interface CategoryFilterProps {
 }
 
 export default function CategoryFilter({ selectedCategory, onSelectCategory }: CategoryFilterProps) {
+  // Get categories directly from the events store
+  const { categories } = useEvents();
+
   return (
     <View style={styles.container}>
       <ScrollView 
@@ -15,7 +18,7 @@ export default function CategoryFilter({ selectedCategory, onSelectCategory }: C
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {CATEGORIES.map((category) => (
+        {categories.map((category) => (
           <TouchableOpacity
             key={category}
             style={[
@@ -41,8 +44,10 @@ export default function CategoryFilter({ selectedCategory, onSelectCategory }: C
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 8,
-    backgroundColor: '#fff'
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
   scrollContent: {
     paddingHorizontal: 16,

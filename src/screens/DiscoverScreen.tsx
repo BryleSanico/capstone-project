@@ -1,19 +1,19 @@
-// src/screens/DiscoverScreen.tsx
-import React, { useState, useMemo, useLayoutEffect } from 'react';
-import { View, StyleSheet, FlatList, Text } from 'react-native';
+import React, { useState, useLayoutEffect, useEffect, useCallback } from 'react';
+import { View, StyleSheet, FlatList, Text, ActivityIndicator, RefreshControl } from 'react-native';
 import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import EventCard from '@/src/components/EventCard';
 import SearchBar from '@/src/components/SearchBar';
 import CategoryFilter from '@/src/components/CategoryFilter';
-import { MOCK_EVENTS } from '@/src/constants/events';
 import { Event } from '@/src/types/event';
 import { RootStackParamList } from '@/src/navigation/AppNavigator';
-import { TabParamList } from '../navigation/TabNavigator';
-import { useTickets } from '@/src/hooks/tickets-store'; 
+import { TabParamList } from '@/src/navigation/TabNavigator';
+import { useTickets } from '@/src/hooks/tickets-store';
+import { useEvents } from '@/src/hooks/event-store';
 
-// Define the navigation prop type for this screen
+// Define the types for route and navigation
+// Note: The screen name here must match the one in AppNavigator.tsx
 type DiscoverScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Discover'>,
   NativeStackNavigationProp<RootStackParamList>
@@ -21,9 +21,23 @@ type DiscoverScreenNavigationProp = CompositeNavigationProp<
 
 export default function DiscoverScreen() {
   const navigation = useNavigation<DiscoverScreenNavigationProp>();
+  const {
+    events,
+    isLoading,
+    isPaginating,
+    hasMore,
+    error,
+    fetchEvents,
+    fetchMoreEvents,
+    fetchCategories,
+  } = useEvents();
+  const { favorites } = useTickets();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   
+  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       title: 'Discover Events',
@@ -32,85 +46,122 @@ export default function DiscoverScreen() {
       headerShadowVisible: false,
     });
   }, [navigation]);
+  
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 2000);
 
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
 
-  const filteredEvents = useMemo(() => {
-    return MOCK_EVENTS.filter((event: Event) => {
-      const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           event.location.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesCategory = selectedCategory === 'All' || event.category === selectedCategory;
-      
-      return matchesSearch && matchesCategory;
-    });
-  }, [searchQuery, selectedCategory]);
+  useEffect(() => {
+    fetchEvents({ query: debouncedQuery, category: selectedCategory });
+  }, [debouncedQuery, selectedCategory, fetchEvents]);
+  
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   const handleEventPress = (event: Event) => {
-    // Get the latest state directly from the store right now
-    const currentFavorites = useTickets.getState().favorites;
-    const isFavorite = currentFavorites.includes(event.id);
-
+    const isFavorite = favorites.includes(event.id);
     navigation.navigate('EventDetails', {
       id: event.id,
-      initialIsFavorite: isFavorite, // Pass current state as a parameter
+      initialIsFavorite: isFavorite,
     });
   };
 
-
-  const handleFilterPress = () => {
-    console.log('Filter pressed');
+  const handleLoadMore = () => {
+    if (!isPaginating && hasMore) {
+      fetchMoreEvents({ query: debouncedQuery, category: selectedCategory });
+    }
   };
+
+  const handleRefresh = () => {
+    fetchEvents({ query: debouncedQuery, category: selectedCategory });
+  };
+
+  const renderFooter = () => {
+    if (!isPaginating) return null;
+    return <ActivityIndicator style={{ marginVertical: 20 }} color="#6366f1" />;
+  };
+
+  if (isLoading && events.length === 0) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#6366f1" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        <SearchBar
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          onFilterPress={handleFilterPress}
-        />
-        
-        <CategoryFilter
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
-        />
-        
+      <SearchBar
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        onFilterPress={() => {}}
+      />
+      <CategoryFilter
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+      />
+      
+      {error && !isLoading && (
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+
+      {!error && (
         <FlatList
-          data={filteredEvents}
+          data={events}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <EventCard
-              event={item}
-              onPress={() => handleEventPress(item)}
-            />
+            <EventCard event={item} onPress={() => handleEventPress(item)} />
           )}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={renderFooter}
+          refreshControl={
+            <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} tintColor="#6366f1" />
+          }
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No events found</Text>
-              <Text style={styles.emptySubtext}>Try adjusting your search or filters</Text>
-            </View>
+            !isLoading ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No events found</Text>
+                <Text style={styles.emptySubtext}>Try adjusting your search or filters</Text>
+              </View>
+            ) : null
           }
         />
-      </View>
+      )}
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
-  content: {
-    flex: 1,
-  },
   listContent: {
     paddingTop: 8,
     paddingBottom: 20,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#ff4757',
+    textAlign: 'center',
   },
   emptyState: {
     flex: 1,
@@ -129,3 +180,4 @@ const styles = StyleSheet.create({
     color: '#999',
   },
 });
+
