@@ -85,7 +85,7 @@ export default function EventCard({ event, onPress }: EventCardProps) {
           
           <View style={styles.footer}>
             <Text style={styles.price}>${event.price.toFixed(2)}</Text>
-            <Text style={styles.organizer}>by {event.organizer}</Text>
+            <Text style={styles.organizer}>by {event.organizer?.fullName || "Unknown User"}</Text>
           </View>
         </View>
       </View>

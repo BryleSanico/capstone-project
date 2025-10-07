@@ -28,9 +28,5 @@ export const useAuth = create<AuthState>((set) => {
       await supabase.auth.signOut();
       // The onAuthStateChanged listener will handle setting session to null
     },
-    // It's good practice to unsubscribe when the store is no longer in use,
-    // though in a React Native app this is less critical than in web with HMR.
-    // Zustand doesn't have a built-in 'destroy' lifecycle, so this is illustrative.
-    // cleanup: () => subscription.unsubscribe(),
   };
 });

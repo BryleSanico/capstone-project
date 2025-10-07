@@ -14,8 +14,8 @@ import RegisterScreen from '../screens/RegisterScreen';
 // This is the heart of your type-safe navigation
 export type RootStackParamList = {
   Main: NavigatorScreenParams<TabParamList>;
-  EventDetails: { id: string; initialIsFavorite: boolean};
-  TicketDetails: { id: string };
+  EventDetails: { id: number; initialIsFavorite: boolean};
+  TicketDetails: { id: number };
   Login: undefined;
   Register: undefined;
 };
@@ -47,6 +47,10 @@ export default function AppNavigator() {
           name="Register" 
           component={RegisterScreen} 
         />
+        {/* <Stack.Screen 
+          name="Register" 
+          component={RegisterScreen} 
+        /> */}
         {/*
         <Stack.Screen name="Modal" component={ModalScreen} options={{ presentation: "modal" }} />
         */}

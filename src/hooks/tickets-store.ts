@@ -7,10 +7,10 @@ const FAVORITES_STORAGE_KEY = "favorite_events";
 
 type TicketsState = {
   tickets: Ticket[];
-  favorites: string[];
+  favorites: number[];
   isLoading: boolean;
   addTicket: (ticket: Ticket) => Promise<void>;
-  toggleFavorite: (eventId: string) => Promise<void>;
+  toggleFavorite: (eventId: number) => Promise<void>;
   loadTickets: () => Promise<void>;
   loadFavorites: () => Promise<void>;
 };
@@ -34,7 +34,7 @@ export const useTickets = create<TicketsState>()((set, get) => ({
   loadFavorites: async () => {
     try {
       const stored = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY);
-      const parsed: string[] = stored ? JSON.parse(stored) : [];
+      const parsed: number[] = stored ? JSON.parse(stored) : [];
       set({ favorites: parsed });
     } catch (err) {
       console.error("Failed to load favorites:", err);
@@ -47,12 +47,11 @@ export const useTickets = create<TicketsState>()((set, get) => ({
     await AsyncStorage.setItem(TICKETS_STORAGE_KEY, JSON.stringify(updated));
   },
 
-  toggleFavorite: async (eventId: string) => {
+  toggleFavorite: async (eventId: number) => {
     const { favorites } = get();
     const updated = favorites.includes(eventId)
       ? favorites.filter((id) => id !== eventId)
       : [...favorites, eventId];
-     console.log('[Zustand Store] Favorites updated to:', updated);
     set({ favorites: updated });
     await AsyncStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(updated));
   },

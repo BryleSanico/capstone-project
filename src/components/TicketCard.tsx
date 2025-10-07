@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
-import { Ticket } from '@/types/event';
+import { Ticket } from '@/src/types/ticket';
 
 interface TicketCardProps {
   ticket: Ticket;

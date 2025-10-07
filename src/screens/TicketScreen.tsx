@@ -67,7 +67,7 @@ export default function TicketsScreen() {
         ) : (
           <FlatList
             data={tickets}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <TicketCard
                 ticket={item}

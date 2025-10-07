@@ -114,7 +114,7 @@ export default function EventDetailsScreen() {
     if (!event) return;
     const date = new Date(event.startTime);
     const ticket: Ticket = {
-      id: Date.now().toString(),
+      id: Date.now(),
       eventId: event.id,
       eventTitle: event.title,
       eventDate: date.toDateString(),
@@ -194,7 +194,7 @@ export default function EventDetailsScreen() {
 
         <View style={styles.content}>
           <Text style={styles.title}>{event.title}</Text>
-          <Text style={styles.organizer}>Organized by {event.organizer}</Text>
+          <Text style={styles.organizer}>Organized by {event.organizer?.fullName || "Unknown User"}</Text>
 
           {/* Event information section */}
           <View style={styles.infoSection}>

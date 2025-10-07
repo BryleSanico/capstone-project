@@ -117,7 +117,7 @@ export default function DiscoverScreen() {
       {!error && (
         <FlatList
           data={events}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <EventCard event={item} onPress={() => handleEventPress(item)} />
           )}
