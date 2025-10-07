@@ -11,6 +11,8 @@ import { RootStackParamList } from '@/src/navigation/AppNavigator';
 import { TabParamList } from '@/src/navigation/TabNavigator';
 import { useTickets } from '@/src/hooks/tickets-store';
 import { useEvents } from '@/src/hooks/event-store';
+import { useLoadLocalStorage } from '@/src/helper/loadStorage';
+import { useFavorites } from '../hooks/favorites-store';
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -31,13 +33,14 @@ export default function DiscoverScreen() {
     fetchMoreEvents,
     fetchCategories,
   } = useEvents();
-  const { favorites } = useTickets();
+  const { favorites } = useFavorites();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
-
+ 
+  useLoadLocalStorage();
   useLayoutEffect(() => {
     navigation.setOptions({
       title: 'Discover Events',
@@ -85,7 +88,8 @@ export default function DiscoverScreen() {
 
   const renderFooter = () => {
     if (!isPaginating) return null;
-    return <ActivityIndicator style={{ marginVertical: 20 }} color="#6366f1" />;
+    // return <ActivityIndicator style={{ marginVertical: 20 }} color="#6366f1" />;
+        return <ActivityIndicator style={{ marginVertical: 20 }} color="#ee3f09ff" />;
   };
 
   if (isLoading && events.length === 0) {

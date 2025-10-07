@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
 import { Event } from '@/src/types/event';
-import { useTickets } from '@/src/hooks/tickets-store';
+import { useFavorites } from '@/src/hooks/favorites-store';
 
 interface EventCardProps {
   event: Event;
@@ -11,7 +11,7 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event, onPress }: EventCardProps) {
-  const { toggleFavorite, favorites } = useTickets();
+  const { toggleFavorite, favorites } = useFavorites();
   const isEventFavorite = favorites.includes(event.id);
 
   // Updated date/time formatting function

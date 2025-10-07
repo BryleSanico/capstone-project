@@ -57,11 +57,7 @@ export default function LoginScreen() {
     if (error) {
       Alert.alert("Login Error", error.message);
     } else {
-      if (navigation.canGoBack()) {
-        navigation.goBack();
-      } else {
-        navigation.replace("Main", { screen: "Discover" });
-      }
+       navigation.replace("Main", { screen: "Discover" });
     }
   };
 

@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect, useEffect } from 'react';
+import React, { useState, useLayoutEffect, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,17 +10,19 @@ import {
   Share,
   Platform,
   ActivityIndicator,
-} from 'react-native';
-import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import LinearGradient from 'react-native-linear-gradient';
-import Icon from 'react-native-vector-icons/Ionicons';
-import HapticFeedback from 'react-native-haptic-feedback';
-import { useTickets } from '@/src/hooks/tickets-store';
-import { Ticket } from '@/src/types/ticket';
-import { RootStackParamList } from '@/src/navigation/AppNavigator';
-import { useEvents } from '@/src/hooks/event-store';
+} from "react-native";
+import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { SafeAreaView } from "react-native-safe-area-context";
+import LinearGradient from "react-native-linear-gradient";
+import Icon from "react-native-vector-icons/Ionicons";
+import HapticFeedback from "react-native-haptic-feedback";
+import { useTickets } from "@/src/hooks/tickets-store";
+import { Ticket } from "@/src/types/ticket";
+import { RootStackParamList } from "@/src/navigation/AppNavigator";
+import { useEvents } from "@/src/hooks/event-store";
+import { useAuth } from "@/src/hooks/auth-store";
+import { useFavorites } from "../hooks/favorites-store";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -37,24 +39,24 @@ export default function EventDetailsScreen() {
   const route = useRoute<EventDetailsScreenRouteProp>();
   const navigation = useNavigation<EventDetailsScreenNavigationProp>();
   const { id, initialIsFavorite } = route.params;
-
-  // Get event data and fetching logic from the events store
-  const { currentEvent: event, isLoading, fetchEventById } = useEvents();
-
+  const [isBuying, setIsBuying] = useState(false);
   const [ticketQuantity, setTicketQuantity] = useState(1);
-  const { favorites, addTicket, toggleFavorite } = useTickets();
-  const isFavorite = favorites.includes(id);
 
+  const { session } = useAuth();
+  const { currentEvent: event, isLoading, fetchEventById } = useEvents(); // Get event data and fetching logic from the events store
+  const { addTicket } = useTickets();
+  const {toggleFavorite, favorites } = useFavorites();
+  // Fetch event details using the centralized store function
+  useEffect(() => {
+    fetchEventById(id);
+  }, [id, fetchEventById]);
+
+  const isFavorite = favorites.includes(id);
   const [headerFavorite, setHeaderFavorite] = useState(initialIsFavorite);
 
   useEffect(() => {
     setHeaderFavorite(isFavorite);
   }, [isFavorite]);
-
-  // Fetch event details using the centralized store function
-  useEffect(() => {
-    fetchEventById(id);
-  }, [id, fetchEventById]);
 
   useLayoutEffect(() => {
     if (!event) return;
@@ -110,10 +112,24 @@ export default function EventDetailsScreen() {
     }
   };
 
-  const handleBuyTickets = () => {
+  const handleBuyTickets = async () => {
     if (!event) return;
+    // Prevent guests from buying tickets and prompt them to log in
+    if (!session) {
+      Alert.alert(
+        "Login Required",
+        "Please log in or create an account to purchase tickets.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Login", onPress: () => navigation.navigate("Login") },
+        ]
+      );
+      return;
+    }
+    setIsBuying(true);
+
     const date = new Date(event.startTime);
-    const ticket: Ticket = {
+    const ticketData: Ticket = {
       id: Date.now(),
       eventId: event.id,
       eventTitle: event.title,
@@ -123,10 +139,11 @@ export default function EventDetailsScreen() {
       quantity: ticketQuantity,
       totalPrice: event.price * ticketQuantity,
       purchaseDate: new Date().toISOString(),
-      qrCode: `EVENT_${event.id}_TICKET_${Date.now()}`,
+      qrCode: `EVENT_${event.id}_USER_${session.user.id}`, // unique QR
     };
 
-    addTicket(ticket);
+    const success = await addTicket(ticketData);
+    setIsBuying(false);
 
     Alert.alert(
       "Tickets Purchased!",
@@ -167,6 +184,7 @@ export default function EventDetailsScreen() {
       </SafeAreaView>
     );
   }
+  
 
   if (!event) {
     return (
@@ -194,7 +212,9 @@ export default function EventDetailsScreen() {
 
         <View style={styles.content}>
           <Text style={styles.title}>{event.title}</Text>
-          <Text style={styles.organizer}>Organized by {event.organizer?.fullName || "Unknown User"}</Text>
+          <Text style={styles.organizer}>
+            Organized by {event.organizer?.fullName || "Unknown User"}
+          </Text>
 
           {/* Event information section */}
           <View style={styles.infoSection}>
@@ -279,9 +299,19 @@ export default function EventDetailsScreen() {
               ${(event.price * ticketQuantity).toFixed(2)}
             </Text>
           </View>
-          <TouchableOpacity style={styles.buyButton} onPress={handleBuyTickets}>
-            <Icon name="ticket-outline" size={20} color="#fff" />
-            <Text style={styles.buyButtonText}>Buy Tickets</Text>
+          <TouchableOpacity
+            style={styles.buyButton}
+            onPress={handleBuyTickets}
+            disabled={isBuying}
+          >
+            {isBuying ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <Icon name="ticket-outline" size={20} color="#fff" />
+                <Text style={styles.buyButtonText}>Buy Tickets</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
       </View>

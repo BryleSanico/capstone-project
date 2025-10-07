@@ -6,19 +6,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AppNavigator from "./src/navigation/AppNavigator";
 import SplashScreen from "react-native-splash-screen";
-import { useTickets } from '@/src/hooks/tickets-store';
+import { useLoadLocalStorage } from "@/src/helper/loadStorage";
+
 
 const queryClient = new QueryClient();
 
 export default function App() {
-
-  const { loadTickets, loadFavorites } = useTickets();
-    // Mount tickets and favorites
-    useEffect (() => {
-      loadTickets();
-      loadFavorites();
-    }, [loadTickets, loadFavorites]);
-
+  useLoadLocalStorage();
   useEffect(() => {
     SplashScreen.hide();
   }, []);

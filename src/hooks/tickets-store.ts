@@ -1,58 +1,63 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { Ticket } from "@/src/types/ticket";
+import { useAuth } from "./auth-store";
+import storageService from "../services/storageService";
+import ticketService from "../services/ticketService";
 
 const TICKETS_STORAGE_KEY = "user_tickets";
-const FAVORITES_STORAGE_KEY = "favorite_events";
 
 type TicketsState = {
   tickets: Ticket[];
-  favorites: number[];
   isLoading: boolean;
-  addTicket: (ticket: Ticket) => Promise<void>;
-  toggleFavorite: (eventId: number) => Promise<void>;
+  addTicket: (ticketData: Omit<Ticket, 'id' | 'purchaseDate'>) => Promise<boolean>;
   loadTickets: () => Promise<void>;
-  loadFavorites: () => Promise<void>;
 };
 
 export const useTickets = create<TicketsState>()((set, get) => ({
   tickets: [],
-  favorites: [],
   isLoading: true,
 
   loadTickets: async () => {
-    try {
-      const stored = await AsyncStorage.getItem(TICKETS_STORAGE_KEY);
-      const parsed: Ticket[] = stored ? JSON.parse(stored) : [];
-      set({ tickets: parsed, isLoading: false });
-    } catch (err) {
-      console.error("Failed to load tickets:", err);
-      set({ isLoading: false });
+    set({ isLoading: true });
+    const { session } = useAuth.getState();
+
+    if (session?.user) {
+      try {
+        const userTickets = await ticketService.getUserTickets();
+        set({ tickets: userTickets, isLoading: false });
+        await storageService.setItem(TICKETS_STORAGE_KEY, userTickets);
+      } catch (err) {
+        console.error("Failed to load tickets from DB.", err);
+        set({ isLoading: false });
+      }
+    } else {
+      const localTickets = await storageService.getItem<Ticket[]>(TICKETS_STORAGE_KEY);
+      set({ tickets: localTickets || [], isLoading: false });
     }
   },
 
-  loadFavorites: async () => {
-    try {
-      const stored = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY);
-      const parsed: number[] = stored ? JSON.parse(stored) : [];
-      set({ favorites: parsed });
-    } catch (err) {
-      console.error("Failed to load favorites:", err);
+  addTicket: async (ticketData) => {
+    const { session } = useAuth.getState();
+    if (!session?.user) {
+      alert('Please log in or create an account to purchase tickets.');
+      return false;
     }
-  },
 
-  addTicket: async (ticket: Ticket) => {
-    const updated = [...get().tickets, ticket];
-    set({ tickets: updated });
-    await AsyncStorage.setItem(TICKETS_STORAGE_KEY, JSON.stringify(updated));
-  },
-
-  toggleFavorite: async (eventId: number) => {
-    const { favorites } = get();
-    const updated = favorites.includes(eventId)
-      ? favorites.filter((id) => id !== eventId)
-      : [...favorites, eventId];
-    set({ favorites: updated });
-    await AsyncStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(updated));
+    try {
+      const savedTicket = await ticketService.createTicket(ticketData);
+      const updatedTickets = [savedTicket, ...get().tickets];
+      set({ tickets: updatedTickets });
+      await storageService.setItem(TICKETS_STORAGE_KEY, updatedTickets);
+      return true;
+    } catch (err: any) {
+      if (err.code === '23505') { // Unique constraint violation
+        alert('You have already purchased tickets for this event.');
+      } else {
+        console.error("Error purchasing ticket:", err);
+        alert('There was an error purchasing your tickets. Please try again.');
+      }
+      return false;
+    }
   },
 }));
+

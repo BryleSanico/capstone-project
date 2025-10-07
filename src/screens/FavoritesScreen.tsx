@@ -21,6 +21,7 @@ import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { TabParamList } from "@/src/navigation/TabNavigator";
 import EventCard from "@/src/components/EventCard";
 import { useIsFocused } from "@react-navigation/native";
+import { useFavorites } from "../hooks/favorites-store";
 
 // Define the navigation tab
 // Note: The screen name here must match the one in TabNavigator.tsx
@@ -32,8 +33,9 @@ type FavoritesScreenNavigationProp = CompositeNavigationProp<
 export default function FavoritesScreen() {
   const navigation = useNavigation<FavoritesScreenNavigationProp>();
   const isFocused = useIsFocused();
-  const { favorites, loadFavorites } = useTickets();
-  const { favoriteEvents, fetchFavoriteEvents, isLoading } = useEvents();
+  const { favorites, loadFavorites } = useFavorites();
+  const { favoriteEvents, isLoading, error, fetchFavoriteEvents } = useEvents();
+
 
   useEffect(() => {
     loadFavorites();

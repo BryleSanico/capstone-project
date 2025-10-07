@@ -20,7 +20,9 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { TabParamList } from '../navigation/TabNavigator';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useAuth } from '../hooks/auth-store';
+import { useAuth } from '@/src/hooks/auth-store';
+import { useLoadLocalStorage } from '../helper/loadStorage';
+import { useFavorites } from '../hooks/favorites-store';
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -31,7 +33,8 @@ type ProfileScreenNavigationProp = CompositeNavigationProp<
 
 export default function ProfileScreen() {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
-  const { tickets, favorites } = useTickets();
+  const { tickets } = useTickets();
+  const { favorites } = useFavorites();
   const { user, signOut } = useAuth();
 
   useLayoutEffect(() => {
@@ -49,7 +52,7 @@ export default function ProfileScreen() {
       {
         text: "Logout",
         style: "destructive",
-        onPress: () => signOut(), 
+        onPress: () => {signOut()}, 
       },
     ]);
   };
@@ -156,7 +159,7 @@ export default function ProfileScreen() {
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={styles.loginButton} onPress={() => navigation.navigate('Login')}>
+          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
             <Text style={styles.loginButtonText}>Login</Text>
           </TouchableOpacity>
         )}

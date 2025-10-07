@@ -72,7 +72,7 @@ export default function RegisterScreen() {
       Alert.alert(
         "Success!",
         "Please check your email for a confirmation link to complete registration.",
-        [{ text: "OK", onPress: () => navigation.navigate("Login") }]
+        [{ text: "OK", onPress: () => navigation.goBack() }]
       );
     }
   };
