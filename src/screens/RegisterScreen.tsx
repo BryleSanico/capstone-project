@@ -17,7 +17,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
 import Icon2 from "react-native-vector-icons/FontAwesome";
-import { supabase } from "@/src/lib/supabase"; 
+import { useAuth } from "@/src/hooks/auth-store"; 
 
 // Define the root stack navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -34,7 +34,9 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+
   const navigation = useNavigation<RegisterScreenNavigationProp>();
+  const { signUp } = useAuth();
 
     useLayoutEffect(() => {
       navigation.setOptions({
@@ -55,15 +57,7 @@ export default function RegisterScreen() {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-      options: {
-        data: {
-          full_name: name,
-        },
-      },
-    });
+    const { error } = await signUp(name, email, password);
 
     setLoading(false);
     if (error) {

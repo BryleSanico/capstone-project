@@ -16,7 +16,7 @@ import { useNavigation } from "@react-navigation/native";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { supabase } from "@/src/lib/supabase";
+import { useAuth } from '@/src/hooks/auth-store';
 
 // Define the root stack navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -32,6 +32,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState<boolean>(false);
 
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { signInWithPassword } = useAuth();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -48,16 +49,14 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    });
+    const { error } = await signInWithPassword(email, password);
     setLoading(false);
 
     if (error) {
       Alert.alert("Login Error", error.message);
     } else {
-       navigation.replace("Main", { screen: "Discover" });
+        // On successful login, go back to dismiss the modal
+      navigation.goBack();
     }
   };
 
