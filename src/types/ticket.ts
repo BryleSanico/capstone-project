@@ -1,6 +1,6 @@
 export interface Ticket {
-  id: string;
-  eventId: string;
+  id: number;
+  eventId: number;
   eventTitle: string;
   eventDate: string;
   eventTime: string;

@@ -1,5 +1,7 @@
+import { User } from "@/src/types/user";
+
 export interface Event {
-  id: string;
+  id: number;
   title: string;
   description: string;
   imageUrl: string;
@@ -8,7 +10,7 @@ export interface Event {
   address: string;
   price: number;
   category: string;
-  organizer: string;
+  organizer: User;
   capacity: number;
   attendees: number;
   tags: string[];
