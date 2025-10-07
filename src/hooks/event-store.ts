@@ -1,24 +1,9 @@
 import { create } from 'zustand';
 import { supabase } from '@/src/lib/supabase';
 import { Event } from '@/src/types/event';
+import { User }  from '@/src/types/user';
 
 const EVENTS_PER_PAGE = 5;
-
-type EventsState = {
-  events: Event[];
-  categories: string[]; // To store dynamic categories
-  favoriteEvents: Event[];
-  currentEvent: Event | null;
-  isLoading: boolean;
-  isPaginating: boolean;
-  error: string | null;
-  hasMore: boolean;
-  fetchEvents: (filters: { query: string; category: string }) => Promise<void>;
-  fetchMoreEvents: (filters: { query: string; category: string }) => Promise<void>;
-  fetchFavoriteEvents: (ids: string[]) => Promise<void>;
-  fetchEventById: (id: string) => Promise<void>;
-  fetchCategories: () => Promise<void>; // New function for categories
-};
 
 const mapSupabaseToEvent = (item: any): Event => ({
   id: item.id,
@@ -30,15 +15,41 @@ const mapSupabaseToEvent = (item: any): Event => ({
   address: item.address,
   price: item.price,
   category: item.category,
-  organizer: item.organizer,
+  organizer: item.profiles ? {
+    id: item.profiles.id,
+    fullName: item.profiles.full_name, 
+    email: item.profiles.email, 
+    avatar: item.profiles.avatar_url,   
+  } : {
+    id: '00000000-0000-0000-0000-000000000000',
+    fullName: 'Unknown User',
+    email: '',
+    avatar: undefined,
+  },
   capacity: item.capacity,
   attendees: item.attendees,
   tags: item.tags,
 });
 
+type EventsState = {
+  events: Event[];
+  categories: string[];
+  favoriteEvents: Event[];
+  currentEvent: Event | null;
+  isLoading: boolean;
+  isPaginating: boolean;
+  error: string | null;
+  hasMore: boolean;
+  fetchEvents: (filters: { query: string; category: string }) => Promise<void>;
+  fetchMoreEvents: (filters: { query: string; category: string }) => Promise<void>;
+  fetchFavoriteEvents: (ids: number[]) => Promise<void>; 
+  fetchEventById: (id: number) => Promise<void>; 
+  fetchCategories: () => Promise<void>;
+};
+
 export const useEvents = create<EventsState>()((set, get) => ({
   events: [],
-  categories: ['All'], // Initialize with 'All'
+  categories: ['All'],
   favoriteEvents: [],
   currentEvent: null,
   isLoading: false,
@@ -46,13 +57,67 @@ export const useEvents = create<EventsState>()((set, get) => ({
   error: null,
   hasMore: true,
 
+  fetchEventById: async (id: number) => { 
+    set({ isLoading: true, error: null, currentEvent: null });
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select(`
+          *,
+          event_organizers (
+            profiles (
+              id,
+              full_name,
+              avatar_url
+            )
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      
+      const organizerProfile = data.event_organizers[0]?.profiles;
+
+      const mappedEvent = mapSupabaseToEvent({
+        ...data,
+        profiles: organizerProfile,
+      });
+
+      set({ currentEvent: mappedEvent, isLoading: false });
+
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+    }
+  },
+  
+  fetchFavoriteEvents: async (ids: number[]) => {
+     if (ids.length === 0) {
+      set({ favoriteEvents: [], isLoading: false });
+      return;
+    }
+    set({ isLoading: true, error: null });
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .in('id', ids);
+
+      if (error) throw error;
+      
+      // map the organizer data 
+      const mappedData = data.map(item => mapSupabaseToEvent(item));
+      set({ favoriteEvents: mappedData, isLoading: false });
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+    }
+  },
+  
   fetchEvents: async ({ query, category }) => {
     set({ isLoading: true, error: null, events: [] });
     try {
-      let supabaseQuery = supabase.from('events').select('*');
+      let supabaseQuery = supabase.from('events').select('*, profiles:event_organizers(profiles(id, full_name, avatar_url))');
 
-      // Use .ilike() for partial, case-insensitive string matching.
-      // The '%' are wildcards, so it finds any event containing the query text.
       if (query) {
         supabaseQuery = supabaseQuery.ilike('title', `%${query}%`);
       }
@@ -66,7 +131,7 @@ export const useEvents = create<EventsState>()((set, get) => ({
 
       if (error) throw error;
       
-      const mappedData = data.map(mapSupabaseToEvent);
+      const mappedData = data.map(item => mapSupabaseToEvent({ ...item, profiles: item.profiles[0]?.profiles }));
       set({
         events: mappedData,
         isLoading: false,
@@ -84,10 +149,10 @@ export const useEvents = create<EventsState>()((set, get) => ({
     set({ isPaginating: true });
     try {
       const currentPage = Math.floor(events.length / EVENTS_PER_PAGE);
-      const from = (currentPage + 1) * EVENTS_PER_PAGE - EVENTS_PER_PAGE;
+      const from = (currentPage + 1) * EVENTS_PER_PAGE;
       const to = from + EVENTS_PER_PAGE - 1;
 
-      let supabaseQuery = supabase.from('events').select('*');
+      let supabaseQuery = supabase.from('events').select('*, profiles:event_organizers(profiles(id, full_name, avatar_url))');
 
       if (query) {
         supabaseQuery = supabaseQuery.ilike('title', `%${query}%`);
@@ -102,7 +167,7 @@ export const useEvents = create<EventsState>()((set, get) => ({
         
       if (error) throw error;
       
-      const mappedData = data.map(mapSupabaseToEvent);
+      const mappedData = data.map(item => mapSupabaseToEvent({ ...item, profiles: item.profiles[0]?.profiles }));
       set((state) => ({
         events: [...state.events, ...mappedData],
         isPaginating: false,
@@ -112,51 +177,9 @@ export const useEvents = create<EventsState>()((set, get) => ({
       set({ error: err.message, isPaginating: false });
     }
   },
-  
-  fetchFavoriteEvents: async (ids: string[]) => {
-     if (ids.length === 0) {
-      set({ favoriteEvents: [], isLoading: false });
-      return;
-    }
-    set({ isLoading: true, error: null });
-    try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .in('id', ids);
 
-      if (error) throw error;
-
-      const mappedData = data.map(mapSupabaseToEvent);
-      set({ favoriteEvents: mappedData, isLoading: false });
-    } catch (err: any) {
-      set({ error: err.message, isLoading: false });
-    }
-  },
-
-  fetchEventById: async (id: string) => {
-    set({ isLoading: true, error: null, currentEvent: null });
-    try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-      
-      const mappedEvent = mapSupabaseToEvent(data);
-      set({ currentEvent: mappedEvent, isLoading: false });
-
-    } catch (err: any) {
-      set({ error: err.message, isLoading: false });
-    }
-  },
-
-  // New function to get all unique categories from the database
   fetchCategories: async () => {
     try {
-      // Use an RPC call to a database function to get distinct categories
       const { data, error } = await supabase.rpc('get_distinct_categories');
 
       if (error) throw error;
@@ -169,16 +192,4 @@ export const useEvents = create<EventsState>()((set, get) => ({
     }
   }
 }));
-
-// IMPORTANT: You need to run the following SQL in your Supabase SQL Editor ONE TIME
-// to create the `get_distinct_categories` function.
-/*
-  create or replace function get_distinct_categories()
-  returns table(category text) as $$
-  begin
-    return query
-      select distinct T.category from events T order by 1;
-  end;
-  $$ language plpgsql;
-*/
 
