@@ -40,7 +40,7 @@ export default function DiscoverScreen() {
   
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
  
-  useLoadLocalStorage();
+  // useLoadLocalStorage();
   useLayoutEffect(() => {
     navigation.setOptions({
       title: 'Discover Events',

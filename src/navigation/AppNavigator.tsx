@@ -8,8 +8,7 @@ import EventDetailsScreen from '../screens/EventDetailsScreen';
 import TicketDetailsScreen from '../screens/TicketDetailsScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
-// import ModalScreen from '../screens/ModalScreen'; // If you create this
-// import NotFoundScreen from '../screens/NotFoundScreen'; // For handling not found
+
 
 // This is the heart of your type-safe navigation
 export type RootStackParamList = {
@@ -47,13 +46,6 @@ export default function AppNavigator() {
           name="Register" 
           component={RegisterScreen} 
         />
-        {/* <Stack.Screen 
-          name="Register" 
-          component={RegisterScreen} 
-        /> */}
-        {/*
-        <Stack.Screen name="Modal" component={ModalScreen} options={{ presentation: "modal" }} />
-        */}
       </Stack.Navigator>
 
   );

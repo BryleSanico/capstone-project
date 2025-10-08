@@ -1,7 +1,8 @@
 import { supabase } from "@/src/lib/supabase";
 import { Ticket } from "@/src/types/ticket";
 import { SupabaseTicket } from "@/src/services/types/ticket";
-import { useAuth } from "@/src/hooks/auth-store";
+import { getCurrentSession } from "../utils/sessionHelper";
+
 
 // Helper function to map ticket data
 const mapSupabaseToTicket = (item: SupabaseTicket): Ticket => ({
@@ -22,7 +23,7 @@ const ticketService = {
    * Fetches all tickets for the currently logged-in user.
    */
   async getUserTickets(): Promise<Ticket[]> {
-    const { session } = useAuth.getState();
+    const session = await getCurrentSession();
     if (!session?.user) return [];
 
     const { data, error } = await supabase
@@ -42,7 +43,7 @@ const ticketService = {
    * Creates a new ticket in the database.
    */
   async createTicket(ticketData: Omit<Ticket, 'id' | 'purchaseDate'>): Promise<Ticket> {
-    const { session } = useAuth.getState();
+    const session = await getCurrentSession();
     if (!session?.user) throw new Error("User must be logged in to purchase tickets.");
 
     const { data, error } = await supabase

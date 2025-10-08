@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { supabase } from "@/src/lib/supabase"; 
 import { AuthError, Session, User } from '@supabase/supabase-js';
 import { useFavorites } from './favorites-store';
+import { useTickets } from './tickets-store';
+import storageService from '../services/storageService';
 
 type AuthState = {
   session: Session | null;
@@ -30,6 +32,8 @@ export const useAuth = create<AuthState>((set, get) => ({
           useFavorites.getState().checkForUnsyncedFavorites();
         }
       });
+
+       useTickets.getState().loadTickets();
       
       // Ensure loading is only set to false once on initial load
       if (get().isLoading) {
@@ -65,6 +69,12 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
   signOut: async () => {
     await supabase.auth.signOut();
+    
+    // Clear the user's tickets from local storage.
+    await storageService.removeItem('user_tickets');
+
+    // Trigger a reload of the tickets state
+    await useTickets.getState().loadTickets();
     // The onAuthStateChange listener will automatically handle reloading the guest favorites.
     set({ session: null, user: null });
   },

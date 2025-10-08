@@ -21,7 +21,6 @@ import { TabParamList } from '../navigation/TabNavigator';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '@/src/hooks/auth-store';
-import { useLoadLocalStorage } from '../helper/loadStorage';
 import { useFavorites } from '../hooks/favorites-store';
 
 // Define the types for route and navigation

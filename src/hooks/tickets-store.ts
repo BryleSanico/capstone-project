@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { Ticket } from "@/src/types/ticket";
-import { useAuth } from "./auth-store";
 import storageService from "../services/storageService";
 import ticketService from "../services/ticketService";
+import { getCurrentSession } from "../utils/sessionHelper";
 
 const TICKETS_STORAGE_KEY = "user_tickets";
 
@@ -19,7 +19,7 @@ export const useTickets = create<TicketsState>()((set, get) => ({
 
   loadTickets: async () => {
     set({ isLoading: true });
-    const { session } = useAuth.getState();
+    const session = await getCurrentSession();
 
     if (session?.user) {
       try {
@@ -37,7 +37,7 @@ export const useTickets = create<TicketsState>()((set, get) => ({
   },
 
   addTicket: async (ticketData) => {
-    const { session } = useAuth.getState();
+    const session = await getCurrentSession();
     if (!session?.user) {
       alert('Please log in or create an account to purchase tickets.');
       return false;

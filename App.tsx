@@ -6,13 +6,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AppNavigator from "./src/navigation/AppNavigator";
 import SplashScreen from "react-native-splash-screen";
-import { useLoadLocalStorage } from "@/src/helper/loadStorage";
-
 
 const queryClient = new QueryClient();
 
 export default function App() {
-  useLoadLocalStorage();
+
   useEffect(() => {
     SplashScreen.hide();
   }, []);
