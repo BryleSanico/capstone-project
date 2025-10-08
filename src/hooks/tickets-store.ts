@@ -3,6 +3,7 @@ import { Ticket } from "@/src/types/ticket";
 import storageService from "../services/storageService";
 import ticketService from "../services/ticketService";
 import { getCurrentSession } from "../utils/sessionHelper";
+import { useNetworkStatus } from "./network-store";
 
 const TICKETS_STORAGE_KEY = "user_tickets";
 
@@ -20,19 +21,24 @@ export const useTickets = create<TicketsState>()((set, get) => ({
   loadTickets: async () => {
     set({ isLoading: true });
     const session = await getCurrentSession();
+    const { isConnected } = useNetworkStatus.getState();
 
-    if (session?.user) {
+    if (session?.user && isConnected) {
+       // ONLINE & LOGGED IN: Fetch from DB, with local cache as fallback
       try {
         const userTickets = await ticketService.getUserTickets();
         set({ tickets: userTickets, isLoading: false });
         await storageService.setItem(TICKETS_STORAGE_KEY, userTickets);
       } catch (err) {
-        console.error("Failed to load tickets from DB.", err);
-        set({ isLoading: false });
+        console.error("Offline Fallback: Failed to load tickets from DB, using local cache.", err);
+        const localTickets = await storageService.getItem<Ticket[]>(TICKETS_STORAGE_KEY) || [];
+        set({ tickets: localTickets, isLoading: false });
       }
     } else {
-      const localTickets = await storageService.getItem<Ticket[]>(TICKETS_STORAGE_KEY);
-      set({ tickets: localTickets || [], isLoading: false });
+      // OFFLINE or GUEST: Load directly from local storage
+      const localTickets = await storageService.getItem<Ticket[]>(TICKETS_STORAGE_KEY) || [];
+      // Ensure guests see no tickets, as storage is cleared on logout
+      set({ tickets: session?.user ? localTickets : [], isLoading: false });
     }
   },
 

@@ -4,6 +4,7 @@ import { AuthError, Session, User } from '@supabase/supabase-js';
 import { useFavorites } from './favorites-store';
 import { useTickets } from './tickets-store';
 import storageService from '../services/storageService';
+import { useNetworkStatus } from './network-store';
 
 type AuthState = {
   session: Session | null;
@@ -21,6 +22,9 @@ export const useAuth = create<AuthState>((set, get) => ({
   isLoading: true,
 
   initialize: () => {
+    // Initialize network listener
+    useNetworkStatus.getState().initialize();
+
     // This listener handles all auth state changes (initial load, login, logout)
     supabase.auth.onAuthStateChange((_event, session) => {
       set({ session, user: session?.user ?? null });

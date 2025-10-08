@@ -13,7 +13,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
 import MaterialIcon from "react-native-vector-icons/MaterialCommunityIcons";
 import { getIconComponent } from "../../utils/iconLoader";
-import { MenuItem } from "../../types/menu";
+import { MenuItem } from "@/src/types/menu";
 import { useTickets } from '@/src/hooks/tickets-store'; 
 import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';

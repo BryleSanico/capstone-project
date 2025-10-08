@@ -69,7 +69,7 @@ export default function EventDetailsScreen() {
         };
         HapticFeedback.trigger("impactLight", options);
       }
-      toggleFavorite(event.id);
+      toggleFavorite(event);
     };
 
     navigation.setOptions({

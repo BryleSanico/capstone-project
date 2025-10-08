@@ -34,7 +34,7 @@ export default function EventCard({ event, onPress }: EventCardProps) {
 
   const handleFavoritePress = (e: any) => {
     e.stopPropagation(); // Prevents the main onPress from firing
-    toggleFavorite(event.id);
+    toggleFavorite(event);
   };
 
   return (
