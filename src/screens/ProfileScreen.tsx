@@ -14,14 +14,14 @@ import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
 import MaterialIcon from "react-native-vector-icons/MaterialCommunityIcons";
 import { getIconComponent } from "../../utils/iconLoader";
 import { MenuItem } from "@/src/types/menu";
-import { useTickets } from '@/src/hooks/tickets-store'; 
+import { useTickets } from '@/src/stores/tickets-store'; 
 import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { TabParamList } from '../navigation/TabNavigator';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useAuth } from '@/src/hooks/auth-store';
-import { useFavorites } from '../hooks/favorites-store';
+import { useAuth } from '@/src/stores/auth-store';
+import { useFavorites } from '../stores/favorites-store';
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Event } from '@/src/types/event';
 import { eventService } from '@/src/services/eventService';
+import { useNetworkStatus } from './network-store';
 
 type EventsState = {
   events: Event[];
@@ -29,6 +30,12 @@ export const useEvents = create<EventsState>()((set, get) => ({
   hasMore: true,
 
   fetchEvents: async ({ query, category }) => {
+    // Check network status before making an API call
+    if (!useNetworkStatus.getState().isConnected) {
+      set({ error: "You are offline. Please check your network connection.", isLoading: false, events: [] });
+      return;
+    }
+
     set({ isLoading: true, error: null });
     try {
       const data = await eventService.fetchEvents(0, query, category);
@@ -38,7 +45,7 @@ export const useEvents = create<EventsState>()((set, get) => ({
         isLoading: false,
       });
     } catch (err: any) {
-      set({ error: err.message, isLoading: false });
+      set({ error: "Sorry, we couldn't load events. Please try again later.", isLoading: false });
     }
   },
 
@@ -46,9 +53,14 @@ export const useEvents = create<EventsState>()((set, get) => ({
     const { events, isPaginating } = get();
     if (isPaginating || !get().hasMore) return;
 
+    // Prevent pagination attempts while offline
+    if (!useNetworkStatus.getState().isConnected) {
+      return;
+    }
+
     set({ isPaginating: true });
     try {
-      const page = Math.floor(events.length / 5); // Assuming 5 events per page
+      const page = Math.floor(events.length / 5);
       const data = await eventService.fetchEvents(page + 1, query, category);
       set((state) => ({
         events: [...state.events, ...data],
@@ -56,7 +68,9 @@ export const useEvents = create<EventsState>()((set, get) => ({
         isPaginating: false,
       }));
     } catch (err: any) {
-      set({ error: err.message, isPaginating: false });
+      // Stop paginating
+      set({ isPaginating: false, hasMore: false });
+      console.error("Pagination failed:", err.message);
     }
   },
 

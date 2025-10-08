@@ -1,7 +1,7 @@
 import { supabase } from '@/src/lib/supabase';
 import { Event } from '@/src/types/event';
 import storageService from './storageService';
-import { useNetworkStatus } from '../hooks/network-store';
+import { useNetworkStatus } from '../stores/network-store';
 
 const EVENTS_PER_PAGE = 5;
 const EVENTS_CACHE_KEY = "events_cache";
@@ -17,7 +17,6 @@ const cacheEvent = async (event: Event) => {
   cache[event.id] = event;
   await storageService.setItem(EVENTS_CACHE_KEY, cache);
 };
-
 
 // This mapping function is now centralized in the service
 const mapSupabaseToEvent = (item: any): Event => {

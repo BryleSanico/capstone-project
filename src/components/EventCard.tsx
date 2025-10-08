@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
 import { Event } from '@/src/types/event';
-import { useFavorites } from '@/src/hooks/favorites-store';
+import { useFavorites } from '@/src/stores/favorites-store';
 
 interface EventCardProps {
   event: Event;

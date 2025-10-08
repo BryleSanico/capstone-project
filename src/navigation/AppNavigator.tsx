@@ -1,5 +1,5 @@
 // src/navigation/AppNavigator.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer, NavigatorScreenParams } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { TabParamList } from './TabNavigator'; 
@@ -9,6 +9,7 @@ import TicketDetailsScreen from '../screens/TicketDetailsScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 
+// import { useNetworkReconnector } from '../hooks/useNetworkReconnector';
 
 // This is the heart of your type-safe navigation
 export type RootStackParamList = {
@@ -22,8 +23,8 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
+//  useNetworkReconnector();
   return (
-
       <Stack.Navigator screenOptions={{ headerBackTitle: "Back" }}>
         <Stack.Screen 
           name="Main" 

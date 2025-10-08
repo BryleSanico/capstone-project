@@ -14,14 +14,14 @@ import {
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "@/src/navigation/AppNavigator";
 import Icon from "react-native-vector-icons/Ionicons";
-import { useTickets } from "@/src/hooks/tickets-store";
-import { useEvents } from "@/src/hooks/event-store";
+import { useTickets } from "@/src/stores/tickets-store";
+import { useEvents } from "@/src/stores/event-store";
 import { Event } from "@/src/types/event";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { TabParamList } from "@/src/navigation/TabNavigator";
 import EventCard from "@/src/components/EventCard";
 import { useIsFocused } from "@react-navigation/native";
-import { useFavorites } from "../hooks/favorites-store";
+import { useFavorites } from "../stores/favorites-store";
 
 // Define the navigation tab
 // Note: The screen name here must match the one in TabNavigator.tsx

@@ -1,23 +1,39 @@
-import React, { useState, useLayoutEffect, useEffect, useCallback } from 'react';
-import { View, StyleSheet, FlatList, Text, ActivityIndicator, RefreshControl } from 'react-native';
-import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import EventCard from '@/src/components/EventCard';
-import SearchBar from '@/src/components/SearchBar';
-import CategoryFilter from '@/src/components/CategoryFilter';
-import { Event } from '@/src/types/event';
-import { RootStackParamList } from '@/src/navigation/AppNavigator';
-import { TabParamList } from '@/src/navigation/TabNavigator';
-import { useTickets } from '@/src/hooks/tickets-store';
-import { useEvents } from '@/src/hooks/event-store';
-import { useLoadLocalStorage } from '@/src/helper/loadStorage';
-import { useFavorites } from '../hooks/favorites-store';
+import React, {
+  useState,
+  useLayoutEffect,
+  useEffect,
+  useCallback,
+} from "react";
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  Text,
+  ActivityIndicator,
+  RefreshControl,
+} from "react-native";
+import {
+  useNavigation,
+  CompositeNavigationProp,
+} from "@react-navigation/native";
+import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import EventCard from "@/src/components/EventCard";
+import SearchBar from "@/src/components/SearchBar";
+import CategoryFilter from "@/src/components/CategoryFilter";
+import { Event } from "@/src/types/event";
+import { RootStackParamList } from "@/src/navigation/AppNavigator";
+import { TabParamList } from "@/src/navigation/TabNavigator";
+import { useTickets } from "@/src/stores/tickets-store";
+import { useEvents } from "@/src/stores/event-store";
+import { useLoadLocalStorage } from "@/src/helper/loadStorage";
+import { useFavorites } from "@/src/stores/favorites-store";
+// import { useNetworkReconnector } from "../hooks/useNetworkReconnector";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
 type DiscoverScreenNavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<TabParamList, 'Discover'>,
+  BottomTabNavigationProp<TabParamList, "Discover">,
   NativeStackNavigationProp<RootStackParamList>
 >;
 
@@ -35,42 +51,47 @@ export default function DiscoverScreen() {
   } = useEvents();
   const { favorites } = useFavorites();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
- 
+
   // useLoadLocalStorage();
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: 'Discover Events',
-      headerStyle: { backgroundColor: '#fff' },
-      headerTitleStyle: { fontWeight: '700', fontSize: 20 },
+      title: "Discover Events",
+      headerStyle: { backgroundColor: "#fff" },
+      headerTitleStyle: { fontWeight: "700", fontSize: 20 },
       headerShadowVisible: false,
     });
   }, [navigation]);
-  
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(searchQuery);
-    }, 2000);
+    }, 500);
 
     return () => {
       clearTimeout(handler);
     };
   }, [searchQuery]);
 
-  useEffect(() => {
+  // Used useCallback to prevent re-creating the function on every render
+  const handleFetch = useCallback(() => {
     fetchEvents({ query: debouncedQuery, category: selectedCategory });
   }, [debouncedQuery, selectedCategory, fetchEvents]);
-  
+
+  useEffect(() => {
+    handleFetch();
+  }, [debouncedQuery, selectedCategory]);
+
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
 
   const handleEventPress = (event: Event) => {
     const isFavorite = favorites.includes(event.id);
-    navigation.navigate('EventDetails', {
+    navigation.navigate("EventDetails", {
       id: event.id,
       initialIsFavorite: isFavorite,
     });
@@ -83,13 +104,15 @@ export default function DiscoverScreen() {
   };
 
   const handleRefresh = () => {
-    fetchEvents({ query: debouncedQuery, category: selectedCategory });
+    handleFetch();
   };
 
   const renderFooter = () => {
     if (!isPaginating) return null;
     // return <ActivityIndicator style={{ marginVertical: 20 }} color="#6366f1" />;
-        return <ActivityIndicator style={{ marginVertical: 20 }} color="#ee3f09ff" />;
+    return (
+      <ActivityIndicator style={{ marginVertical: 20 }} color="#ee3f09ff" />
+    );
   };
 
   if (isLoading && events.length === 0) {
@@ -99,7 +122,6 @@ export default function DiscoverScreen() {
       </View>
     );
   }
-
   return (
     <View style={styles.container}>
       <SearchBar
@@ -111,7 +133,7 @@ export default function DiscoverScreen() {
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
       />
-      
+
       {error && !isLoading && (
         <View style={styles.centerContainer}>
           <Text style={styles.errorText}>{error}</Text>
@@ -131,13 +153,19 @@ export default function DiscoverScreen() {
           onEndReachedThreshold={0.5}
           ListFooterComponent={renderFooter}
           refreshControl={
-            <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} tintColor="#6366f1" />
+            <RefreshControl
+              refreshing={isLoading}
+              onRefresh={handleRefresh}
+              tintColor="#6366f1"
+            />
           }
           ListEmptyComponent={
             !isLoading ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyText}>No events found</Text>
-                <Text style={styles.emptySubtext}>Try adjusting your search or filters</Text>
+                <Text style={styles.emptySubtext}>
+                  Try adjusting your search or filters
+                </Text>
               </View>
             ) : null
           }
@@ -150,7 +178,7 @@ export default function DiscoverScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
   },
   listContent: {
     paddingTop: 8,
@@ -158,30 +186,29 @@ const styles = StyleSheet.create({
   },
   centerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   errorText: {
     fontSize: 16,
-    color: '#ff4757',
-    textAlign: 'center',
+    color: "#ff4757",
+    textAlign: "center",
   },
   emptyState: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingTop: 100,
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#666',
+    fontWeight: "600",
+    color: "#666",
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#999',
+    color: "#999",
   },
 });
-

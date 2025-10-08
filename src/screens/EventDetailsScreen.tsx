@@ -17,12 +17,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
 import HapticFeedback from "react-native-haptic-feedback";
-import { useTickets } from "@/src/hooks/tickets-store";
+import { useTickets } from "@/src/stores/tickets-store";
 import { Ticket } from "@/src/types/ticket";
 import { RootStackParamList } from "@/src/navigation/AppNavigator";
-import { useEvents } from "@/src/hooks/event-store";
-import { useAuth } from "@/src/hooks/auth-store";
-import { useFavorites } from "../hooks/favorites-store";
+import { useEvents } from "@/src/stores/event-store";
+import { useAuth } from "@/src/stores/auth-store";
+import { useFavorites } from "../stores/favorites-store";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx

@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
 import QRCode from "react-native-qrcode-svg";
-import { useTickets } from "@/src/hooks/tickets-store";
+import { useTickets } from "@/src/stores/tickets-store";
 import { RootStackParamList } from "@/src/navigation/AppNavigator"; 
 
 // Define the types for route and navigation

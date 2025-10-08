@@ -10,7 +10,6 @@ import SplashScreen from "react-native-splash-screen";
 const queryClient = new QueryClient();
 
 export default function App() {
-
   useEffect(() => {
     SplashScreen.hide();
   }, []);

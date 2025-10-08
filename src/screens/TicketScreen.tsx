@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Ionicons";
 import TicketCard from "@/src/components/TicketCard";
-import { useTickets } from "@/src/hooks/tickets-store";
+import { useTickets } from "@/src/stores/tickets-store";
 import { Ticket } from "@/src/types/ticket";
 import {
   useNavigation,

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { useTickets } from '@/src/hooks/tickets-store'; 
-import { useFavorites } from '../hooks/favorites-store';
+import { useTickets } from '@/src/stores/tickets-store'; 
+import { useFavorites } from '../stores/favorites-store';
 
 /**
  * A custom hook to handle the side-effect of loading tickets and favorites
