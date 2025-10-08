@@ -24,11 +24,9 @@ import CategoryFilter from "@/src/components/CategoryFilter";
 import { Event } from "@/src/types/event";
 import { RootStackParamList } from "@/src/navigation/AppNavigator";
 import { TabParamList } from "@/src/navigation/TabNavigator";
-import { useTickets } from "@/src/stores/tickets-store";
 import { useEvents } from "@/src/stores/event-store";
-import { useLoadLocalStorage } from "@/src/helper/loadStorage";
 import { useFavorites } from "@/src/stores/favorites-store";
-// import { useNetworkReconnector } from "../hooks/useNetworkReconnector";
+import { OfflineState } from "../components/Errors/offlineState";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -56,7 +54,6 @@ export default function DiscoverScreen() {
 
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
 
-  // useLoadLocalStorage();
   useLayoutEffect(() => {
     navigation.setOptions({
       title: "Discover Events",
@@ -122,6 +119,10 @@ export default function DiscoverScreen() {
       </View>
     );
   }
+
+    if (error && !isLoading) {
+    return <OfflineState message={error} onRefresh={handleRefresh} />;
+  }
   return (
     <View style={styles.container}>
       <SearchBar
@@ -134,51 +135,33 @@ export default function DiscoverScreen() {
         onSelectCategory={setSelectedCategory}
       />
 
-      {error && !isLoading && (
-        <View style={styles.centerContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      )}
-
-      {!error && (
-        <FlatList
-          data={events}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <EventCard event={item} onPress={() => handleEventPress(item)} />
-          )}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-          onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={renderFooter}
-          refreshControl={
-            <RefreshControl
-              refreshing={isLoading}
-              onRefresh={handleRefresh}
-              tintColor="#6366f1"
-            />
-          }
-          ListEmptyComponent={
-            !isLoading ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>No events found</Text>
-                <Text style={styles.emptySubtext}>
-                  Try adjusting your search or filters
-                </Text>
-              </View>
-            ) : null
-          }
-        />
-      )}
+       <FlatList
+        data={events}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => <EventCard event={item} onPress={() => handleEventPress(item)} />}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={renderFooter}
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} tintColor="#6366f1" />}
+        // This now only shows if there are no errors and the list is empty.
+        ListEmptyComponent={!isLoading && !error ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No events found</Text>
+            <Text style={styles.emptySubtext}>Try adjusting your search or filters</Text>
+          </View>
+        ) : null}
+      />
     </View>
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: '#f8f9fa',
   },
   listContent: {
     paddingTop: 8,
@@ -186,29 +169,26 @@ const styles = StyleSheet.create({
   },
   centerContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: 20,
-  },
-  errorText: {
-    fontSize: 16,
-    color: "#ff4757",
-    textAlign: "center",
+    backgroundColor: '#f8f9fa',
   },
   emptyState: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingTop: 100,
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: "600",
-    color: "#666",
+    fontWeight: '600',
+    color: '#666',
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: "#999",
+    color: '#999',
   },
 });
+

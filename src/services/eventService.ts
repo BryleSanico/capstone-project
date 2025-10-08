@@ -5,6 +5,7 @@ import { useNetworkStatus } from '../stores/network-store';
 
 const EVENTS_PER_PAGE = 5;
 const EVENTS_CACHE_KEY = "events_cache";
+const { isConnected } = useNetworkStatus.getState();
 
 // Helper function to get the current event cache from storage
 const getEventsCache = async (): Promise<Record<number, Event>> => {
@@ -74,7 +75,7 @@ export const eventService = {
   },
 
     async fetchEventById(id: number): Promise<Event | null> {
-    const { isConnected } = useNetworkStatus.getState();
+
 
     if (isConnected) {
       const { data, error } = await supabase
@@ -98,8 +99,6 @@ export const eventService = {
   },
 
     async fetchFavoriteEvents(ids: number[]): Promise<Event[]> {
-    const { isConnected } = useNetworkStatus.getState();
-
     if (isConnected) {
       const { data, error } = await supabase
         .from('events')
@@ -119,7 +118,7 @@ export const eventService = {
 
   async fetchCategories(): Promise<string[]> {
     // Only fetch categories if online
-    if (!useNetworkStatus.getState().isConnected) {
+    if (!isConnected) {
       return ['All', 'Music', 'Technology', 'Food & Drink', 'Arts & Culture'];
     }
     const { data, error } = await supabase.rpc('get_distinct_categories');

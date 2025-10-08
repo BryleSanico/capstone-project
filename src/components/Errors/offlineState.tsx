@@ -13,9 +13,6 @@ export const OfflineState: React.FC<OfflineStateProps> = ({ message, onRefresh }
       <Icon name="cloud-offline-outline" size={64} color="#ccc" />
       <Text style={styles.errorTitle}>Connection Error</Text>
       <Text style={styles.errorText}>{message}</Text>
-      <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
-        <Text style={styles.refreshButtonText}>Try Again</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -40,16 +37,5 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginBottom: 24,
-  },
-  refreshButton: {
-    backgroundColor: '#6366f1',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  refreshButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
