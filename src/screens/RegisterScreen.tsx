@@ -17,7 +17,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
 import Icon2 from "react-native-vector-icons/FontAwesome";
-import { useAuth } from "@/src/stores/auth-store"; 
+import { useAuth } from "../stores/auth-store"; 
 
 // Define the root stack navigation
 // Note: The screen name here must match the one in AppNavigator.tsx

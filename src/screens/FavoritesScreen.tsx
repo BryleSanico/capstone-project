@@ -6,22 +6,23 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  SafeAreaView,
 } from "react-native";
 import {
   useNavigation,
   CompositeNavigationProp,
 } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "@/src/navigation/AppNavigator";
+import { RootStackParamList } from "../navigation/AppNavigator";
 import Icon from "react-native-vector-icons/Ionicons";
-import { useTickets } from "@/src/stores/tickets-store";
-import { useEvents } from "@/src/stores/event-store";
-import { Event } from "@/src/types/event";
+import { useEvents } from "../stores/event-store";
+import { Event } from "../types/event";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
-import { TabParamList } from "@/src/navigation/TabNavigator";
-import EventCard from "@/src/components/EventCard";
+import { TabParamList } from "../navigation/TabNavigator";
+import EventCard from "../components/EventCard";
 import { useIsFocused } from "@react-navigation/native";
 import { useFavorites } from "../stores/favorites-store";
+import { Loader } from "../components/loaders/loader";
 
 // Define the navigation tab
 // Note: The screen name here must match the one in TabNavigator.tsx
@@ -63,11 +64,12 @@ export default function FavoritesScreen() {
     });
   };
 
+
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color="#6366f1" />
-      </View>
+      <SafeAreaView style={[styles.container, styles.loadingContainer]}>
+        <Loader size={120} />
+      </SafeAreaView>
     );
   }
 
@@ -166,5 +168,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#fff",
+  },
+    loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

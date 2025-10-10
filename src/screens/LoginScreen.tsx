@@ -16,7 +16,8 @@ import { useNavigation } from "@react-navigation/native";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useAuth } from '@/src/stores/auth-store';
+import { useAuth } from '../stores/auth-store';
+import { Loader } from "../components/loaders/loader";
 
 // Define the root stack navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -29,7 +30,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [isLoading, setLoading] = useState<boolean>(false);
 
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { signInWithPassword } = useAuth();
@@ -59,6 +60,10 @@ export default function LoginScreen() {
       navigation.goBack();
     }
   };
+
+  if(isLoading) {
+    return <Loader/>;
+  }
 
   return (
     <View style={styles.container}>
@@ -97,7 +102,7 @@ export default function LoginScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
-                editable={!loading}
+                editable={!isLoading}
               />
             </View>
 
@@ -114,7 +119,7 @@ export default function LoginScreen() {
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 autoComplete="password"
-                editable={!loading}
+                editable={!isLoading}
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
@@ -135,7 +140,7 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={styles.loginButton}
               onPress={handleLogin}
-              disabled={loading}
+              disabled={isLoading}
             >
               <LinearGradient
                 colors={["#6366f1", "#8b5cf6"]}
@@ -143,11 +148,9 @@ export default function LoginScreen() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
+             
                   <Text style={styles.loginButtonText}>Sign In</Text>
-                )}
+                
               </LinearGradient>
             </TouchableOpacity>
 

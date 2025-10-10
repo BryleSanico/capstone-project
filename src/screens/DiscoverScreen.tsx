@@ -18,15 +18,18 @@ import {
 } from "@react-navigation/native";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import EventCard from "@/src/components/EventCard";
-import SearchBar from "@/src/components/SearchBar";
-import CategoryFilter from "@/src/components/CategoryFilter";
-import { Event } from "@/src/types/event";
-import { RootStackParamList } from "@/src/navigation/AppNavigator";
-import { TabParamList } from "@/src/navigation/TabNavigator";
-import { useEvents } from "@/src/stores/event-store";
-import { useFavorites } from "@/src/stores/favorites-store";
+import EventCard from "../components/EventCard";
+import SearchBar from "../components/SearchBar";
+import CategoryFilter from "../components/CategoryFilter";
+import { Event } from "../types/event";
 import { OfflineState } from "../components/Errors/offlineState";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { LoaderSearch } from "../components/loaders/loaderSearch";
+import { useNetworkStatus } from "../stores/network-store";
+import { RootStackParamList } from "../navigation/AppNavigator";
+import { useFavorites } from "../stores/favorites-store";
+import { useEvents } from "../stores/event-store";
+import { TabParamList } from "../navigation/TabNavigator";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -53,7 +56,10 @@ export default function DiscoverScreen() {
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
-
+ 
+  // Subscribe to reactive network state
+  const isConnected = useNetworkStatus((state) => state.isConnected);
+  
   useLayoutEffect(() => {
     navigation.setOptions({
       title: "Discover Events",
@@ -94,6 +100,7 @@ export default function DiscoverScreen() {
     });
   };
 
+  
   const handleLoadMore = () => {
     if (!isPaginating && hasMore) {
       fetchMoreEvents({ query: debouncedQuery, category: selectedCategory });
@@ -106,23 +113,47 @@ export default function DiscoverScreen() {
 
   const renderFooter = () => {
     if (!isPaginating) return null;
-    // return <ActivityIndicator style={{ marginVertical: 20 }} color="#6366f1" />;
+    return <ActivityIndicator style={{ marginVertical: 20 }} color="#6366f1" />;
+  };
+  
+
+  const renderContent = () => {
+    if (error && !isLoading) {
+    return <OfflineState message={error} onRefresh={handleRefresh} />;
+    }
+    
+    if (!isConnected && events.length === 0) {
+      return <OfflineState message="You are offline. Please check your network connection." onRefresh={handleRefresh} />;
+    }
+    
+    if (isLoading && events.length === 0) {
     return (
-      <ActivityIndicator style={{ marginVertical: 20 }} color="#ee3f09ff" />
+      <SafeAreaView style={[styles.container, styles.loadingContainer]}>
+        <LoaderSearch size={120} />
+      </SafeAreaView>
+    );
+    }
+        return (
+      <FlatList
+        data={events}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => <EventCard event={item} onPress={() => handleEventPress(item)} />}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={renderFooter}
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} tintColor="#6366f1" />}
+        ListEmptyComponent={!isLoading && !error ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No events found</Text>
+            <Text style={styles.emptySubtext}>Try adjusting your search or filters</Text>
+          </View>
+        ) : null}
+      />
     );
   };
 
-  if (isLoading && events.length === 0) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#6366f1" />
-      </View>
-    );
-  }
-
-    if (error && !isLoading) {
-    return <OfflineState message={error} onRefresh={handleRefresh} />;
-  }
   return (
     <View style={styles.container}>
       <SearchBar
@@ -134,25 +165,7 @@ export default function DiscoverScreen() {
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
       />
-
-       <FlatList
-        data={events}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => <EventCard event={item} onPress={() => handleEventPress(item)} />}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={renderFooter}
-        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} tintColor="#6366f1" />}
-        // This now only shows if there are no errors and the list is empty.
-        ListEmptyComponent={!isLoading && !error ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No events found</Text>
-            <Text style={styles.emptySubtext}>Try adjusting your search or filters</Text>
-          </View>
-        ) : null}
-      />
+      {renderContent()}
     </View>
   );
 }
@@ -189,6 +202,11 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 14,
     color: '#999',
+  },
+    loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

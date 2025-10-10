@@ -15,6 +15,7 @@
     "android:device": "expo run:android --device",
     "ios": "expo run:ios",
     "ios:device": "expo run:ios --device",
+    "run:ios-offline": "bash scripts/run-ios-offline.sh",
     "build:dev": "eas build --profile development",
     "build:preview": "eas build --profile preview",
     "build:production": "eas build --profile production",
@@ -47,6 +48,7 @@
     "@ungap/structured-clone": "^1.3.0",
     "expo": "^53.0.4",
     "expo-linking": "~7.1.4",
+    "lottie-react-native": "^7.3.4",
     "nativewind": "^4.1.23",
     "react": "19.0.0",
     "react-dom": "19.0.0",
@@ -67,6 +69,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@react-native-community/cli": "^20.0.2",
     "@types/react": "~19.0.10",
     "@types/react-native-vector-icons": "^6.4.18",
     "eslint": "^9.31.0",
