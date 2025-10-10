@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
-import { Ticket } from '@/types/event';
+import { Ticket } from '@/src/types/ticket';
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -159,6 +159,6 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#e1e2e3ff',
   },
 });

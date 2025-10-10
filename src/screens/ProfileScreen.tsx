@@ -1,5 +1,5 @@
 // src/screens/ProfileScreen.tsx
-import React, { useLayoutEffect } from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 import {
   View,
   Text,
@@ -7,21 +7,35 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import Icon from "react-native-vector-icons/Ionicons";
+import Icon from 'react-native-vector-icons/Ionicons';
 import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
 import MaterialIcon from "react-native-vector-icons/MaterialCommunityIcons";
 import { getIconComponent } from "../../utils/iconLoader";
-import { MenuItem } from "../../types/menu";
-import { useTickets } from "@/hooks/tickets-store";
-import { useNavigation } from '@react-navigation/native';
+import { MenuItem } from "../types/menu";
+import { useTickets } from '../stores/tickets-store'; 
+import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { TabParamList } from '../navigation/TabNavigator';
+import { RootStackParamList } from '../navigation/AppNavigator';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useAuth } from '../stores/auth-store';
+import { useFavorites } from '../stores/favorites-store';
+
+// Define the types for route and navigation
+// Note: The screen name here must match the one in AppNavigator.tsx
+type ProfileScreenNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'Profile'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 export default function ProfileScreen() {
-  const navigation = useNavigation();
-  const { tickets, favorites } = useTickets();
-  
+  const navigation = useNavigation<ProfileScreenNavigationProp>();
+  const { tickets } = useTickets();
+  const { favorites } = useFavorites();
+  const { user, signOut } = useAuth();
+
   useLayoutEffect(() => {
     navigation.setOptions({
       title: 'Profile',
@@ -32,14 +46,19 @@ export default function ProfileScreen() {
 
  
   const handleLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
+    Alert.alert("Logout", "Are you sure you want to log out?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Logout",
         style: "destructive",
-        onPress: () => console.log("Logout"),
+        onPress: () => {signOut()}, 
       },
     ]);
+  };
+
+
+  const handleLogin = () => {
+    navigation.navigate('Login');
   };
 
   const menuItems: MenuItem[] = [
@@ -53,7 +72,7 @@ export default function ProfileScreen() {
       icon: { name: "heart-o", library: "FontAwesome" },
       title: "Favorite Events",
       subtitle: `${favorites.length} events saved`,
-      onPress: () => console.log("Favorites"),
+      onPress: () => navigation.navigate('My Favorites'),
     },
     {
       icon: { name: "settings-outline", library: "Ionicons" },
@@ -89,8 +108,8 @@ export default function ProfileScreen() {
           <View style={styles.avatarContainer}>
             <FontAwesomeIcon name="user" size={40} color="#fff" />
           </View>
-          <Text style={styles.userName}>John Doe</Text>
-          <Text style={styles.userEmail}>john.doe@example.com</Text>
+          <Text style={styles.userName}>{user?.user_metadata.full_name || "Guest"}</Text>
+          <Text style={styles.userEmail}>{user?.user_metadata.email || "guest@example.com"}</Text>
         </LinearGradient>
 
         <View style={styles.statsContainer}>
@@ -132,10 +151,17 @@ export default function ProfileScreen() {
           })}
         </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <MaterialIcon name="logout" size={20} color="#ff4757" />
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
+        {/* Conditionally render Login or Logout button */}
+        {user ? (
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <MaterialIcon name="logout" size={20} color="#ff4757" />
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+            <Text style={styles.loginButtonText}>Login</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </View>
   );
@@ -272,5 +298,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#ff4757",
+  },
+    loginButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#6366f1",
+    marginHorizontal: 16,
+    marginBottom: 32,
+    padding: 16,
+    borderRadius: 12,
+    gap: 8,
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  loginButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
 });

@@ -1,24 +1,29 @@
 // src/navigation/AppNavigator.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer, NavigatorScreenParams } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { TabParamList } from './TabNavigator'; 
 import TabNavigator from './TabNavigator';
 import EventDetailsScreen from '../screens/EventDetailsScreen';
 import TicketDetailsScreen from '../screens/TicketDetailsScreen';
-// import ModalScreen from '../screens/ModalScreen'; // If you create this
-// import NotFoundScreen from '../screens/NotFoundScreen'; // For handling not found
+import LoginScreen from '../screens/LoginScreen';
+import RegisterScreen from '../screens/RegisterScreen';
+
+import { useNetworkReconnector } from '../hooks/useNetworkReconnector';
 
 // This is the heart of your type-safe navigation
 export type RootStackParamList = {
   Main: NavigatorScreenParams<TabParamList>;
-  EventDetails: { id: string; initialIsFavorite: boolean};
-  TicketDetails: { id: string };
+  EventDetails: { id: number; initialIsFavorite: boolean};
+  TicketDetails: { id: number };
+  Login: undefined;
+  Register: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
+ useNetworkReconnector();
   return (
 
       <Stack.Navigator screenOptions={{ headerBackTitle: "Back" }}>
@@ -35,9 +40,14 @@ export default function AppNavigator() {
           name="TicketDetails" 
           component={TicketDetailsScreen} 
         />
-        {/*
-        <Stack.Screen name="Modal" component={ModalScreen} options={{ presentation: "modal" }} />
-        */}
+        <Stack.Screen 
+          name="Login" 
+          component={LoginScreen} 
+        />
+         <Stack.Screen 
+          name="Register" 
+          component={RegisterScreen} 
+        />
       </Stack.Navigator>
 
   );

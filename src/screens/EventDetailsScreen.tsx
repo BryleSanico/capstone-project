@@ -1,5 +1,4 @@
-// src/screens/EventDetailsScreen.tsx
-import React, { useState, useLayoutEffect, useEffect } from 'react';
+import React, { useState, useLayoutEffect, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,62 +9,67 @@ import {
   Alert,
   Share,
   Platform,
+  ActivityIndicator,
 } from "react-native";
-import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import LinearGradient from 'react-native-linear-gradient';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { SafeAreaView } from "react-native-safe-area-context";
+import LinearGradient from "react-native-linear-gradient";
+import Icon from "react-native-vector-icons/Ionicons";
 import HapticFeedback from "react-native-haptic-feedback";
-import { MOCK_EVENTS } from '@/src/constants/events';
-import { useTickets } from '@/src/hooks/tickets-store';
-import { Ticket } from '@/src/types/event';
-import { RootStackParamList } from '@/src/navigation/AppNavigator';
+import { useFavorites } from "../stores/favorites-store";
+import { useAuth } from "../stores/auth-store";
+import { useEvents } from "../stores/event-store";
+import { Ticket } from "../types/ticket";
+import { RootStackParamList } from "../navigation/AppNavigator";
+import { useTickets } from "../stores/tickets-store";
 
 // Define the types for route and navigation
-type EventDetailsScreenRouteProp = RouteProp<RootStackParamList, 'EventDetails'>;
-type EventDetailsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'EventDetails'>;
+// Note: The screen name here must match the one in AppNavigator.tsx
+type EventDetailsScreenRouteProp = RouteProp<
+  RootStackParamList,
+  "EventDetails"
+>;
+type EventDetailsScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "EventDetails"
+>;
 
 export default function EventDetailsScreen() {
   const route = useRoute<EventDetailsScreenRouteProp>();
   const navigation = useNavigation<EventDetailsScreenNavigationProp>();
-  
-  //  Get the ID and the initial favorite status from the params
-  const { id, initialIsFavorite } = route.params; 
-  
+  const { id, initialIsFavorite } = route.params;
+  const [isBuying, setIsBuying] = useState(false);
   const [ticketQuantity, setTicketQuantity] = useState(1);
 
-  console.log(`[Details Screen] Received param 'initialIsFavorite':`, initialIsFavorite); 
-  const { favorites, addTicket, toggleFavorite } = useTickets();
-  console.log('[Details Screen] Reading live favorites from store:', favorites); 
-  
-  // Get current favorite status from the global store
-  const isFavorite = favorites.includes(id);
+  const { session } = useAuth();
+  const { currentEvent: event, isLoading, fetchEventById } = useEvents(); // Get event data and fetching logic from the events store
+  const { addTicket } = useTickets();
+  const {toggleFavorite, favorites } = useFavorites();
+  // Fetch event details using the centralized store function
+  useEffect(() => {
+    fetchEventById(id);
+  }, [id, fetchEventById]);
 
-  // Local state for the header icon, initialized with the param to prevent the flicker
+  const isFavorite = favorites.includes(id);
   const [headerFavorite, setHeaderFavorite] = useState(initialIsFavorite);
 
-  // Syncs local header state with the current global state
   useEffect(() => {
     setHeaderFavorite(isFavorite);
   }, [isFavorite]);
-
-  const event = MOCK_EVENTS.find((e) => e.id === id);
 
   useLayoutEffect(() => {
     if (!event) return;
 
     const handleFavoritePress = () => {
-        if (Platform.OS !== "web") {
-    const options = {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false
-    };
-    
-    HapticFeedback.trigger("impactLight", options);
-  }
-      // When pressed, toggle the global state. The useEffect above will handle the UI update.
-      toggleFavorite(event.id);
+      if (Platform.OS !== "web") {
+        const options = {
+          enableVibrateFallback: true,
+          ignoreAndroidSystemSettings: false,
+        };
+        HapticFeedback.trigger("impactLight", options);
+      }
+      toggleFavorite(event);
     };
 
     navigation.setOptions({
@@ -75,36 +79,85 @@ export default function EventDetailsScreen() {
       headerRight: () => (
         <View style={styles.headerButtons}>
           <TouchableOpacity
-                  style={styles.headerButton}
-                  onPress={handleSharePress}
-                >
-                  <Icon name="share-outline" size={20} color="#fff" />
-                </TouchableOpacity>
+            style={styles.headerButton}
+            onPress={handleSharePress}
+          >
+            <Icon name="share-outline" size={20} color="#fff" />
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerButton}
             onPress={handleFavoritePress}
           >
             <Icon
-              name={headerFavorite ? "heart" : "heart-outline"} // Use local state for the icon
+              name={headerFavorite ? "heart" : "heart-outline"}
               size={20}
-              color={headerFavorite ? "#ff4757" : "#fff"}   // Use local state for the color
+              color={headerFavorite ? "#ff4757" : "#fff"}
             />
           </TouchableOpacity>
         </View>
       ),
     });
-    // The effect now depends on the local state and the event
   }, [navigation, event, headerFavorite, toggleFavorite]);
 
-    if (!event) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Event not found</Text>
-        </View>
-      </SafeAreaView>
+  const handleSharePress = async () => {
+    if (!event) return;
+    try {
+      await Share.share({
+        message: `Check out this event: ${event.title} on ${formatDate(
+          event.startTime
+        )} at ${event.location}`,
+      });
+    } catch (error) {
+      console.error("Error sharing:", error);
+    }
+  };
+
+  const handleBuyTickets = async () => {
+    if (!event) return;
+    // Prevent guests from buying tickets and prompt them to log in
+    if (!session) {
+      Alert.alert(
+        "Login Required",
+        "Please log in or create an account to purchase tickets.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Login", onPress: () => navigation.navigate("Login") },
+        ]
+      );
+      return;
+    }
+    setIsBuying(true);
+
+    const date = new Date(event.startTime);
+    const ticketData: Ticket = {
+      id: Date.now(),
+      eventId: event.id,
+      eventTitle: event.title,
+      eventDate: date.toDateString(),
+      eventTime: date.toTimeString(),
+      eventLocation: event.location,
+      quantity: ticketQuantity,
+      totalPrice: event.price * ticketQuantity,
+      purchaseDate: new Date().toISOString(),
+      qrCode: `EVENT_${event.id}_USER_${session.user.id}`, // unique QR
+    };
+
+    const success = await addTicket(ticketData);
+    setIsBuying(false);
+
+    Alert.alert(
+      "Tickets Purchased!",
+      "You've successfully purchased tickets.",
+      [
+        {
+          text: "View Tickets",
+          onPress: () => navigation.navigate("Main", { screen: "My Tickets" }),
+        },
+        { text: "OK", style: "default" },
+      ]
     );
-  }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -115,51 +168,37 @@ export default function EventDetailsScreen() {
     });
   };
 
-  const handleSharePress = async () => {
-    try {
-      await Share.share({
-        message: `Check out this event: ${event.title} on ${formatDate(
-          event.date
-        )} at ${event.location}`,
-        url: `https://events.app/event/${event.id}`,
-      });
-    } catch (error) {
-      console.error("Error sharing:", error);
-    }
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
   };
 
-  const handleBuyTickets = () => {
-    const ticket: Ticket = {
-      id: Date.now().toString(),
-      eventId: event.id,
-      eventTitle: event.title,
-      eventDate: event.date,
-      eventTime: event.time,
-      eventLocation: event.location,
-      quantity: ticketQuantity,
-      totalPrice: event.price * ticketQuantity,
-      purchaseDate: new Date().toISOString(),
-      qrCode: `EVENT_${event.id}_TICKET_${Date.now()}`,
-    };
-    
-    addTicket(ticket);
-
-    Alert.alert(
-      "Tickets Purchased!",
-      "You've successfully purchased tickets.",
-      [
-        { text: "View Tickets", onPress: () => navigation.navigate('Main', { screen: 'My Tickets' }) }, // Navigate to a specific tab
-        { text: "OK", style: "default" },
-      ]
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#6366f1" />
+      </SafeAreaView>
     );
-  };
- 
+  }
+  
+
+  if (!event) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Event not found</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.imageContainer}>
           <Image source={{ uri: event.imageUrl }} style={styles.image} />
           <LinearGradient
@@ -173,15 +212,22 @@ export default function EventDetailsScreen() {
 
         <View style={styles.content}>
           <Text style={styles.title}>{event.title}</Text>
-          <Text style={styles.organizer}>Organized by {event.organizer}</Text>
+          <Text style={styles.organizer}>
+            Organized by {event.organizer?.fullName || "Unknown User"}
+          </Text>
 
+          {/* Event information section */}
           <View style={styles.infoSection}>
             <View style={styles.infoRow}>
               <Icon name="calendar-outline" size={20} color="#6366f1" />
               <View style={styles.infoContent}>
                 <Text style={styles.infoTitle}>Date & Time</Text>
-                <Text style={styles.infoText}>{formatDate(event.date)}</Text>
-                <Text style={styles.infoSubtext}>{event.time}</Text>
+                <Text style={styles.infoText}>
+                  {formatDate(event.startTime)}
+                </Text>
+                <Text style={styles.infoSubtext}>
+                  {formatTime(event.startTime)}
+                </Text>
               </View>
             </View>
 
@@ -224,6 +270,7 @@ export default function EventDetailsScreen() {
         </View>
       </ScrollView>
 
+      {/* Ticket Quantity Selector */}
       <View style={styles.bottomSection}>
         <View style={styles.ticketSelector}>
           <Text style={styles.ticketLabel}>Tickets</Text>
@@ -244,6 +291,7 @@ export default function EventDetailsScreen() {
           </View>
         </View>
 
+        {/* Purchase section */}
         <View style={styles.purchaseSection}>
           <View style={styles.priceInfo}>
             <Text style={styles.totalLabel}>Total</Text>
@@ -251,9 +299,19 @@ export default function EventDetailsScreen() {
               ${(event.price * ticketQuantity).toFixed(2)}
             </Text>
           </View>
-          <TouchableOpacity style={styles.buyButton} onPress={handleBuyTickets}>
-            <Icon name="ticket-outline" size={20} color="#fff" />
-            <Text style={styles.buyButtonText}>Buy Tickets</Text>
+          <TouchableOpacity
+            style={styles.buyButton}
+            onPress={handleBuyTickets}
+            disabled={isBuying}
+          >
+            {isBuying ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <Icon name="ticket-outline" size={20} color="#fff" />
+                <Text style={styles.buyButtonText}>Buy Tickets</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -266,8 +324,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-  scrollView: {
+  loadingContainer: {
     flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
   },
   imageContainer: {
     position: "relative",
@@ -389,7 +450,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopWidth: 1,
     borderTopColor: "#f0f0f0",
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 32,
   },
   ticketSelector: {
