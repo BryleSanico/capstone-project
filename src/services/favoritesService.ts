@@ -1,4 +1,4 @@
-import { supabase } from '@/src/lib/supabase';
+import { supabase } from '../lib/supabase';
 
 export const favoritesService = {
   // Fetches the numeric IDs of the user's favorite events

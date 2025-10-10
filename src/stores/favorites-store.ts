@@ -4,7 +4,7 @@ import { favoritesService } from "../services/favoritesService";
 import { Alert } from "react-native";
 import { getCurrentSession } from "../utils/sessionHelper";
 import { useNetworkStatus } from "./network-store";
-import { Event } from "@/src/types/event";
+import { Event } from "../types/event";
 
 // Use two distinct keys to separate guest and logged-in user data
 const GUEST_FAVORITES_KEY = "guest_favorite_events";
@@ -104,7 +104,7 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
     }
   },
 
-  toggleFavorite: async (event: Event) => { // Accept the full Event object
+  toggleFavorite: async (event: Event) => { 
     const eventId = event.id; 
     const session = await getCurrentSession();
     const userId = session?.user?.id;

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Ticket } from "@/src/types/ticket";
+import { Ticket } from "../types/ticket";
 import storageService from "../services/storageService";
 import ticketService from "../services/ticketService";
 import { getCurrentSession } from "../utils/sessionHelper";

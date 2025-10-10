@@ -3,17 +3,18 @@ import React, { useEffect, useLayoutEffect } from "react";
 import { View, Text, StyleSheet, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Ionicons";
-import TicketCard from "@/src/components/TicketCard";
-import { useTickets } from "@/src/stores/tickets-store";
-import { Ticket } from "@/src/types/ticket";
+import TicketCard from "../components/TicketCard";
+import { useTickets } from "../stores/tickets-store";
+import { Ticket } from "../types/ticket";
 import {
   useNavigation,
   CompositeNavigationProp,
 } from "@react-navigation/native";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "@/src/navigation/AppNavigator";
-import { TabParamList } from "@/src/navigation/TabNavigator";
+import { RootStackParamList } from "../navigation/AppNavigator";
+import { TabParamList } from "../navigation/TabNavigator";
+import { Loader } from "../components/loaders/loader";
 
 // Define the navigation tab
 // Note: The screen name here must match the one in TabNavigator.tsx
@@ -45,10 +46,8 @@ export default function TicketsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading tickets...</Text>
-        </View>
+      <SafeAreaView style={[styles.container, styles.loadingContainer]}>
+        <Loader size={150} />
       </SafeAreaView>
     );
   }

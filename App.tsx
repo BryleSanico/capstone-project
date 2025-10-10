@@ -7,6 +7,8 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AppNavigator from "./src/navigation/AppNavigator";
 import SplashScreen from "react-native-splash-screen";
 
+
+
 const queryClient = new QueryClient();
 
 export default function App() {

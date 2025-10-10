@@ -9,18 +9,16 @@ import {
   Platform,
   ScrollView,
   Alert,
-  ActivityIndicator,
 } from "react-native";
-import { RootStackParamList } from "@/src/navigation/AppNavigator";
+import { RootStackParamList } from "../navigation/AppNavigator";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
 import Icon2 from "react-native-vector-icons/FontAwesome";
-import { useAuth } from "../stores/auth-store"; 
+import { useAuth } from "../stores/auth-store";
+import { Loader } from "../components/loaders/loader";
 
-// Define the root stack navigation
-// Note: The screen name here must match the one in AppNavigator.tsx
 type RegisterScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "Register"
@@ -33,18 +31,18 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const navigation = useNavigation<RegisterScreenNavigationProp>();
   const { signUp } = useAuth();
 
-    useLayoutEffect(() => {
-      navigation.setOptions({
-        title: '',
-        headerTransparent: true,
-        headerTintColor: '#fff',
-      });
-    }, [navigation]);
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: '',
+      headerTransparent: true,
+      headerTintColor: '#fff',
+    });
+  }, [navigation]);
   
   const handleRegister = async () => {
     if (!name || !email || !password || !confirmPassword) {
@@ -56,18 +54,20 @@ export default function RegisterScreen() {
       return;
     }
 
-    setLoading(true);
-    const { error } = await signUp(name, email, password);
-
-    setLoading(false);
-    if (error) {
-      Alert.alert("Registration Error", error.message);
-    } else {
-      Alert.alert(
-        "Success!",
-        "Please check your email for a confirmation link to complete registration.",
-        [{ text: "OK", onPress: () => navigation.goBack() }]
-      );
+    setIsLoading(true);
+    try {
+      const { error } = await signUp(name, email, password);
+      if (error) {
+        Alert.alert("Registration Error", error.message);
+      } else {
+        Alert.alert(
+          "Success!",
+          "Please check your email for a confirmation link to complete registration.",
+          [{ text: "OK", onPress: () => navigation.goBack() }]
+        );
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -107,7 +107,7 @@ export default function RegisterScreen() {
                 onChangeText={setName}
                 autoCapitalize="words"
                 autoComplete="name"
-                editable={!loading}
+                editable={!isLoading}
               />
             </View>
 
@@ -124,7 +124,7 @@ export default function RegisterScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
-                editable={!loading}
+                editable={!isLoading}
               />
             </View>
 
@@ -141,7 +141,7 @@ export default function RegisterScreen() {
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 autoComplete="password"
-                editable={!loading}
+                editable={!isLoading}
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
@@ -168,7 +168,7 @@ export default function RegisterScreen() {
                 secureTextEntry={!showConfirmPassword}
                 autoCapitalize="none"
                 autoComplete="password"
-                editable={!loading}
+                editable={!isLoading}
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
@@ -182,24 +182,26 @@ export default function RegisterScreen() {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              style={styles.registerButton}
-              onPress={handleRegister}
-              disabled={loading}
-            >
-              <LinearGradient
-                colors={["#6366f1", "#8b5cf6"]}
-                style={styles.registerButtonGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.registerButtonText}>Create Account</Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
+            <View style={styles.buttonContainer}>
+              {isLoading ? (
+                <Loader size={120} />
+              ) : (
+                <TouchableOpacity
+                  style={styles.registerButton}
+                  onPress={handleRegister}
+                  disabled={isLoading}
+                >
+                  <LinearGradient
+                    colors={["#6366f1", "#8b5cf6"]}
+                    style={styles.registerButtonGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Text style={styles.registerButtonText}>Create Account</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              )}
+            </View>
 
             <View style={styles.loginContainer}>
               <Text style={styles.loginText}>Already have an account? </Text>
@@ -271,10 +273,16 @@ const styles = StyleSheet.create({
   eyeIcon: {
     padding: 4,
   },
+  buttonContainer: {
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+  },
   registerButton: {
+    width: '100%',
     borderRadius: 12,
     overflow: "hidden",
-    marginTop: 8,
     shadowColor: "#6366f1",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -286,6 +294,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     height: 50,
     justifyContent: 'center',
+    width: '100%',
   },
   registerButtonText: {
     fontSize: 16,
@@ -308,3 +317,4 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
+

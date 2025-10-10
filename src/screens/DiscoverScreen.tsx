@@ -15,6 +15,7 @@ import {
 import {
   useNavigation,
   CompositeNavigationProp,
+  useIsFocused,
 } from "@react-navigation/native";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -30,6 +31,7 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 import { useFavorites } from "../stores/favorites-store";
 import { useEvents } from "../stores/event-store";
 import { TabParamList } from "../navigation/TabNavigator";
+import { Loader } from "../components/loaders/loader";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -54,6 +56,8 @@ export default function DiscoverScreen() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const isFocused = useIsFocused();
 
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
  
@@ -84,13 +88,18 @@ export default function DiscoverScreen() {
     fetchEvents({ query: debouncedQuery, category: selectedCategory });
   }, [debouncedQuery, selectedCategory, fetchEvents]);
 
+  // Effect for initial load and filter changes
   useEffect(() => {
-    handleFetch();
-  }, [debouncedQuery, selectedCategory]);
+    if (isFocused) {
+      handleFetch();
+    }
+  }, [debouncedQuery, selectedCategory, isFocused]);
 
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    if (isFocused) {
+      fetchCategories();
+    }
+  }, [fetchCategories, isFocused]);
 
   const handleEventPress = (event: Event) => {
     const isFavorite = favorites.includes(event.id);
@@ -107,13 +116,15 @@ export default function DiscoverScreen() {
     }
   };
 
-  const handleRefresh = () => {
-    handleFetch();
-  };
-
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await handleFetch();
+    setIsRefreshing(false);
+  }, [handleFetch]);
+  
   const renderFooter = () => {
     if (!isPaginating) return null;
-    return <ActivityIndicator style={{ marginVertical: 20 }} color="#6366f1" />;
+    return <Loader size={50} />;
   };
   
 
@@ -122,10 +133,9 @@ export default function DiscoverScreen() {
     return <OfflineState message={error} onRefresh={handleRefresh} />;
     }
     
-    if (!isConnected && events.length === 0) {
+    if (!isConnected && isFocused) {
       return <OfflineState message="You are offline. Please check your network connection." onRefresh={handleRefresh} />;
     }
-    
     if (isLoading && events.length === 0) {
     return (
       <SafeAreaView style={[styles.container, styles.loadingContainer]}>
@@ -143,7 +153,7 @@ export default function DiscoverScreen() {
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
         ListFooterComponent={renderFooter}
-        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} tintColor="#6366f1" />}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor="#6366f1" />}
         ListEmptyComponent={!isLoading && !error ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>No events found</Text>

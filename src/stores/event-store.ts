@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { Event } from '@/src/types/event';
-import { eventService } from '@/src/services/eventService';
-import { useNetworkStatus } from './network-store';
+import { Event } from '../types/event';
+import { eventService } from '../services/eventService';
+import { useNetworkStatus } from '../stores/network-store';
 
 type EventsState = {
   events: Event[];

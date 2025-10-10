@@ -13,14 +13,14 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
 import MaterialIcon from "react-native-vector-icons/MaterialCommunityIcons";
 import { getIconComponent } from "../../utils/iconLoader";
-import { MenuItem } from "@/src/types/menu";
-import { useTickets } from '@/src/stores/tickets-store'; 
+import { MenuItem } from "../types/menu";
+import { useTickets } from '../stores/tickets-store'; 
 import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { TabParamList } from '../navigation/TabNavigator';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useAuth } from '@/src/stores/auth-store';
+import { useAuth } from '../stores/auth-store';
 import { useFavorites } from '../stores/favorites-store';
 
 // Define the types for route and navigation

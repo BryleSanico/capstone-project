@@ -1,6 +1,6 @@
-import { supabase } from "@/src/lib/supabase";
-import { Ticket } from "@/src/types/ticket";
-import { SupabaseTicket } from "@/src/services/types/ticket";
+import { supabase } from "../lib/supabase";
+import { Ticket } from "../types/ticket";
+import { SupabaseTicket } from "../services/types/ticket";
 import { getCurrentSession } from "../utils/sessionHelper";
 
 

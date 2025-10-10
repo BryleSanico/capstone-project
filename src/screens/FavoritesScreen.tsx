@@ -68,7 +68,7 @@ export default function FavoritesScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, styles.loadingContainer]}>
-        <Loader size={120} />
+        <Loader size={150} />
       </SafeAreaView>
     );
   }

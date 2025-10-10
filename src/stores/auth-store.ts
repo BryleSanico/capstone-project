@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { supabase } from "@/src/lib/supabase"; 
+import { supabase } from "../lib/supabase"; 
 import { AuthError, Session, User } from '@supabase/supabase-js';
 import { useFavorites } from './favorites-store';
 import { useTickets } from './tickets-store';

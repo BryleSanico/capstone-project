@@ -1,9 +1,9 @@
 // src/hooks/useNetworkReconnector.ts
 import { useEffect } from "react";
-import { useNetworkStatus } from "@/src/stores/network-store";
-import { useEvents } from "@/src/stores/event-store";
-import { useFavorites } from "@/src/stores/favorites-store";
-import { useTickets } from "@/src/stores/tickets-store";
+import { useNetworkStatus } from "../stores/network-store";
+import { useTickets } from "../stores/tickets-store";
+import { useFavorites } from "../stores/favorites-store";
+import { useEvents } from "../stores/event-store";
 
 export function useNetworkReconnector() {
   const { isConnected, initialize } = useNetworkStatus();
@@ -23,7 +23,7 @@ export function useNetworkReconnector() {
   useEffect(() => {
     if (isConnected) {
       console.log("🟢 Network reconnected — refreshing data...");
-      // Fetch only if we’re connected again
+      // Fetch only if network connected again
       fetchEvents({ query: "", category: "All" });
       loadFavorites();
       loadTickets();

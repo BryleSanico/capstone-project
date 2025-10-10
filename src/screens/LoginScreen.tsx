@@ -9,7 +9,6 @@ import {
   Platform,
   ScrollView,
   Alert,
-  ActivityIndicator,
 } from "react-native";
 import { RootStackParamList } from "@/src/navigation/AppNavigator";
 import { useNavigation } from "@react-navigation/native";
@@ -19,8 +18,6 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from '../stores/auth-store';
 import { Loader } from "../components/loaders/loader";
 
-// Define the root stack navigation
-// Note: The screen name here must match the one in AppNavigator.tsx
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "Login"
@@ -30,7 +27,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [isLoading, setLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { signInWithPassword } = useAuth();
@@ -49,21 +46,18 @@ export default function LoginScreen() {
       return;
     }
 
-    setLoading(true);
-    const { error } = await signInWithPassword(email, password);
-    setLoading(false);
-
-    if (error) {
-      Alert.alert("Login Error", error.message);
-    } else {
-        // On successful login, go back to dismiss the modal
-      navigation.goBack();
+    setIsLoading(true);
+    try {
+      const { error } = await signInWithPassword(email, password);
+      if (error) {
+        Alert.alert("Login Error", error.message);
+      } else {
+        navigation.goBack();
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  if(isLoading) {
-    return <Loader/>;
-  }
 
   return (
     <View style={styles.container}>
@@ -137,22 +131,27 @@ export default function LoginScreen() {
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.loginButton}
-              onPress={handleLogin}
-              disabled={isLoading}
-            >
-              <LinearGradient
-                colors={["#6366f1", "#8b5cf6"]}
-                style={styles.loginButtonGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-             
-                  <Text style={styles.loginButtonText}>Sign In</Text>
-                
-              </LinearGradient>
-            </TouchableOpacity>
+            {/* Conditional rendering for the button/loader */}
+            <View style={styles.buttonContainer}>
+              {isLoading ? (
+                <Loader size={120} />
+              ) : (
+                <TouchableOpacity
+                  style={styles.loginButton}
+                  onPress={handleLogin}
+                  disabled={isLoading}
+                >
+                  <LinearGradient
+                    colors={["#6366f1", "#8b5cf6"]}
+                    style={styles.loginButtonGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Text style={styles.loginButtonText}>Sign In</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              )}
+            </View>
 
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
@@ -241,7 +240,13 @@ const styles = StyleSheet.create({
     color: "#6366f1",
     fontWeight: "600",
   },
+  buttonContainer: {
+    height: 50, 
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   loginButton: {
+    width: '100%', 
     borderRadius: 12,
     overflow: "hidden",
     shadowColor: "#6366f1",
@@ -255,6 +260,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     height: 50,
     justifyContent: "center",
+    width: '100%',
   },
   loginButtonText: {
     fontSize: 16,
@@ -292,3 +298,4 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
+

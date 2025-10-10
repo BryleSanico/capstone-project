@@ -1,5 +1,5 @@
-import { supabase } from '@/src/lib/supabase';
-import { Event } from '@/src/types/event';
+import { supabase } from '../lib/supabase';
+import { Event } from '../types/event';
 import storageService from './storageService';
 import { useNetworkStatus } from '../stores/network-store';
 
