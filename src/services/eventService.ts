@@ -2,28 +2,26 @@ import { supabase } from '../lib/supabase';
 import { Event } from '../types/event';
 import storageService from './storageService';
 import { useNetworkStatus } from '../stores/network-store';
+import { storageKeys } from '../utils/storageKeys';
 
-const EVENTS_PER_PAGE = 5;
-const EVENTS_CACHE_KEY = "events_cache";
-const { isConnected } = useNetworkStatus.getState();
-
-// Helper function to get the current event cache from storage
-const getEventsCache = async (): Promise<Record<number, Event>> => {
-  return await storageService.getItem<Record<number, Event>>(EVENTS_CACHE_KEY) || {};
+// Helper to get the detailed event cache.
+const getDetailCache = async (): Promise<Record<number, Event>> => {
+  return await storageService.getItem<Record<number, Event>>(storageKeys.getEventsDetailCacheKey()) || {};
 };
 
-// Helper function to save an event to the cache
-const cacheEvent = async (event: Event) => {
-  const cache = await getEventsCache();
-  cache[event.id] = event;
-  await storageService.setItem(EVENTS_CACHE_KEY, cache);
+// Helper to save an event (or multiple events) to the detailed cache.
+const cacheEventDetails = async (events: Event[]) => {
+  if (events.length === 0) return;
+  const cache = await getDetailCache();
+  events.forEach(event => {
+    cache[event.id] = event;
+  });
+  await storageService.setItem(storageKeys.getEventsDetailCacheKey(), cache);
 };
 
-// This mapping function is now centralized in the service
+// Centralized mapping function remains the same.
 const mapSupabaseToEvent = (item: any): Event => {
-  // Gracefully handle the nested organizer profile data
-  const organizerProfile = item.event_organizers?.[0]?.profiles || item.profiles;
-
+  const organizerProfile = item.organizer || item.event_organizers?.[0]?.profiles || item.profiles;
   return {
     id: item.id,
     title: item.title,
@@ -36,9 +34,9 @@ const mapSupabaseToEvent = (item: any): Event => {
     category: item.category,
     organizer: organizerProfile ? {
       id: organizerProfile.id,
-      fullName: organizerProfile.full_name,
-      email: organizerProfile.email || '', // Ensure email exists
-      avatar: organizerProfile.avatar_url,
+      fullName: organizerProfile.fullName || organizerProfile.full_name,
+      email: organizerProfile.email || '',
+      avatar: organizerProfile.avatar || organizerProfile.avatar_url,
     } : {
       id: '00000000-0000-0000-0000-000000000000',
       fullName: 'Community Event',
@@ -48,77 +46,97 @@ const mapSupabaseToEvent = (item: any): Event => {
     capacity: item.capacity,
     attendees: item.attendees,
     tags: item.tags || [],
+    updatedAt: item.updated_at,
   };
 };
 
 export const eventService = {
-  async fetchEvents(page: number, query: string, category: string): Promise<Event[]> {
-    const from = page * EVENTS_PER_PAGE;
-    const to = from + EVENTS_PER_PAGE - 1;
+  // Caching for DiscoverScreen list
+  getCachedEvents: async (): Promise<Event[]> => await storageService.getItem<Event[]>(storageKeys.getEventsCacheKey()) || [],
+  cacheEvents: (events: Event[]) => storageService.setItem(storageKeys.getEventsCacheKey(), events),
+  getLastSyncTimestamp: () => storageService.getItem<string>(storageKeys.getEventsSyncKey()),
+  setLastSyncTimestamp: (ts: string) => storageService.setItem(storageKeys.getEventsSyncKey(), ts),
 
-    let supabaseQuery = supabase.from('events').select('*, profiles:event_organizers(profiles(id, full_name, avatar_url))');
 
-    if (query) {
-      supabaseQuery = supabaseQuery.ilike('title', `%${query}%`);
-    }
-    if (category && category !== 'All') {
-      supabaseQuery = supabaseQuery.eq('category', category);
-    }
-
-    const { data, error } = await supabaseQuery
-      .order('start_time', { ascending: true })
-      .range(from, to);
+  async fetchEvents(page: number, limit: number, query: string, category: string, lastSyncTimestamp: string | null): Promise<{ events: Event[], totalCount: number }> {
+    const { data, error } = await supabase.rpc('get_paginated_events', {
+      p_page: page,
+      p_limit: limit,
+      p_query: query,
+      p_category: category,
+      p_last_updated: lastSyncTimestamp
+    });
 
     if (error) throw error;
     
-    return data.map(item => mapSupabaseToEvent({ ...item, profiles: item.profiles[0]?.profiles }));
+    const result = data[0] || { events: [], total_count: 0 };
+    const events = (result.events || []).map(mapSupabaseToEvent);
+    
+    // Proactively cache the full details of all fetched events.
+    await cacheEventDetails(events);
+    
+    return {
+      events: events,
+      totalCount: result.total_count
+    };
   },
 
-    async fetchEventById(id: number): Promise<Event | null> {
-
-
-    if (isConnected) {
-      const { data, error } = await supabase
-        .from('events')
-        .select(`*, profiles:event_organizers(profiles(id, full_name, avatar_url))`)
-        .eq('id', id)
-        .single();
-      
-      if (error) throw error;
-      if (!data) return null;
-
-      const mappedEvent = mapSupabaseToEvent({ ...data, profiles: data.profiles[0]?.profiles });
-      // We still cache when viewing details, as this is a strong user interest signal.
-      await cacheEvent(mappedEvent);
-      return mappedEvent;
-    } else {
-      console.log(`Offline mode: Fetching event ${id} from cache.`);
-      const cache = await getEventsCache();
-      return cache[id] || null;
+  async getLatestEventTimestamp(): Promise<string | null> {
+    const { data, error } = await supabase.rpc('get_latest_event_timestamp').single();
+    if (error && error.code !== 'PGRST116') throw error;
+    return data as string | null;
+  },
+  
+  async fetchEventById(id: number): Promise<Event | null> {
+    // Check the detailed cache first. This is now the primary source.
+    const detailCache = await getDetailCache();
+    if (detailCache[id]) {
+      return detailCache[id];
     }
-  },
 
-    async fetchFavoriteEvents(ids: number[]): Promise<Event[]> {
-    if (isConnected) {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*, profiles:event_organizers(profiles(id, full_name, avatar_url))')
-        .in('id', ids);
-
-      if (error) throw error;
-      const mappedData = data.map(item => mapSupabaseToEvent({ ...item, profiles: item.profiles[0]?.profiles }));
-      return mappedData;
-    } else {
-      console.log("Offline mode: Fetching favorite events from cache.");
-      const cache = await getEventsCache();
-      const cachedEvents = ids.map(id => cache[id]).filter(Boolean);
-      return cachedEvents as Event[];
+    //  If not in the cache and offline, do nothing.
+    if (!useNetworkStatus.getState().isConnected) {
+      return null;
     }
+
+    // If online and not in cache, fetch from the server.
+    const { data, error } = await supabase.rpc('get_events_by_ids', { event_ids: [id] });
+    if (error) throw error;
+    if (!data || data.length === 0) return null;
+
+    const event = mapSupabaseToEvent(data[0]);
+    // Save the newly fetched event to the detailed cache for future use.
+    await cacheEventDetails([event]);
+    return event;
   },
 
-  async fetchCategories(): Promise<string[]> {
-    // Only fetch categories if online
-    if (!isConnected) {
+  async fetchEventsByIds(ids: number[]): Promise<Event[]> {
+    if (ids.length === 0) return [];
+    const detailCache = await getDetailCache();
+    const cachedEvents = ids.map(id => detailCache[id]).filter(Boolean) as Event[];
+    const cachedIds = new Set(cachedEvents.map(e => e.id));
+    const idsToFetch = ids.filter(id => !cachedIds.has(id));
+
+    if (idsToFetch.length === 0) return cachedEvents;
+
+    if (useNetworkStatus.getState().isConnected) {
+        try {
+            const { data, error } = await supabase.rpc('get_events_by_ids', { event_ids: idsToFetch });
+            if (error) throw error;
+            const fetchedEvents = data.map(mapSupabaseToEvent);
+            // Also cache these details.
+            await cacheEventDetails(fetchedEvents);
+            return [...cachedEvents, ...fetchedEvents];
+        } catch (error) {
+            console.error("Failed to fetch events by IDs, returning cached only.", error);
+            return cachedEvents;
+        }
+    }
+    return cachedEvents;
+  },
+
+   async fetchCategories(): Promise<string[]> {
+    if (!useNetworkStatus.getState().isConnected) {
       return ['All', 'Music', 'Technology', 'Food & Drink', 'Arts & Culture'];
     }
     const { data, error } = await supabase.rpc('get_distinct_categories');

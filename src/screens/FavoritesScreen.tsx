@@ -5,23 +5,21 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator,
   SafeAreaView,
 } from "react-native";
 import {
   useNavigation,
   CompositeNavigationProp,
+  useIsFocused,
 } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import Icon from "react-native-vector-icons/Ionicons";
-import { useEvents } from "../stores/event-store";
 import { Event } from "../types/event";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { TabParamList } from "../navigation/TabNavigator";
 import EventCard from "../components/EventCard";
-import { useIsFocused } from "@react-navigation/native";
-import { useFavorites } from "../stores/favorites-store";
+import { useFavorites } from "../stores/favorites-store"; // Corrected import
 import { Loader } from "../components/loaders/loader";
 
 // Define the navigation tab
@@ -34,20 +32,16 @@ type FavoritesScreenNavigationProp = CompositeNavigationProp<
 export default function FavoritesScreen() {
   const navigation = useNavigation<FavoritesScreenNavigationProp>();
   const isFocused = useIsFocused();
-  const { favorites, loadFavorites } = useFavorites();
-  const { favoriteEvents, isLoading, error, fetchFavoriteEvents } = useEvents();
-
+  
+  // Data now comes directly from the favorites store
+  const { favoriteEvents, isLoading, loadFavorites } = useFavorites();
 
   useEffect(() => {
-    loadFavorites();
-  }, [loadFavorites]);
-
-  // Fetch favorite events when the screen is focused or the favorites list changes
-  useEffect(() => {
+    // When the screen is focused, reload the favorites
     if (isFocused) {
-      fetchFavoriteEvents(favorites);
+      loadFavorites();
     }
-  }, [isFocused, favorites, fetchFavoriteEvents]);
+  }, [isFocused]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -63,7 +57,6 @@ export default function FavoritesScreen() {
       initialIsFavorite: true,
     });
   };
-
 
   if (isLoading) {
     return (
@@ -97,7 +90,7 @@ export default function FavoritesScreen() {
         renderEmptyState()
       ) : (
         <FlatList
-          data={favoriteEvents}
+          data={favoriteEvents} // Use the new state property
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <EventCard event={item} onPress={() => handleEventPress(item)} />
@@ -115,7 +108,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f8f9fa",
   },
-  centerContent: {
+  loadingContainer: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -168,10 +162,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#fff",
-  },
-    loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
 });

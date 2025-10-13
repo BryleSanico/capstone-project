@@ -1,11 +1,9 @@
 import { supabase } from "../lib/supabase";
 import { Ticket } from "../types/ticket";
-import { SupabaseTicket } from "../services/types/ticket";
 import { getCurrentSession } from "../utils/sessionHelper";
 
-
-// Helper function to map ticket data
-const mapSupabaseToTicket = (item: SupabaseTicket): Ticket => ({
+// Helper function to map ticket data from RPC function
+const mapRpcToTicket = (item: any): Ticket => ({
   id: item.id,
   eventId: item.event_id,
   eventTitle: item.event_title,
@@ -19,29 +17,37 @@ const mapSupabaseToTicket = (item: SupabaseTicket): Ticket => ({
 });
 
 const ticketService = {
-  /**
-   * Fetches all tickets for the currently logged-in user.
-   */
-  async getUserTickets(): Promise<Ticket[]> {
+  // Fetches user tickets using the RPC function
+  async getUserTickets(lastSyncTimestamp: string | null): Promise<Ticket[]> {
     const session = await getCurrentSession();
     if (!session?.user) return [];
 
-    const { data, error } = await supabase
-      .from('tickets')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .order('purchase_date', { ascending: false });
+    const { data, error } = await supabase.rpc('get_user_tickets', {
+        last_sync_time: lastSyncTimestamp
+    });
 
     if (error) {
       console.error("Error fetching user tickets:", error.message);
       throw error;
     }
-    return data.map(mapSupabaseToTicket);
+    return data.map(mapRpcToTicket);
   },
 
-  /**
-   * Creates a new ticket in the database.
-   */
+  // Get the most recent ticket timestamp for sync purposes
+  async getLatestTicketTimestamp(): Promise<string | null> {
+    const { data, error } = await supabase.rpc('get_latest_ticket_timestamp').single();
+
+    if (error) {
+        // Ignore RLS policy if no rows are returned, means the table is empty.
+        if (error.code === 'PGRST116') {
+            return null;
+        }
+        console.error("Error fetching latest ticket timestamp:", error);
+        throw error;
+    }
+    return data as string | null;
+  },
+
   async createTicket(ticketData: Omit<Ticket, 'id' | 'purchaseDate'>): Promise<Ticket> {
     const session = await getCurrentSession();
     if (!session?.user) throw new Error("User must be logged in to purchase tickets.");
@@ -68,7 +74,7 @@ const ticketService = {
       throw error;
     }
 
-    return mapSupabaseToTicket(data);
+    return mapRpcToTicket(data);
   }
 };
 

@@ -46,10 +46,7 @@ const storageService = {
     }
   },
   
-  /**
-   * Clears all data from AsyncStorage.
-   * Useful for logging out a user.
-   */
+  // Clears all data from AsyncStorage.
   async clearAll(): Promise<void> {
     try {
         await AsyncStorage.clear();

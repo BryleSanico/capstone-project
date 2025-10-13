@@ -4,8 +4,8 @@ import storageService from "../services/storageService";
 import ticketService from "../services/ticketService";
 import { getCurrentSession } from "../utils/sessionHelper";
 import { useNetworkStatus } from "./network-store";
-
-const TICKETS_STORAGE_KEY = "user_tickets";
+import { Alert } from "react-native";
+import { storageKeys } from "../utils/storageKeys"; 
 
 type TicketsState = {
   tickets: Ticket[];
@@ -21,47 +21,72 @@ export const useTickets = create<TicketsState>()((set, get) => ({
   loadTickets: async () => {
     set({ isLoading: true });
     const session = await getCurrentSession();
-    const { isConnected } = useNetworkStatus.getState();
+    const userId = session?.user?.id;
 
-    if (session?.user && isConnected) {
-       // ONLINE & LOGGED IN: Fetch from DB, with local cache as fallback
-      try {
-        const userTickets = await ticketService.getUserTickets();
-        set({ tickets: userTickets, isLoading: false });
-        await storageService.setItem(TICKETS_STORAGE_KEY, userTickets);
-      } catch (err) {
-        console.error("Offline Fallback: Failed to load tickets from DB, using local cache.", err);
-        const localTickets = await storageService.getItem<Ticket[]>(TICKETS_STORAGE_KEY) || [];
-        set({ tickets: localTickets, isLoading: false });
-      }
-    } else {
-      // OFFLINE or GUEST: Load directly from local storage
-      const localTickets = await storageService.getItem<Ticket[]>(TICKETS_STORAGE_KEY) || [];
-      // Ensure guests see no tickets, as storage is cleared on logout
-      set({ tickets: session?.user ? localTickets : [], isLoading: false });
+    // If there's no logged-in user, clear the tickets and stop.
+    if (!userId) {
+        set({ tickets: [], isLoading: false });
+        return;
+    }
+
+    // Generate user-specific keys for the cache.
+    const ticketsCacheKey = storageKeys.getTicketsCacheKey(userId);
+    const lastSyncKey = storageKeys.getTicketsSyncKey(userId);
+    
+    // 1. Load from user-specific cache for instant UI
+    const cachedTickets = await storageService.getItem<Ticket[]>(ticketsCacheKey) || [];
+    set({ tickets: cachedTickets });
+
+    // 2. Sync with server if online
+    if (!useNetworkStatus.getState().isConnected) {
+        set({ isLoading: false });
+        return;
+    }
+
+    try {
+        const lastSync = await storageService.getItem<string>(lastSyncKey);
+        const newTickets = await ticketService.getUserTickets(lastSync);
+
+        if (newTickets.length > 0) {
+            const ticketMap = new Map(cachedTickets.map(t => [t.id, t]));
+            newTickets.forEach(ticket => ticketMap.set(ticket.id, ticket));
+            const mergedTickets = Array.from(ticketMap.values()).sort((a,b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
+
+            set({ tickets: mergedTickets });
+            await storageService.setItem(ticketsCacheKey, mergedTickets);
+        }
+
+        const latestTimestamp = await ticketService.getLatestTicketTimestamp();
+        if (latestTimestamp) {
+            await storageService.setItem(lastSyncKey, latestTimestamp);
+        }
+    } catch (error) {
+        console.error("Failed to sync tickets:", error);
+    } finally {
+        set({ isLoading: false });
     }
   },
 
   addTicket: async (ticketData) => {
     const session = await getCurrentSession();
-    if (!session?.user) {
-      alert('Please log in or create an account to purchase tickets.');
+    const userId = session?.user?.id;
+
+    if (!userId) {
+      Alert.alert('Please log in to purchase tickets.');
       return false;
     }
+
+    const ticketsCacheKey = storageKeys.getTicketsCacheKey(userId);
 
     try {
       const savedTicket = await ticketService.createTicket(ticketData);
       const updatedTickets = [savedTicket, ...get().tickets];
       set({ tickets: updatedTickets });
-      await storageService.setItem(TICKETS_STORAGE_KEY, updatedTickets);
+      await storageService.setItem(ticketsCacheKey, updatedTickets);
       return true;
     } catch (err: any) {
-      if (err.code === '23505') { // Unique constraint violation
-        alert('You have already purchased tickets for this event.');
-      } else {
-        console.error("Error purchasing ticket:", err);
-        alert('There was an error purchasing your tickets. Please try again.');
-      }
+      console.error("Error purchasing ticket:", err);
+      Alert.alert('Ticket Purchase Error', 'There was an error purchasing your tickets.');
       return false;
     }
   },

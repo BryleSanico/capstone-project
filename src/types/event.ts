@@ -1,4 +1,4 @@
-import { User } from "@/src/types/user";
+import { User } from "../types/user";
 
 export interface Event {
   id: number;
@@ -14,4 +14,5 @@ export interface Event {
   capacity: number;
   attendees: number;
   tags: string[];
+  updatedAt?: string;
 }

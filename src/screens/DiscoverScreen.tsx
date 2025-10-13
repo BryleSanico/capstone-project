@@ -3,15 +3,9 @@ import React, {
   useLayoutEffect,
   useEffect,
   useCallback,
+  useRef,
 } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Text,
-  ActivityIndicator,
-  RefreshControl,
-} from "react-native";
+import { View, StyleSheet, FlatList, Text, RefreshControl } from "react-native";
 import {
   useNavigation,
   CompositeNavigationProp,
@@ -43,27 +37,27 @@ type DiscoverScreenNavigationProp = CompositeNavigationProp<
 export default function DiscoverScreen() {
   const navigation = useNavigation<DiscoverScreenNavigationProp>();
   const {
-    events,
+    cachedEvents,
     isLoading,
-    isPaginating,
+    isSyncing,
     hasMore,
     error,
-    fetchEvents,
-    fetchMoreEvents,
+    loadInitialEvents,
+    loadMoreEvents,
+    syncEvents,
     fetchCategories,
   } = useEvents();
-  const { favorites } = useFavorites();
 
+  const { favorites } = useFavorites();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const isFocused = useIsFocused();
-
-  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
- 
-  // Subscribe to reactive network state
   const isConnected = useNetworkStatus((state) => state.isConnected);
-  
+  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
+
+  // Ref to prevent syncing on the very first mount
+  const isInitialMount = useRef(true);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       title: "Discover Events",
@@ -73,33 +67,27 @@ export default function DiscoverScreen() {
     });
   }, [navigation]);
 
+  // Debounce search input
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-    }, 500);
-
-    return () => {
-      clearTimeout(handler);
-    };
+    const handler = setTimeout(() => setDebouncedQuery(searchQuery), 500);
+    return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Used useCallback to prevent re-creating the function on every render
-  const handleFetch = useCallback(() => {
-    fetchEvents({ query: debouncedQuery, category: selectedCategory });
-  }, [debouncedQuery, selectedCategory, fetchEvents]);
-
-  // Effect for initial load and filter changes
+  // ONLY runs on initial mount or when filters change. It performs a full reload
   useEffect(() => {
-    if (isFocused) {
-      handleFetch();
-    }
-  }, [debouncedQuery, selectedCategory, isFocused]);
+    loadInitialEvents({ query: debouncedQuery, category: selectedCategory });
+    fetchCategories();
+  }, [debouncedQuery, selectedCategory, loadInitialEvents, fetchCategories]);
 
   useEffect(() => {
-    if (isFocused) {
-      fetchCategories();
+    if (isInitialMount.current) {
+      // On the first render, we don't need to sync because the effect above has already loaded the data.
+      isInitialMount.current = false;
+    } else if (isFocused) {
+      // On subsequent focuses (e.g., navigating back), just sync for new data.
+      syncEvents({ query: debouncedQuery, category: selectedCategory });
     }
-  }, [fetchCategories, isFocused]);
+  }, [isFocused]);
 
   const handleEventPress = (event: Event) => {
     const isFavorite = favorites.includes(event.id);
@@ -109,57 +97,68 @@ export default function DiscoverScreen() {
     });
   };
 
-  
+  // Handler for infinite scroll
   const handleLoadMore = () => {
-    if (!isPaginating && hasMore) {
-      fetchMoreEvents({ query: debouncedQuery, category: selectedCategory });
+    if (!isSyncing && hasMore && isConnected) {
+      loadMoreEvents({ query: debouncedQuery, category: selectedCategory });
     }
   };
 
+  // Handler for pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    await handleFetch();
-    setIsRefreshing(false);
-  }, [handleFetch]);
-  
+    await syncEvents({ query: debouncedQuery, category: selectedCategory });
+  }, [syncEvents, debouncedQuery, selectedCategory]);
+
   const renderFooter = () => {
-    if (!isPaginating) return null;
+    if (!isSyncing || !hasMore) return null;
     return <Loader size={50} />;
   };
-  
 
   const renderContent = () => {
-    if (error && !isLoading) {
-    return <OfflineState message={error} onRefresh={handleRefresh} />;
+    if ((isLoading || isSyncing) && cachedEvents.length === 0) {
+      return (
+        <SafeAreaView style={[styles.container, styles.loadingContainer]}>
+          <LoaderSearch size={120} />
+        </SafeAreaView>
+      );
     }
-    
-    if (!isConnected && isFocused) {
-      return <OfflineState message="You are offline. Please check your network connection." onRefresh={handleRefresh} />;
+
+    // Show offline state or error if cache is empty
+    if (cachedEvents.length === 0 && !isConnected) {
+      const message = "You are offline. Please check your network connection.";
+      return <OfflineState message={message} onRefresh={handleRefresh} />;
     }
-    if (isLoading && events.length === 0) {
+
+    // Main list rendering from cache
     return (
-      <SafeAreaView style={[styles.container, styles.loadingContainer]}>
-        <LoaderSearch size={120} />
-      </SafeAreaView>
-    );
-    }
-        return (
       <FlatList
-        data={events}
+        data={cachedEvents}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => <EventCard event={item} onPress={() => handleEventPress(item)} />}
+        renderItem={({ item }) => (
+          <EventCard event={item} onPress={() => handleEventPress(item)} />
+        )}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
+        onEndReachedThreshold={0.7}
         ListFooterComponent={renderFooter}
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor="#6366f1" />}
-        ListEmptyComponent={!isLoading && !error ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No events found</Text>
-            <Text style={styles.emptySubtext}>Try adjusting your search or filters</Text>
-          </View>
-        ) : null}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={handleRefresh}
+            tintColor="#6366f1"
+          />
+        }
+        ListEmptyComponent={
+          !isLoading && !isSyncing ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No events found</Text>
+              <Text style={styles.emptySubtext}>
+                Try adjusting your search or filters
+              </Text>
+            </View>
+          ) : null
+        }
       />
     );
   };
@@ -180,43 +179,34 @@ export default function DiscoverScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
   },
   listContent: {
     paddingTop: 8,
     paddingBottom: 20,
   },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#f8f9fa',
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 100,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#999',
-  },
-    loadingContainer: {
+  loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingTop: 100,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#666",
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#999",
+  },
 });
-

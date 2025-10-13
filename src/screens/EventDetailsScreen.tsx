@@ -38,36 +38,42 @@ type EventDetailsScreenNavigationProp = NativeStackNavigationProp<
 export default function EventDetailsScreen() {
   const route = useRoute<EventDetailsScreenRouteProp>();
   const navigation = useNavigation<EventDetailsScreenNavigationProp>();
-  const { id, initialIsFavorite } = route.params;
+  const { id } = route.params;
   const [isBuying, setIsBuying] = useState(false);
   const [ticketQuantity, setTicketQuantity] = useState(1);
 
   const { session } = useAuth();
-  const { currentEvent: event, isLoading, fetchEventById } = useEvents(); // Get event data and fetching logic from the events store
+  const { currentEvent: event, isLoading, fetchEventById } = useEvents();
   const { addTicket } = useTickets();
-  const {toggleFavorite, favorites } = useFavorites();
-  // Fetch event details using the centralized store function
+  const { toggleFavorite, favorites } = useFavorites();
+  const isFavorite = favorites.includes(id);
+
+  // triggers the centralized, cache-first fetching logic in the store.
   useEffect(() => {
     fetchEventById(id);
   }, [id, fetchEventById]);
-
-  const isFavorite = favorites.includes(id);
-  const [headerFavorite, setHeaderFavorite] = useState(initialIsFavorite);
-
-  useEffect(() => {
-    setHeaderFavorite(isFavorite);
-  }, [isFavorite]);
 
   useLayoutEffect(() => {
     if (!event) return;
 
     const handleFavoritePress = () => {
+        if (!session) {
+        Alert.alert(
+          "Login Required",
+          "Please log in to save events to your favorites.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Login", onPress: () => navigation.navigate("Login") },
+          ]
+        );
+        return;
+      }
+
       if (Platform.OS !== "web") {
-        const options = {
+        HapticFeedback.trigger("impactLight", {
           enableVibrateFallback: true,
           ignoreAndroidSystemSettings: false,
-        };
-        HapticFeedback.trigger("impactLight", options);
+        });
       }
       toggleFavorite(event);
     };
@@ -89,15 +95,15 @@ export default function EventDetailsScreen() {
             onPress={handleFavoritePress}
           >
             <Icon
-              name={headerFavorite ? "heart" : "heart-outline"}
+              name={isFavorite ? "heart" : "heart-outline"}
               size={20}
-              color={headerFavorite ? "#ff4757" : "#fff"}
+              color={isFavorite ? "#ff4757" : "#fff"}
             />
           </TouchableOpacity>
         </View>
       ),
     });
-  }, [navigation, event, headerFavorite, toggleFavorite]);
+  }, [navigation, event, isFavorite, toggleFavorite]);
 
   const handleSharePress = async () => {
     if (!event) return;
@@ -114,11 +120,10 @@ export default function EventDetailsScreen() {
 
   const handleBuyTickets = async () => {
     if (!event) return;
-    // Prevent guests from buying tickets and prompt them to log in
     if (!session) {
       Alert.alert(
         "Login Required",
-        "Please log in or create an account to purchase tickets.",
+        "Please log in to purchase tickets.",
         [
           { text: "Cancel", style: "cancel" },
           { text: "Login", onPress: () => navigation.navigate("Login") },
@@ -129,8 +134,7 @@ export default function EventDetailsScreen() {
     setIsBuying(true);
 
     const date = new Date(event.startTime);
-    const ticketData: Ticket = {
-      id: Date.now(),
+    const ticketData: Omit<Ticket, 'id' | 'purchaseDate'> = {
       eventId: event.id,
       eventTitle: event.title,
       eventDate: date.toDateString(),
@@ -138,24 +142,25 @@ export default function EventDetailsScreen() {
       eventLocation: event.location,
       quantity: ticketQuantity,
       totalPrice: event.price * ticketQuantity,
-      purchaseDate: new Date().toISOString(),
-      qrCode: `EVENT_${event.id}_USER_${session.user.id}`, // unique QR
+      qrCode: `EVENT_${event.id}_USER_${session.user.id}`,
     };
 
     const success = await addTicket(ticketData);
     setIsBuying(false);
 
-    Alert.alert(
-      "Tickets Purchased!",
-      "You've successfully purchased tickets.",
-      [
-        {
-          text: "View Tickets",
-          onPress: () => navigation.navigate("Main", { screen: "My Tickets" }),
-        },
-        { text: "OK", style: "default" },
-      ]
-    );
+    if (success) {
+      Alert.alert(
+        "Tickets Purchased!",
+        "You've successfully purchased your tickets.",
+        [
+          {
+            text: "View My Tickets",
+            onPress: () => navigation.navigate("Main", { screen: "My Tickets" }),
+          },
+          { text: "OK", style: "default" },
+        ]
+      );
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -185,12 +190,12 @@ export default function EventDetailsScreen() {
     );
   }
   
-
+  // If null, it means it not in the cache and couldn't be fetched (e.g., offline and never seen).
   if (!event) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Event not found</Text>
+          <Text style={styles.errorText}>Event details not available offline.</Text>
         </View>
       </SafeAreaView>
     );
@@ -216,7 +221,6 @@ export default function EventDetailsScreen() {
             Organized by {event.organizer?.fullName || "Unknown User"}
           </Text>
 
-          {/* Event information section */}
           <View style={styles.infoSection}>
             <View style={styles.infoRow}>
               <Icon name="calendar-outline" size={20} color="#6366f1" />
@@ -270,7 +274,6 @@ export default function EventDetailsScreen() {
         </View>
       </ScrollView>
 
-      {/* Ticket Quantity Selector */}
       <View style={styles.bottomSection}>
         <View style={styles.ticketSelector}>
           <Text style={styles.ticketLabel}>Tickets</Text>
@@ -291,7 +294,6 @@ export default function EventDetailsScreen() {
           </View>
         </View>
 
-        {/* Purchase section */}
         <View style={styles.purchaseSection}>
           <View style={styles.priceInfo}>
             <Text style={styles.totalLabel}>Total</Text>
@@ -537,9 +539,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    padding: 20,
   },
   errorText: {
     fontSize: 18,
     color: "#666",
+    textAlign: "center",
   },
 });
+

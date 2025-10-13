@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
 import { Event } from '../types/event';
 import { useFavorites } from '../stores/favorites-store';
-
+import { useAuth } from '../stores/auth-store';
+import { useNavigation } from '@react-navigation/native';
 interface EventCardProps {
   event: Event;
   onPress: () => void;
@@ -13,7 +14,8 @@ interface EventCardProps {
 export default function EventCard({ event, onPress }: EventCardProps) {
   const { toggleFavorite, favorites } = useFavorites();
   const isEventFavorite = favorites.includes(event.id);
-
+  const { session } = useAuth();
+  const navigation = useNavigation();
   // Updated date/time formatting function
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -34,6 +36,17 @@ export default function EventCard({ event, onPress }: EventCardProps) {
 
   const handleFavoritePress = (e: any) => {
     e.stopPropagation(); // Prevents the main onPress from firing
+    if (!session) {
+        Alert.alert(
+          "Login Required",
+          "Please log in to save events to your favorites.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Login", onPress: () => navigation.navigate("Login" as never) },
+          ]
+        );
+        return;
+    }
     toggleFavorite(event);
   };
 

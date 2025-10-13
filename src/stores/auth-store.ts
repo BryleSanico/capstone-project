@@ -3,8 +3,8 @@ import { supabase } from "../lib/supabase";
 import { AuthError, Session, User } from '@supabase/supabase-js';
 import { useFavorites } from './favorites-store';
 import { useTickets } from './tickets-store';
-import storageService from '../services/storageService';
 import { useNetworkStatus } from './network-store';
+import { cacheManager } from '../services/cacheManager'; 
 
 type AuthState = {
   session: Session | null;
@@ -22,32 +22,32 @@ export const useAuth = create<AuthState>((set, get) => ({
   isLoading: true,
 
   initialize: () => {
-    // Initialize network listener
     useNetworkStatus.getState().initialize();
 
-    // This listener handles all auth state changes (initial load, login, logout)
-    supabase.auth.onAuthStateChange((_event, session) => {
+    supabase.auth.onAuthStateChange(async (_event, session) => {
+      // Get the user from the previous session state before updating.
+      const previousUser = get().user;
+
+      // When the user signs out, clear their specific cache.
+      // This happens when the new session is null and there was a previous user.
+      if (!session && previousUser) {
+        await cacheManager.clearUserSpecificCache(previousUser.id);
+      }
+      
+      // Update the session state for the entire app.
       set({ session, user: session?.user ?? null });
 
-      // Always reload favorites to reflect the correct state (guest or user)
-      useFavorites.getState().loadFavorites().then(() => {
-        // After loading, if the user is now logged in, check for unsynced guest favorites
-        if (session) {
-          useFavorites.getState().checkForUnsyncedFavorites();
-        }
-      });
-
-       useTickets.getState().loadTickets();
+      // On any auth change, reload favorites and tickets.
+      useFavorites.getState().loadFavorites();
+      useTickets.getState().loadTickets();
       
-      // Ensure loading is only set to false once on initial load
       if (get().isLoading) {
         set({ isLoading: false });
       }
     });
 
-    // Check for an initial session when the app starts
     const checkInitialSession = async () => {
-      const { data } = await supabase.auth.getSession();
+      await supabase.auth.getSession();
       set({ isLoading: false });
     };
 
@@ -71,18 +71,12 @@ export const useAuth = create<AuthState>((set, get) => ({
     });
     return { error };
   },
+
   signOut: async () => {
     await supabase.auth.signOut();
-    
-    // Clear the user's tickets from local storage.
-    await storageService.removeItem('user_tickets');
-
-    // Trigger a reload of the tickets state
-    await useTickets.getState().loadTickets();
-    // The onAuthStateChange listener will automatically handle reloading the guest favorites.
-    set({ session: null, user: null });
   },
 }));
 
 // Initialize the auth listener when the app loads
 useAuth.getState().initialize();
+

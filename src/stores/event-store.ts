@@ -3,107 +3,156 @@ import { Event } from '../types/event';
 import { eventService } from '../services/eventService';
 import { useNetworkStatus } from '../stores/network-store';
 
+const EVENTS_PER_PAGE = 10;
+
 type EventsState = {
-  events: Event[];
-  categories: string[];
-  favoriteEvents: Event[];
-  currentEvent: Event | null;
+  cachedEvents: Event[];
+  currentPage: number;
+  totalEvents: number;
   isLoading: boolean;
-  isPaginating: boolean;
+  isSyncing: boolean;
   error: string | null;
   hasMore: boolean;
-  fetchEvents: (filters: { query: string; category: string }) => Promise<void>;
-  fetchMoreEvents: (filters: { query: string; category: string }) => Promise<void>;
-  fetchFavoriteEvents: (ids: number[]) => Promise<void>;
-  fetchEventById: (id: number) => Promise<void>;
+  categories: string[];
+  currentEvent: Event | null;
+
+  loadInitialEvents: (filters: { query: string; category: string }) => Promise<void>;
+  loadMoreEvents: (filters: { query: string; category: string }) => Promise<void>;
+  syncEvents: (filters: { query: string; category: string }) => Promise<void>;
   fetchCategories: () => Promise<void>;
+  fetchEventById: (id: number) => Promise<void>;
 };
 
 export const useEvents = create<EventsState>()((set, get) => ({
-  events: [],
-  categories: ['All'],
-  favoriteEvents: [],
-  currentEvent: null,
+  cachedEvents: [],
+  currentPage: 1,
+  totalEvents: 0,
   isLoading: false,
-  isPaginating: false,
+  isSyncing: false,
   error: null,
   hasMore: true,
+  categories: ['All'],
+  currentEvent: null,
 
-  fetchEvents: async ({ query, category }) => {
-    // Check network status before making an API call
+  loadInitialEvents: async ({ query, category }) => {
+    set({ isLoading: true, error: null, cachedEvents: [], currentPage: 1, hasMore: true });
+    
+    const cached = await eventService.getCachedEvents();
+    if (cached.length > 0) {
+      set({ cachedEvents: cached, totalEvents: cached.length });
+    }
+
+    await get().syncEvents({ query, category });
+
+    set({ isLoading: false });
+  },
+
+  loadMoreEvents: async ({ query, category }) => {
+    const { isSyncing, hasMore, currentPage, cachedEvents } = get();
+    if (isSyncing || !hasMore || !useNetworkStatus.getState().isConnected) return;
+
+    set({ isSyncing: true });
+    const nextPage = currentPage + 1;
+
+    try {
+      const { events: newEvents, totalCount } = await eventService.fetchEvents(nextPage, EVENTS_PER_PAGE, query, category, null);
+
+      if (newEvents.length > 0) {
+        const eventsMap = new Map(cachedEvents.map(e => [e.id, e]));
+        newEvents.forEach(event => eventsMap.set(event.id, event));
+        const mergedEvents = Array.from(eventsMap.values());
+
+        await eventService.cacheEvents(mergedEvents);
+        set({
+          cachedEvents: mergedEvents,
+          currentPage: nextPage,
+          totalEvents: totalCount,
+          hasMore: mergedEvents.length < totalCount,
+        });
+      } else {
+        set({ hasMore: false });
+      }
+    } catch (err: any) {
+      set({ error: "Could not load more events." });
+    } finally {
+      set({ isSyncing: false });
+    }
+  },
+
+  syncEvents: async ({ query, category }) => {
     if (!useNetworkStatus.getState().isConnected) {
-      set({ error: "You are offline. Please check your network connection.", isLoading: false, events: [] });
+      set({ error: "You are offline. Please check your network connection."});
       return;
     }
+    set({ isSyncing: true, error: null });
 
-    set({ isLoading: true, error: null });
     try {
-      const data = await eventService.fetchEvents(0, query, category);
-      set({
-        events: data,
-        hasMore: data.length > 0,
-        isLoading: false,
-      });
+      const lastSyncTimestamp = await eventService.getLastSyncTimestamp();
+      const { events: updatedEvents, totalCount } = await eventService.fetchEvents(1, EVENTS_PER_PAGE, query, category, lastSyncTimestamp);
+
+      if (updatedEvents.length > 0 || get().cachedEvents.length === 0) {
+        const existingCache = get().cachedEvents;
+        const eventsMap = new Map(existingCache.map(e => [e.id, e]));
+        updatedEvents.forEach(event => eventsMap.set(event.id, event));
+        
+        const mergedEvents = Array.from(eventsMap.values()).sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+
+        await eventService.cacheEvents(mergedEvents);
+        set({
+          cachedEvents: mergedEvents,
+          currentPage: 1,
+          totalEvents: totalCount > 0 ? totalCount : mergedEvents.length,
+          hasMore: mergedEvents.length < totalCount,
+        });
+      }
+
+      const latestTimestamp = await eventService.getLatestEventTimestamp();
+      if (latestTimestamp) {
+        await eventService.setLastSyncTimestamp(latestTimestamp);
+      }
     } catch (err: any) {
-      set({ error: "Sorry, we couldn't load events. Please try again later.", isLoading: false });
-    }
-  },
-
-  fetchMoreEvents: async ({ query, category }) => {
-    const { events, isPaginating } = get();
-    if (isPaginating || !get().hasMore) return;
-
-    // Prevent pagination attempts while offline
-    if (!useNetworkStatus.getState().isConnected) {
-      return;
-    }
-
-    set({ isPaginating: true });
-    try {
-      const page = Math.floor(events.length / 5);
-      const data = await eventService.fetchEvents(page + 1, query, category);
-      set((state) => ({
-        events: [...state.events, ...data],
-        hasMore: data.length > 0,
-        isPaginating: false,
-      }));
-    } catch (err: any) {
-      // Stop paginating
-      set({ isPaginating: false, hasMore: false });
-      console.error("Pagination failed:", err.message);
-    }
-  },
-
-  fetchFavoriteEvents: async (ids: number[]) => {
-    if (ids.length === 0) {
-      set({ favoriteEvents: [] });
-      return;
-    }
-    set({ isLoading: true, error: null });
-    try {
-      const data = await eventService.fetchFavoriteEvents(ids);
-      set({ favoriteEvents: data, isLoading: false });
-    } catch (err: any) {
-      set({ error: err.message, isLoading: false });
-    }
-  },
-
-  fetchEventById: async (id: number) => {
-    set({ isLoading: true, error: null, currentEvent: null });
-    try {
-      const data = await eventService.fetchEventById(id);
-      set({ currentEvent: data, isLoading: false });
-    } catch (err: any) {
-      set({ error: err.message, isLoading: false });
+      console.error("Sync failed:", err);
+      set({ error: "Failed to sync with the server." });
+    } finally {
+      set({ isSyncing: false });
     }
   },
 
   fetchCategories: async () => {
     try {
       const data = await eventService.fetchCategories();
-      set({ categories: data });
+      set({ categories: [...new Set(data)] });
     } catch (err: any) {
       console.error("Failed to fetch categories:", err.message);
     }
   },
+
+  fetchEventById: async (id: number) => {
+    // Immediately check if the event is already in the main `cachedEvents` list for a fast response.
+    const existingEvent = get().cachedEvents.find(e => e.id === id);
+    if (existingEvent) {
+      set({ currentEvent: existingEvent, isLoading: false, error: null });
+    } else {
+      // Only show a full loader if the event is not available at all.
+      set({ isLoading: true, error: null, currentEvent: null });
+    }
+
+    try {
+      // Call the service
+      const data = await eventService.fetchEventById(id);
+      
+      if (data) {
+        set({ currentEvent: data });
+      } else if (!existingEvent) {
+        // Only set an error if the event couldn't be found anywhere (main cache or detail cache).
+        set({ error: "Event details could not be loaded." });
+      }
+    } catch (err: any) {
+      set({ error: "Failed to load event details." });
+    } finally {
+      // Ensure loading is always turned off after the process.
+      set({ isLoading: false });
+    }
+  },
 }));
+
