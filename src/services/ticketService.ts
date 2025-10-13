@@ -10,7 +10,6 @@ const mapRpcToTicket = (item: any): Ticket => ({
   eventDate: item.event_date,
   eventTime: item.event_time,
   eventLocation: item.event_location,
-  quantity: item.quantity,
   totalPrice: item.total_price,
   purchaseDate: item.purchase_date,
   qrCode: item.qr_code,
@@ -48,33 +47,37 @@ const ticketService = {
     return data as string | null;
   },
 
-  async createTicket(ticketData: Omit<Ticket, 'id' | 'purchaseDate'>): Promise<Ticket> {
+    async createTickets(ticketsData: Omit<Ticket, 'id' | 'purchaseDate'>[]): Promise<Ticket[]> {
     const session = await getCurrentSession();
     if (!session?.user) throw new Error("User must be logged in to purchase tickets.");
 
+    const ticketsToInsert = ticketsData.map(ticket => ({
+        user_id: session.user.id,
+        event_id: ticket.eventId,
+        event_title: ticket.eventTitle,
+        event_date: ticket.eventDate,
+        event_time: ticket.eventTime,
+        event_location: ticket.eventLocation,
+        total_price: ticket.totalPrice,
+        qr_code: ticket.qrCode,
+        purchase_date: new Date().toISOString(),
+    }));
+
     const { data, error } = await supabase
       .from('tickets')
-      .insert({
-        user_id: session.user.id,
-        event_id: ticketData.eventId,
-        event_title: ticketData.eventTitle,
-        event_date: ticketData.eventDate,
-        event_time: ticketData.eventTime,
-        event_location: ticketData.eventLocation,
-        quantity: ticketData.quantity,
-        total_price: ticketData.totalPrice,
-        qr_code: ticketData.qrCode,
-        purchase_date: new Date().toISOString(),
-      })
-      .select()
-      .single();
+      .insert(ticketsToInsert)
+      .select();
 
     if (error) {
-      console.error("Error creating ticket:", error.message);
+      console.error("Error creating tickets:", error.message);
+      // Handle specific error for overbooking if a server-side check fails
+      if (error.code === 'P0001') { // Custom error code for sold out
+          throw new Error("Event is sold out. Purchase failed.");
+      }
       throw error;
     }
 
-    return mapRpcToTicket(data);
+    return data.map(mapRpcToTicket);
   }
 };
 

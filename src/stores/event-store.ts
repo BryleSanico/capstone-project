@@ -1,7 +1,7 @@
-import { create } from 'zustand';
-import { Event } from '../types/event';
-import { eventService } from '../services/eventService';
-import { useNetworkStatus } from '../stores/network-store';
+import { create } from "zustand";
+import { Event } from "../types/event";
+import { eventService } from "../services/eventService";
+import { useNetworkStatus } from "../stores/network-store";
 
 const EVENTS_PER_PAGE = 10;
 
@@ -16,11 +16,18 @@ type EventsState = {
   categories: string[];
   currentEvent: Event | null;
 
-  loadInitialEvents: (filters: { query: string; category: string }) => Promise<void>;
-  loadMoreEvents: (filters: { query: string; category: string }) => Promise<void>;
+  loadInitialEvents: (filters: {
+    query: string;
+    category: string;
+  }) => Promise<void>;
+  loadMoreEvents: (filters: {
+    query: string;
+    category: string;
+  }) => Promise<void>;
   syncEvents: (filters: { query: string; category: string }) => Promise<void>;
   fetchCategories: () => Promise<void>;
   fetchEventById: (id: number) => Promise<void>;
+  incrementAttendeeCount: (eventId: number, quantity: number) => void;
 };
 
 export const useEvents = create<EventsState>()((set, get) => ({
@@ -31,12 +38,18 @@ export const useEvents = create<EventsState>()((set, get) => ({
   isSyncing: false,
   error: null,
   hasMore: true,
-  categories: ['All'],
+  categories: ["All"],
   currentEvent: null,
 
   loadInitialEvents: async ({ query, category }) => {
-    set({ isLoading: true, error: null, cachedEvents: [], currentPage: 1, hasMore: true });
-    
+    set({
+      isLoading: true,
+      error: null,
+      cachedEvents: [],
+      currentPage: 1,
+      hasMore: true,
+    });
+
     const cached = await eventService.getCachedEvents();
     if (cached.length > 0) {
       set({ cachedEvents: cached, totalEvents: cached.length });
@@ -49,17 +62,24 @@ export const useEvents = create<EventsState>()((set, get) => ({
 
   loadMoreEvents: async ({ query, category }) => {
     const { isSyncing, hasMore, currentPage, cachedEvents } = get();
-    if (isSyncing || !hasMore || !useNetworkStatus.getState().isConnected) return;
+    if (isSyncing || !hasMore || !useNetworkStatus.getState().isConnected)
+      return;
 
     set({ isSyncing: true });
     const nextPage = currentPage + 1;
 
     try {
-      const { events: newEvents, totalCount } = await eventService.fetchEvents(nextPage, EVENTS_PER_PAGE, query, category, null);
+      const { events: newEvents, totalCount } = await eventService.fetchEvents(
+        nextPage,
+        EVENTS_PER_PAGE,
+        query,
+        category,
+        null
+      );
 
       if (newEvents.length > 0) {
-        const eventsMap = new Map(cachedEvents.map(e => [e.id, e]));
-        newEvents.forEach(event => eventsMap.set(event.id, event));
+        const eventsMap = new Map(cachedEvents.map((e) => [e.id, e]));
+        newEvents.forEach((event) => eventsMap.set(event.id, event));
         const mergedEvents = Array.from(eventsMap.values());
 
         await eventService.cacheEvents(mergedEvents);
@@ -81,21 +101,31 @@ export const useEvents = create<EventsState>()((set, get) => ({
 
   syncEvents: async ({ query, category }) => {
     if (!useNetworkStatus.getState().isConnected) {
-      set({ error: "You are offline. Please check your network connection."});
+      set({ error: "You are offline. Please check your network connection." });
       return;
     }
     set({ isSyncing: true, error: null });
 
     try {
       const lastSyncTimestamp = await eventService.getLastSyncTimestamp();
-      const { events: updatedEvents, totalCount } = await eventService.fetchEvents(1, EVENTS_PER_PAGE, query, category, lastSyncTimestamp);
+      const { events: updatedEvents, totalCount } =
+        await eventService.fetchEvents(
+          1,
+          EVENTS_PER_PAGE,
+          query,
+          category,
+          lastSyncTimestamp
+        );
 
       if (updatedEvents.length > 0 || get().cachedEvents.length === 0) {
         const existingCache = get().cachedEvents;
-        const eventsMap = new Map(existingCache.map(e => [e.id, e]));
-        updatedEvents.forEach(event => eventsMap.set(event.id, event));
-        
-        const mergedEvents = Array.from(eventsMap.values()).sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+        const eventsMap = new Map(existingCache.map((e) => [e.id, e]));
+        updatedEvents.forEach((event) => eventsMap.set(event.id, event));
+
+        const mergedEvents = Array.from(eventsMap.values()).sort(
+          (a, b) =>
+            new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+        );
 
         await eventService.cacheEvents(mergedEvents);
         set({
@@ -129,7 +159,7 @@ export const useEvents = create<EventsState>()((set, get) => ({
 
   fetchEventById: async (id: number) => {
     // Immediately check if the event is already in the main `cachedEvents` list for a fast response.
-    const existingEvent = get().cachedEvents.find(e => e.id === id);
+    const existingEvent = get().cachedEvents.find((e) => e.id === id);
     if (existingEvent) {
       set({ currentEvent: existingEvent, isLoading: false, error: null });
     } else {
@@ -140,7 +170,7 @@ export const useEvents = create<EventsState>()((set, get) => ({
     try {
       // Call the service
       const data = await eventService.fetchEventById(id);
-      
+
       if (data) {
         set({ currentEvent: data });
       } else if (!existingEvent) {
@@ -154,5 +184,27 @@ export const useEvents = create<EventsState>()((set, get) => ({
       set({ isLoading: false });
     }
   },
-}));
 
+  incrementAttendeeCount: (eventId: number, quantity: number) => {
+    set(state => {
+      // Update the event in the main Discover list cache
+      const updatedCachedEvents = state.cachedEvents.map(event => 
+        event.id === eventId 
+          ? { ...event, attendees: event.attendees + quantity, availableSlot: event.availableSlot - quantity } 
+          : event
+      );
+      // Update the currently viewed event if it's the one being purchased
+      const updatedCurrentEvent = state.currentEvent?.id === eventId
+        ? { ...state.currentEvent, attendees: state.currentEvent.attendees + quantity, availableSlot: state.currentEvent.availableSlot - quantity }
+        : state.currentEvent;
+      
+      // Persist the updated event list to the device storage
+      eventService.cacheEvents(updatedCachedEvents);
+      
+      return {
+        cachedEvents: updatedCachedEvents,
+        currentEvent: updatedCurrentEvent
+      };
+    });
+  }
+}));

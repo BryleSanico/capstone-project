@@ -15,4 +15,6 @@ export interface Event {
   attendees: number;
   tags: string[];
   updatedAt?: string;
+  availableSlot: number;
+  userMaxTicketPurchase: number;
 }

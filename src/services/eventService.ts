@@ -44,9 +44,11 @@ const mapSupabaseToEvent = (item: any): Event => {
       avatar: undefined,
     },
     capacity: item.capacity,
-    attendees: item.attendees,
+    attendees: item.attendees_count || 0,
     tags: item.tags || [],
     updatedAt: item.updated_at,
+    availableSlot: item.available_slot,
+    userMaxTicketPurchase: item.user_max_ticket_purchase,
   };
 };
 

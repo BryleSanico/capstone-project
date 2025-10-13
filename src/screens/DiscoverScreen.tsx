@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useCallback,
   useRef,
+  useMemo,
 } from "react";
 import { View, StyleSheet, FlatList, Text, RefreshControl } from "react-native";
 import {
@@ -26,6 +27,7 @@ import { useFavorites } from "../stores/favorites-store";
 import { useEvents } from "../stores/event-store";
 import { TabParamList } from "../navigation/TabNavigator";
 import { Loader } from "../components/loaders/loader";
+import { searchCache } from "../utils/searchCache";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -51,10 +53,9 @@ export default function DiscoverScreen() {
   const { favorites } = useFavorites();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
   const isFocused = useIsFocused();
   const isConnected = useNetworkStatus((state) => state.isConnected);
-  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
-
   // Ref to prevent syncing on the very first mount
   const isInitialMount = useRef(true);
 
@@ -75,19 +76,39 @@ export default function DiscoverScreen() {
 
   // ONLY runs on initial mount or when filters change. It performs a full reload
   useEffect(() => {
-    loadInitialEvents({ query: debouncedQuery, category: selectedCategory });
+    // When the category changes, we treat it as a new search context.
+    loadInitialEvents({ query: "", category: selectedCategory });
     fetchCategories();
-  }, [debouncedQuery, selectedCategory, loadInitialEvents, fetchCategories]);
+  }, [selectedCategory, loadInitialEvents, fetchCategories]);
 
   useEffect(() => {
     if (isInitialMount.current) {
-      // On the first render, we don't need to sync because the effect above has already loaded the data.
+      // Skip sync on the very first render
       isInitialMount.current = false;
     } else if (isFocused) {
       // On subsequent focuses (e.g., navigating back), just sync for new data.
       syncEvents({ query: debouncedQuery, category: selectedCategory });
     }
   }, [isFocused]);
+
+  const displayedEvents = useMemo(
+    () => searchCache(cachedEvents, debouncedQuery),
+    [cachedEvents, debouncedQuery]
+  );
+
+  // If the local search returns no results, and we're online, trigger a network search.
+  useEffect(() => {
+    if (debouncedQuery && displayedEvents.length === 0 && isConnected) {
+      // syncEvents will fetch from the backend using the search query
+      syncEvents({ query: debouncedQuery, category: selectedCategory });
+    }
+  }, [
+    displayedEvents.length,
+    debouncedQuery,
+    isConnected,
+    syncEvents,
+    selectedCategory,
+  ]);
 
   const handleEventPress = (event: Event) => {
     const isFavorite = favorites.includes(event.id);
@@ -123,16 +144,32 @@ export default function DiscoverScreen() {
       );
     }
 
-    // Show offline state or error if cache is empty
-    if (cachedEvents.length === 0 && !isConnected) {
-      const message = "You are offline. Please check your network connection.";
-      return <OfflineState message={message} onRefresh={handleRefresh} />;
+    // If there are no results, show the appropriate message.
+    if (displayedEvents.length === 0) {
+      if (!isConnected) {
+        return (
+          <OfflineState
+            message="You are offline. Please check your network connection."
+            onRefresh={handleRefresh}
+          />
+        );
+      }
+      if (!isLoading && !isSyncing) {
+        return (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No events found</Text>
+            <Text style={styles.emptySubtext}>
+              Try adjusting your search or filters
+            </Text>
+          </View>
+        );
+      }
     }
 
-    // Main list rendering from cache
+    // Main list rendering from memoize cache
     return (
       <FlatList
-        data={cachedEvents}
+        data={displayedEvents}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <EventCard event={item} onPress={() => handleEventPress(item)} />

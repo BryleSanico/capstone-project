@@ -44,9 +44,14 @@ export default function EventDetailsScreen() {
 
   const { session } = useAuth();
   const { currentEvent: event, isLoading, fetchEventById } = useEvents();
-  const { addTicket } = useTickets();
+  const { addTickets, tickets: userTickets } = useTickets();
   const { toggleFavorite, favorites } = useFavorites();
   const isFavorite = favorites.includes(id);
+
+  // Calculate how many tickets the current user has already purchased for this event
+  const userTicketsForEvent = userTickets.filter(
+    (ticket) => ticket.eventId === id
+  ).length;
 
   // triggers the centralized, cache-first fetching logic in the store.
   useEffect(() => {
@@ -57,7 +62,7 @@ export default function EventDetailsScreen() {
     if (!event) return;
 
     const handleFavoritePress = () => {
-        if (!session) {
+      if (!session) {
         Alert.alert(
           "Login Required",
           "Please log in to save events to your favorites.",
@@ -121,31 +126,48 @@ export default function EventDetailsScreen() {
   const handleBuyTickets = async () => {
     if (!event) return;
     if (!session) {
+      Alert.alert("Login Required", "Please log in to purchase tickets.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Login", onPress: () => navigation.navigate("Login") },
+      ]);
+      return;
+    }
+
+    // Perform all validations before proceeding
+    const remainingSlotsForUser =
+      event.userMaxTicketPurchase - userTicketsForEvent;
+    if (ticketQuantity > event.availableSlot) {
       Alert.alert(
-        "Login Required",
-        "Please log in to purchase tickets.",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Login", onPress: () => navigation.navigate("Login") },
-        ]
+        "Not Enough Tickets",
+        `Sorry, only ${event.availableSlot} tickets are left.`
       );
       return;
     }
+    if (ticketQuantity > remainingSlotsForUser) {
+      Alert.alert(
+        "Ticket Limit Exceeded",
+        `You can only purchase ${remainingSlotsForUser} more ticket(s) for this event.`
+      );
+      return;
+    }
+
     setIsBuying(true);
 
-    const date = new Date(event.startTime);
-    const ticketData: Omit<Ticket, 'id' | 'purchaseDate'> = {
+    // Create an array of new tickets to be inserted
+    const newTickets: Omit<Ticket, "id" | "purchaseDate">[] = Array.from({
+      length: ticketQuantity,
+    }).map((_, index) => ({
       eventId: event.id,
       eventTitle: event.title,
-      eventDate: date.toDateString(),
-      eventTime: date.toTimeString(),
+      eventDate: event.startTime,
+      eventTime: formatTime(event.startTime),
       eventLocation: event.location,
-      quantity: ticketQuantity,
-      totalPrice: event.price * ticketQuantity,
-      qrCode: `EVENT_${event.id}_USER_${session.user.id}`,
-    };
+      totalPrice: event.price, // Price per ticket
+      qrCode: `EVT-${event.id}-USR-${session.user.id}-${Date.now()}-${index}`, // Ensure unique QR
+    }));
 
-    const success = await addTicket(ticketData);
+    const success = await addTickets(newTickets);
+
     setIsBuying(false);
 
     if (success) {
@@ -155,7 +177,8 @@ export default function EventDetailsScreen() {
         [
           {
             text: "View My Tickets",
-            onPress: () => navigation.navigate("Main", { screen: "My Tickets" }),
+            onPress: () =>
+              navigation.navigate("Main", { screen: "My Tickets" }),
           },
           { text: "OK", style: "default" },
         ]
@@ -182,23 +205,40 @@ export default function EventDetailsScreen() {
     });
   };
 
-  if (isLoading) {
+  if (isLoading && !event) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6366f1" />
       </SafeAreaView>
     );
   }
-  
+
   // If null, it means it not in the cache and couldn't be fetched (e.g., offline and never seen).
   if (!event) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Event details not available offline.</Text>
+          <Text style={styles.errorText}>
+            Event details not available offline.
+          </Text>
         </View>
       </SafeAreaView>
     );
+  }
+
+  const isSoldOut = event.availableSlot <= 0;
+  const remainingForUser = event.userMaxTicketPurchase - userTicketsForEvent;
+  const maxQuantity = Math.min(event.availableSlot, remainingForUser);
+
+  let purchaseMessage = "Buy Tickets";
+  let isButtonDisabled = isBuying;
+
+  if (isSoldOut) {
+    purchaseMessage = "Sold Out";
+    isButtonDisabled = true;
+  } else if (remainingForUser <= 0) {
+    purchaseMessage = "Ticket Limit Reached";
+    isButtonDisabled = true;
   }
 
   return (
@@ -234,7 +274,6 @@ export default function EventDetailsScreen() {
                 </Text>
               </View>
             </View>
-
             <View style={styles.infoRow}>
               <Icon name="pin-outline" size={20} color="#6366f1" />
               <View style={styles.infoContent}>
@@ -243,15 +282,28 @@ export default function EventDetailsScreen() {
                 <Text style={styles.infoSubtext}>{event.address}</Text>
               </View>
             </View>
-
             <View style={styles.infoRow}>
-              <Icon name="people" size={20} color="#6366f1" />
+              <Icon name="people-outline" size={20} color="#6366f1" />
               <View style={styles.infoContent}>
                 <Text style={styles.infoTitle}>Attendees</Text>
                 <Text style={styles.infoText}>{event.attendees} going</Text>
                 <Text style={styles.infoSubtext}>
-                  {event.capacity - event.attendees} spots left
+                  {isSoldOut
+                    ? "Event is full"
+                    : `${event.availableSlot} spots left`}
                 </Text>
+              </View>
+            </View>
+            <View style={styles.infoRow}>
+              <Icon name="ticket-outline" size={20} color="#6366f1" />
+              <View style={styles.infoContent}>
+                <Text style={styles.infoTitle}>Ticket Limit</Text>
+                <Text
+                  style={styles.infoText}
+                >{`Max ${event.userMaxTicketPurchase} per person`}</Text>
+                <Text
+                  style={styles.infoSubtext}
+                >{`You have ${userTicketsForEvent} ticket(s)`}</Text>
               </View>
             </View>
           </View>
@@ -275,43 +327,57 @@ export default function EventDetailsScreen() {
       </ScrollView>
 
       <View style={styles.bottomSection}>
-        <View style={styles.ticketSelector}>
-          <Text style={styles.ticketLabel}>Tickets</Text>
-          <View style={styles.quantitySelector}>
-            <TouchableOpacity
-              style={styles.quantityButton}
-              onPress={() => setTicketQuantity(Math.max(1, ticketQuantity - 1))}
-            >
-              <Text style={styles.quantityButtonText}>-</Text>
-            </TouchableOpacity>
-            <Text style={styles.quantity}>{ticketQuantity}</Text>
-            <TouchableOpacity
-              style={styles.quantityButton}
-              onPress={() => setTicketQuantity(ticketQuantity + 1)}
-            >
-              <Text style={styles.quantityButtonText}>+</Text>
-            </TouchableOpacity>
+        {!isSoldOut && remainingForUser > 0 && (
+          <View style={styles.ticketSelector}>
+            <Text style={styles.ticketLabel}>Tickets</Text>
+            <View style={styles.quantitySelector}>
+              <TouchableOpacity
+                style={styles.quantityButton}
+                onPress={() =>
+                  setTicketQuantity(Math.max(1, ticketQuantity - 1))
+                }
+              >
+                <Text style={styles.quantityButtonText}>-</Text>
+              </TouchableOpacity>
+              <Text style={styles.quantity}>{ticketQuantity}</Text>
+              <TouchableOpacity
+                style={styles.quantityButton}
+                onPress={() =>
+                  setTicketQuantity(Math.min(ticketQuantity + 1, maxQuantity))
+                }
+              >
+                <Text style={styles.quantityButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-
+        )}
         <View style={styles.purchaseSection}>
           <View style={styles.priceInfo}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalPrice}>
-              ${(event.price * ticketQuantity).toFixed(2)}
+              {isSoldOut || remainingForUser <= 0
+                ? "$ --"
+                : `$${(event.price * ticketQuantity).toFixed(2)}`}
             </Text>
           </View>
           <TouchableOpacity
-            style={styles.buyButton}
+            style={[
+              styles.buyButton,
+              isButtonDisabled && styles.disabledButton,
+            ]}
             onPress={handleBuyTickets}
-            disabled={isBuying}
+            disabled={isButtonDisabled}
           >
             {isBuying ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <>
-                <Icon name="ticket-outline" size={20} color="#fff" />
-                <Text style={styles.buyButtonText}>Buy Tickets</Text>
+                <Icon
+                  name={isSoldOut ? "close-circle-outline" : "ticket-outline"}
+                  size={20}
+                  color="#fff"
+                />
+                <Text style={styles.buyButtonText}>{purchaseMessage}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -535,6 +601,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
+  disabledButton: {
+    backgroundColor: "#a5b4fc",
+    shadowColor: "transparent",
+    elevation: 0,
+  },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
@@ -547,4 +618,3 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
-

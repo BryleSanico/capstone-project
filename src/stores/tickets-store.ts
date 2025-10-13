@@ -6,13 +6,15 @@ import { getCurrentSession } from "../utils/sessionHelper";
 import { useNetworkStatus } from "./network-store";
 import { Alert } from "react-native";
 import { storageKeys } from "../utils/storageKeys"; 
+import { useEvents } from "./event-store"; 
 
 type TicketsState = {
   tickets: Ticket[];
   isLoading: boolean;
-  addTicket: (ticketData: Omit<Ticket, 'id' | 'purchaseDate'>) => Promise<boolean>;
+  addTickets: (ticketsData: Omit<Ticket, 'id' | 'purchaseDate'>[]) => Promise<boolean>;
   loadTickets: () => Promise<void>;
 };
+
 
 export const useTickets = create<TicketsState>()((set, get) => ({
   tickets: [],
@@ -67,26 +69,36 @@ export const useTickets = create<TicketsState>()((set, get) => ({
     }
   },
 
-  addTicket: async (ticketData) => {
+  addTickets: async (ticketsData) => {
     const session = await getCurrentSession();
-    const userId = session?.user?.id;
 
-    if (!userId) {
+    if (!session?.user || ticketsData.length === 0) {
       Alert.alert('Please log in to purchase tickets.');
       return false;
     }
 
-    const ticketsCacheKey = storageKeys.getTicketsCacheKey(userId);
-
     try {
-      const savedTicket = await ticketService.createTicket(ticketData);
-      const updatedTickets = [savedTicket, ...get().tickets];
+      const savedTickets = await ticketService.createTickets(ticketsData);
+      
+      const updatedTickets = [...savedTickets, ...get().tickets];
       set({ tickets: updatedTickets });
-      await storageService.setItem(ticketsCacheKey, updatedTickets);
+
+      const userId = session?.user?.id;
+      
+      const cacheKey = storageKeys.getTicketsCacheKey(userId);
+      await storageService.setItem(cacheKey, updatedTickets);
+      
+      // After a successful purchase, optimistically update the event's attendee count
+      const eventId = ticketsData[0].eventId;
+      const quantityPurchased = ticketsData.length;
+      useEvents.getState().incrementAttendeeCount(eventId, quantityPurchased);
+      
       return true;
     } catch (err: any) {
-      console.error("Error purchasing ticket:", err);
-      Alert.alert('Ticket Purchase Error', 'There was an error purchasing your tickets.');
+      console.error("Error purchasing tickets:", err);
+      Alert.alert('Ticket Purchase Error', err.message || 'There was an error purchasing your tickets.');
+      // Re-sync event data to get the true available slot count on failure
+      useEvents.getState().syncEvents({ query: '', category: 'All' });
       return false;
     }
   },
