@@ -30,7 +30,7 @@ export default function TicketCard({ ticket, onPress }: TicketCardProps) {
         <View style={styles.header}>
           <View style={styles.ticketInfo}>
             <Text style={styles.eventTitle} numberOfLines={2}>{ticket.eventTitle}</Text>
-            <Text style={styles.quantity}>{ticket.quantity} ticket{ticket.quantity > 1 ? 's' : ''}</Text>
+            {/* <Text style={styles.quantity}>{ticket.} ticket{ticket.quantity > 1 ? 's' : ''}</Text> */}
           </View>
           <View style={styles.qrIcon}>
             <Icon name="qr-code-outline" size={24} color="#fff" />
