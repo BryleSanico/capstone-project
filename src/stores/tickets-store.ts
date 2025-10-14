@@ -11,10 +11,18 @@ import { useEvents } from "./event-store";
 type TicketsState = {
   tickets: Ticket[];
   isLoading: boolean;
-  addTickets: (ticketsData: Omit<Ticket, 'id' | 'purchaseDate'>[]) => Promise<boolean>;
+  addTickets: (purchaseRequest: {
+    eventId: number;
+    quantity: number;
+    eventTitle: string;
+    eventDate: string;
+    eventTime: string;
+    eventLocation: string;
+    totalPrice: number;
+  }) => Promise<{ success: boolean; message?: string }>;
   loadTickets: () => Promise<void>;
+  syncTickets: () => Promise<void>;
 };
-
 
 export const useTickets = create<TicketsState>()((set, get) => ({
   tickets: [],
@@ -31,75 +39,80 @@ export const useTickets = create<TicketsState>()((set, get) => ({
         return;
     }
 
-    // Generate user-specific keys for the cache.
+    // Generate user-specific keys for the cache and load from user-specific cache for instant UI
     const ticketsCacheKey = storageKeys.getTicketsCacheKey(userId);
-    const lastSyncKey = storageKeys.getTicketsSyncKey(userId);
-    
-    // 1. Load from user-specific cache for instant UI
     const cachedTickets = await storageService.getItem<Ticket[]>(ticketsCacheKey) || [];
     set({ tickets: cachedTickets });
 
-    // 2. Sync with server if online
-    if (!useNetworkStatus.getState().isConnected) {
-        set({ isLoading: false });
+    await get().syncTickets();
+    set({isLoading: false });
+  },
+
+  syncTickets: async() => {
+        const session = await getCurrentSession();
+    const userId = session?.user?.id;
+    if (!userId || !useNetworkStatus.getState().isConnected) {
+        if (!userId) set({ tickets: [] });
         return;
-    }
+    };
 
     try {
-        const lastSync = await storageService.getItem<string>(lastSyncKey);
+        const syncKey = storageKeys.getTicketsSyncKey(userId);
+        const lastSync = await storageService.getItem<string>(syncKey);
         const newTickets = await ticketService.getUserTickets(lastSync);
 
         if (newTickets.length > 0) {
-            const ticketMap = new Map(cachedTickets.map(t => [t.id, t]));
+            const existingTickets = get().tickets;
+            const ticketMap = new Map(existingTickets.map(t => [t.id, t]));
             newTickets.forEach(ticket => ticketMap.set(ticket.id, ticket));
             const mergedTickets = Array.from(ticketMap.values()).sort((a,b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
 
             set({ tickets: mergedTickets });
-            await storageService.setItem(ticketsCacheKey, mergedTickets);
+            await storageService.setItem(storageKeys.getTicketsCacheKey(userId), mergedTickets);
         }
 
         const latestTimestamp = await ticketService.getLatestTicketTimestamp();
         if (latestTimestamp) {
-            await storageService.setItem(lastSyncKey, latestTimestamp);
+            await storageService.setItem(syncKey, latestTimestamp);
         }
     } catch (error) {
         console.error("Failed to sync tickets:", error);
-    } finally {
-        set({ isLoading: false });
     }
   },
-
-  addTickets: async (ticketsData) => {
+  
+  addTickets: async (purchaseRequest) => {
     const session = await getCurrentSession();
 
-    if (!session?.user || ticketsData.length === 0) {
-      Alert.alert('Please log in to purchase tickets.');
-      return false;
+    if (!session?.user) {
+      return { success: false, message: 'Please log in to purchase tickets.' };
     }
 
-    try {
-      const savedTickets = await ticketService.createTickets(ticketsData);
+   try {
+      const savedTickets = await ticketService.createTickets(purchaseRequest);
       
+      // Update State on Success 
       const updatedTickets = [...savedTickets, ...get().tickets];
       set({ tickets: updatedTickets });
+      
+      const userId = session.user.id;
+      await storageService.setItem(storageKeys.getTicketsCacheKey(userId), updatedTickets);
+      
+      // Manually update the event cache to reflect the new available slot count
+      useEvents.getState().decrementEventSlots(purchaseRequest.eventId, purchaseRequest.quantity);
+      
+      return { success: true };
 
-      const userId = session?.user?.id;
-      
-      const cacheKey = storageKeys.getTicketsCacheKey(userId);
-      await storageService.setItem(cacheKey, updatedTickets);
-      
-      // After a successful purchase, optimistically update the event's attendee count
-      const eventId = ticketsData[0].eventId;
-      const quantityPurchased = ticketsData.length;
-      useEvents.getState().incrementAttendeeCount(eventId, quantityPurchased);
-      
-      return true;
     } catch (err: any) {
       console.error("Error purchasing tickets:", err);
-      Alert.alert('Ticket Purchase Error', err.message || 'There was an error purchasing your tickets.');
+      if (err.message?.includes('EVENT_SOLD_OUT')) {
+        return { success: false, message: 'Sorry, this event is now sold out.' };
+      }
+      if (err.message?.includes('USER_TICKET_LIMIT_REACHED')) {
+        return { success: false, message: "You've reached the maximum number of tickets for this event." };
+      }
       // Re-sync event data to get the true available slot count on failure
       useEvents.getState().syncEvents({ query: '', category: 'All' });
-      return false;
+      return { success: false, message: 'There was an error purchasing your tickets.' };
     }
   },
 }));

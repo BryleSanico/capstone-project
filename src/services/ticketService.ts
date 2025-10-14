@@ -47,37 +47,37 @@ const ticketService = {
     return data as string | null;
   },
 
-    async createTickets(ticketsData: Omit<Ticket, 'id' | 'purchaseDate'>[]): Promise<Ticket[]> {
+  // Calls the atomic 'purchase_tickets' RPC function to handle the entire purchase transaction.
+  async createTickets(ticketPurchaseRequest: {
+    eventId: number;
+    quantity: number;
+    eventTitle: string;
+    eventDate: string;
+    eventTime: string;
+    eventLocation: string;
+    totalPrice: number;
+  }): Promise<Ticket[]> {
     const session = await getCurrentSession();
     if (!session?.user) throw new Error("User must be logged in to purchase tickets.");
 
-    const ticketsToInsert = ticketsData.map(ticket => ({
-        user_id: session.user.id,
-        event_id: ticket.eventId,
-        event_title: ticket.eventTitle,
-        event_date: ticket.eventDate,
-        event_time: ticket.eventTime,
-        event_location: ticket.eventLocation,
-        total_price: ticket.totalPrice,
-        qr_code: ticket.qrCode,
-        purchase_date: new Date().toISOString(),
-    }));
-
-    const { data, error } = await supabase
-      .from('tickets')
-      .insert(ticketsToInsert)
-      .select();
+    const { data, error } = await supabase.rpc('purchase_tickets', {
+      p_event_id: ticketPurchaseRequest.eventId,
+      p_user_id: session.user.id,
+      p_quantity: ticketPurchaseRequest.quantity,
+      p_event_title: ticketPurchaseRequest.eventTitle,
+      p_event_date: ticketPurchaseRequest.eventDate,
+      p_event_time: ticketPurchaseRequest.eventTime,
+      p_event_location: ticketPurchaseRequest.eventLocation,
+      p_total_price: ticketPurchaseRequest.totalPrice,
+    });
 
     if (error) {
       console.error("Error creating tickets:", error.message);
-      // Handle specific error for overbooking if a server-side check fails
-      if (error.code === 'P0001') { // Custom error code for sold out
-          throw new Error("Event is sold out. Purchase failed.");
-      }
-      throw error;
+      // We can now throw the specific message from the database
+      throw new Error(error.message);
     }
 
-    return data.map(mapRpcToTicket);
+    return (data || []).map(mapRpcToTicket);
   }
 };
 

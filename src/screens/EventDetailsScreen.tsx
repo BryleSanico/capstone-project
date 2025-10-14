@@ -153,36 +153,34 @@ export default function EventDetailsScreen() {
 
     setIsBuying(true);
 
-    // Create an array of new tickets to be inserted
-    const newTickets: Omit<Ticket, "id" | "purchaseDate">[] = Array.from({
-      length: ticketQuantity,
-    }).map((_, index) => ({
+   const purchaseRequest = {
       eventId: event.id,
+      quantity: ticketQuantity,
       eventTitle: event.title,
       eventDate: event.startTime,
       eventTime: formatTime(event.startTime),
       eventLocation: event.location,
-      totalPrice: event.price, // Price per ticket
-      qrCode: `EVT-${event.id}-USR-${session.user.id}-${Date.now()}-${index}`, // Ensure unique QR
-    }));
+      totalPrice: event.price * ticketQuantity,
+    };
 
-    const success = await addTickets(newTickets);
+    const { success, message } = await addTickets(purchaseRequest);
 
     setIsBuying(false);
 
     if (success) {
       Alert.alert(
         "Tickets Purchased!",
-        "You've successfully purchased your tickets.",
+        `You've successfully purchased ${ticketQuantity} ticket(s).`,
         [
           {
-            text: "View My Tickets",
-            onPress: () =>
-              navigation.navigate("Main", { screen: "My Tickets" }),
+            text: "View Tickets",
+            onPress: () => navigation.navigate("Main", { screen: "My Tickets" }),
           },
           { text: "OK", style: "default" },
         ]
       );
+    } else {
+      Alert.alert("Purchase Failed", message || "Could not complete your purchase.");
     }
   };
 
