@@ -27,7 +27,8 @@ type EventsState = {
   syncEvents: (filters: { query: string; category: string }) => Promise<void>;
   fetchCategories: () => Promise<void>;
   fetchEventById: (id: number) => Promise<void>;
-  incrementAttendeeCount: (eventId: number, quantity: number) => void;
+  decrementEventSlots: (eventId: number, quantity: number) => void;
+  updateEventInCache: (updatedEvent: Event) => void; // New action
 };
 
 export const useEvents = create<EventsState>()((set, get) => ({
@@ -185,7 +186,7 @@ export const useEvents = create<EventsState>()((set, get) => ({
     }
   },
 
-  incrementAttendeeCount: (eventId: number, quantity: number) => {
+  decrementEventSlots: (eventId: number, quantity: number) => {
     set(state => {
       // Update the event in the main Discover list cache
       const updatedCachedEvents = state.cachedEvents.map(event => 
@@ -206,5 +207,29 @@ export const useEvents = create<EventsState>()((set, get) => ({
         currentEvent: updatedCurrentEvent
       };
     });
-  }
+  },
+    /**
+   * Updates a single event across all relevant caches after a real-time update.
+   */
+  updateEventInCache: (updatedEvent: Event) => {
+    set(state => {
+      // Update the main Discover list cache
+      const updatedCachedEvents = state.cachedEvents.map(event =>
+        event.id === updatedEvent.id ? updatedEvent : event
+      );
+
+      // Update the currently viewed event if it's the one that changed
+      const updatedCurrentEvent = state.currentEvent?.id === updatedEvent.id
+        ? updatedEvent
+        : state.currentEvent;
+
+      // Persist the updated event list to the device's detailed cache
+      eventService.cacheEventDetail(updatedEvent);
+      
+      return {
+        cachedEvents: updatedCachedEvents,
+        currentEvent: updatedCurrentEvent,
+      };
+    });
+  },
 }));

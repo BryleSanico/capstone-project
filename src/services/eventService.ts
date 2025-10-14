@@ -58,7 +58,10 @@ export const eventService = {
   cacheEvents: (events: Event[]) => storageService.setItem(storageKeys.getEventsCacheKey(), events),
   getLastSyncTimestamp: () => storageService.getItem<string>(storageKeys.getEventsSyncKey()),
   setLastSyncTimestamp: (ts: string) => storageService.setItem(storageKeys.getEventsSyncKey(), ts),
-
+  mapSupabaseToEvent,
+  cacheEventDetail: async (event: Event) => {
+    await cacheEventDetails([event]);
+  },
 
   async fetchEvents(page: number, limit: number, query: string, category: string, lastSyncTimestamp: string | null): Promise<{ events: Event[], totalCount: number }> {
     const { data, error } = await supabase.rpc('get_paginated_events', {

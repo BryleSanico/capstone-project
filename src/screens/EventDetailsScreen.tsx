@@ -23,6 +23,7 @@ import { useEvents } from "../stores/event-store";
 import { Ticket } from "../types/ticket";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { useTickets } from "../stores/tickets-store";
+import  useEventSubscription  from "../hooks/useEventSubscription";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -41,7 +42,7 @@ export default function EventDetailsScreen() {
   const { id } = route.params;
   const [isBuying, setIsBuying] = useState(false);
   const [ticketQuantity, setTicketQuantity] = useState(1);
-
+  useEventSubscription(id);
   const { session } = useAuth();
   const { currentEvent: event, isLoading, fetchEventById } = useEvents();
   const { addTickets, tickets: userTickets } = useTickets();
