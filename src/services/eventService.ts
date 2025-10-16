@@ -59,11 +59,14 @@ export const eventService = {
   getLastSyncTimestamp: () => storageService.getItem<string>(storageKeys.getEventsSyncKey()),
   setLastSyncTimestamp: (ts: string) => storageService.setItem(storageKeys.getEventsSyncKey(), ts),
   mapSupabaseToEvent,
-  cacheEventDetail: async (event: Event) => {
-    await cacheEventDetails([event]);
-  },
+  cacheEventDetails,
 
-  async fetchEvents(page: number, limit: number, query: string, category: string, lastSyncTimestamp: string | null): Promise<{ events: Event[], totalCount: number }> {
+  /**
+   * Fetches events from the server. Can be paginated or can fetch all/all updates.
+   * @param page - Page number for pagination. Pass null to fetch all.
+   * @param limit - Number of items per page. Pass null to fetch all.
+   */
+  async fetchEvents(page: number | null, limit: number | null, query: string, category: string, lastSyncTimestamp: string | null): Promise<{ events: Event[], totalCount: number }> {
     const { data, error } = await supabase.rpc('get_paginated_events', {
       p_page: page,
       p_limit: limit,
@@ -77,7 +80,6 @@ export const eventService = {
     const result = data[0] || { events: [], total_count: 0 };
     const events = (result.events || []).map(mapSupabaseToEvent);
     
-    // Proactively cache the full details of all fetched events.
     await cacheEventDetails(events);
     
     return {
@@ -93,24 +95,20 @@ export const eventService = {
   },
   
   async fetchEventById(id: number): Promise<Event | null> {
-    // Check the detailed cache first. This is now the primary source.
     const detailCache = await getDetailCache();
     if (detailCache[id]) {
       return detailCache[id];
     }
 
-    //  If not in the cache and offline, do nothing.
     if (!useNetworkStatus.getState().isConnected) {
       return null;
     }
 
-    // If online and not in cache, fetch from the server.
     const { data, error } = await supabase.rpc('get_events_by_ids', { event_ids: [id] });
     if (error) throw error;
     if (!data || data.length === 0) return null;
 
     const event = mapSupabaseToEvent(data[0]);
-    // Save the newly fetched event to the detailed cache for future use.
     await cacheEventDetails([event]);
     return event;
   },
@@ -129,7 +127,6 @@ export const eventService = {
             const { data, error } = await supabase.rpc('get_events_by_ids', { event_ids: idsToFetch });
             if (error) throw error;
             const fetchedEvents = data.map(mapSupabaseToEvent);
-            // Also cache these details.
             await cacheEventDetails(fetchedEvents);
             return [...cachedEvents, ...fetchedEvents];
         } catch (error) {

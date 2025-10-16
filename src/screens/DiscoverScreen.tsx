@@ -28,6 +28,7 @@ import { useEvents } from "../stores/event-store";
 import { TabParamList } from "../navigation/TabNavigator";
 import { Loader } from "../components/loaders/loader";
 import { searchCache } from "../utils/searchCache";
+import { EmptyState } from "../components/Errors/EmptyState";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -39,7 +40,8 @@ type DiscoverScreenNavigationProp = CompositeNavigationProp<
 export default function DiscoverScreen() {
   const navigation = useNavigation<DiscoverScreenNavigationProp>();
   const {
-    cachedEvents,
+    _fullEventCache,    // The complete list of all cached events.
+    displayedEvents,    // The paginated list for the UI.
     isLoading,
     isSyncing,
     hasMore,
@@ -74,41 +76,36 @@ export default function DiscoverScreen() {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // ONLY runs on initial mount or when filters change. It performs a full reload
+  // Initial data load and category change handler
   useEffect(() => {
-    // When the category changes, we treat it as a new search context.
     loadInitialEvents({ query: "", category: selectedCategory });
     fetchCategories();
-  }, [selectedCategory, loadInitialEvents, fetchCategories]);
+  }, [selectedCategory]);
 
+  // Sync data when the screen is re-focused
   useEffect(() => {
     if (isInitialMount.current) {
-      // Skip sync on the very first render
       isInitialMount.current = false;
-    } else if (isFocused) {
-      // On subsequent focuses (e.g., navigating back), just sync for new data.
-      syncEvents({ query: debouncedQuery, category: selectedCategory });
+    } else if (isFocused && !searchQuery) { // Only sync if not actively searching
+      syncEvents({ query: "", category: selectedCategory });
     }
   }, [isFocused]);
 
-  const displayedEvents = useMemo(
-    () => searchCache(cachedEvents, debouncedQuery),
-    [cachedEvents, debouncedQuery]
+  // Perform search on the full, unpaginated cache for the best results.
+  const searchResults = useMemo(
+    () => searchCache(_fullEventCache, debouncedQuery),
+    [_fullEventCache, debouncedQuery]
   );
 
-  // If the local search returns no results, and we're online, trigger a network search.
+   // Determine which list to show: search results or the main paginated list.
+  const dataForList = debouncedQuery ? searchResults : displayedEvents;
+
+  // Trigger a network search if local search yields no results and we're online.
   useEffect(() => {
-    if (debouncedQuery && displayedEvents.length === 0 && isConnected) {
-      // syncEvents will fetch from the backend using the search query
+    if (debouncedQuery && searchResults.length === 0 && isConnected) {
       syncEvents({ query: debouncedQuery, category: selectedCategory });
     }
-  }, [
-    displayedEvents.length,
-    debouncedQuery,
-    isConnected,
-    syncEvents,
-    selectedCategory,
-  ]);
+  }, [searchResults.length, debouncedQuery, isConnected, syncEvents, selectedCategory]);
 
   const handleEventPress = (event: Event) => {
     const isFavorite = favorites.includes(event.id);
@@ -120,7 +117,7 @@ export default function DiscoverScreen() {
 
   // Handler for infinite scroll
   const handleLoadMore = () => {
-    if (!isSyncing && hasMore && isConnected) {
+    if (!isSyncing && hasMore && isConnected && !debouncedQuery) {
       loadMoreEvents({ query: debouncedQuery, category: selectedCategory });
     }
   };
@@ -131,12 +128,12 @@ export default function DiscoverScreen() {
   }, [syncEvents, debouncedQuery, selectedCategory]);
 
   const renderFooter = () => {
-    if (!isSyncing || !hasMore) return null;
+    if (!isSyncing || !hasMore || debouncedQuery) return null;
     return <Loader size={50} />;
   };
 
   const renderContent = () => {
-    if ((isLoading || isSyncing) && cachedEvents.length === 0) {
+    if ((isLoading || isSyncing) && dataForList.length === 0) {
       return (
         <SafeAreaView style={[styles.container, styles.loadingContainer]}>
           <LoaderSearch size={120} />
@@ -145,7 +142,7 @@ export default function DiscoverScreen() {
     }
 
     // If there are no results, show the appropriate message.
-    if (displayedEvents.length === 0) {
+    if (dataForList.length === 0) {
       if (!isConnected) {
         return (
           <OfflineState
@@ -156,12 +153,7 @@ export default function DiscoverScreen() {
       }
       if (!isLoading && !isSyncing) {
         return (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No events found</Text>
-            <Text style={styles.emptySubtext}>
-              Try adjusting your search or filters
-            </Text>
-          </View>
+          <EmptyState icon="warning-outline" title="No events found" message="Try adjusting your search or filters" />
         );
       }
     }
@@ -169,7 +161,7 @@ export default function DiscoverScreen() {
     // Main list rendering from memoize cache
     return (
       <FlatList
-        data={displayedEvents}
+        data={dataForList}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <EventCard event={item} onPress={() => handleEventPress(item)} />
@@ -185,16 +177,6 @@ export default function DiscoverScreen() {
             onRefresh={handleRefresh}
             tintColor="#6366f1"
           />
-        }
-        ListEmptyComponent={
-          !isLoading && !isSyncing ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No events found</Text>
-              <Text style={styles.emptySubtext}>
-                Try adjusting your search or filters
-              </Text>
-            </View>
-          ) : null
         }
       />
     );
