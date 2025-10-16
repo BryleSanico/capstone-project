@@ -1,56 +1,42 @@
 import { supabase } from '../lib/supabase';
 
 export const favoritesService = {
-  // Fetches the numeric IDs of the user's favorite events using RPC function
-  async getFavorites(lastSyncTimestamp: string | null): Promise<number[]> {
+  /**
+   * Fetches the user's complete list of favorite event IDs from the server.
+   * This is called on login to establish the initial session state.
+   */
+  async getFavorites(): Promise<number[]> {
     const { data, error } = await supabase.rpc('get_user_favorites', {
-      last_sync_time: lastSyncTimestamp
+      last_sync_time: null // Pass null to get the full list
     });
 
     if (error) {
       console.error("Error fetching favorites:", error);
       throw error;
     }
-
+    // The RPC returns an array of objects like { event_id: 123 }, so we map it to a simple number array.
     return data.map((fav: { event_id: number }) => fav.event_id);
   },
-
-  // Get the most recent favorite timestamp for sync purposes
-  async getLatestFavoriteTimestamp(): Promise<string | null> {
-    const { data, error } = await supabase.rpc('get_latest_favorite_timestamp').single();
+  
+  /**
+   * Sends the calculated changes (additions and removals) to the database in a single batch.
+   * This is called by the debounced sync logic in the favorites-store.
+   */
+  async syncFavorites(userId: string, addedIds: number[], removedIds: number[]): Promise<void> {
+    if (addedIds.length === 0 && removedIds.length === 0) {
+      return; // No changes to sync
+    }
     
-    if (error) {
-        // Ignore RLS policy if no rows are returned, means the table is empty.
-        if (error.code === 'PGRST116') {
-            return null;
-        }
-        console.error("Error fetching latest favorite timestamp:", error);
-        throw error;
-    }
-    return data as string | null;
-  },
-
-  async addFavorite(eventId: number, userId: string): Promise<void> {
-    const { error } = await supabase
-      .from('user_favorites')
-      .insert({ event_id: eventId, user_id: userId });
+    const { error } = await supabase.rpc('batch_update_favorites', {
+      p_user_id: userId,
+      p_added_ids: addedIds,
+      p_removed_ids: removedIds,
+    });
 
     if (error) {
-      console.error("Error adding favorite:", error);
-      throw error;
-    }
-  },
-
-  async removeFavorite(eventId: number, userId: string): Promise<void> {
-    const { error } = await supabase
-      .from('user_favorites')
-      .delete()
-      .eq('event_id', eventId)
-      .eq('user_id', userId);
-
-    if (error) {
-      console.error("Error removing favorite:", error);
+      console.error("Error batch syncing favorites:", error);
       throw error;
     }
   },
 };
+

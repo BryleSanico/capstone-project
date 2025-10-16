@@ -125,9 +125,9 @@ export default function TicketDetailsScreen() {
             end={{ x: 1, y: 1 }}
           >
             <Text style={styles.eventTitle}>{ticket.eventTitle}</Text>
-            <Text style={styles.quantity}>
+            {/* <Text style={styles.quantity}>
               {ticket.quantity} ticket{ticket.quantity > 1 ? "s" : ""}
-            </Text>
+            </Text> */}
             <View style={styles.eventDetails}>
               <View style={styles.detailRow}>
                 <Icon

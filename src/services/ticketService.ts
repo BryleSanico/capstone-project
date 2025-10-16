@@ -1,3 +1,4 @@
+// filename: src/services/ticketService.ts
 import { supabase } from "../lib/supabase";
 import { Ticket } from "../types/ticket";
 import { getCurrentSession } from "../utils/sessionHelper";
@@ -16,13 +17,16 @@ const mapRpcToTicket = (item: any): Ticket => ({
 });
 
 const ticketService = {
-  // Fetches user tickets using the RPC function
-  async getUserTickets(lastSyncTimestamp: string | null): Promise<Ticket[]> {
+  /**
+   * Fetches all tickets for the currently logged-in user.
+   * This is now only called when the cache is empty or expired.
+   */
+  async getUserTickets(): Promise<Ticket[]> {
     const session = await getCurrentSession();
     if (!session?.user) return [];
 
     const { data, error } = await supabase.rpc('get_user_tickets', {
-        last_sync_time: lastSyncTimestamp
+        last_sync_time: null // Always get the full list
     });
 
     if (error) {
@@ -30,21 +34,6 @@ const ticketService = {
       throw error;
     }
     return data.map(mapRpcToTicket);
-  },
-
-  // Get the most recent ticket timestamp for sync purposes
-  async getLatestTicketTimestamp(): Promise<string | null> {
-    const { data, error } = await supabase.rpc('get_latest_ticket_timestamp').single();
-
-    if (error) {
-        // Ignore RLS policy if no rows are returned, means the table is empty.
-        if (error.code === 'PGRST116') {
-            return null;
-        }
-        console.error("Error fetching latest ticket timestamp:", error);
-        throw error;
-    }
-    return data as string | null;
   },
 
   // Calls the atomic 'purchase_tickets' RPC function to handle the entire purchase transaction.
@@ -82,3 +71,4 @@ const ticketService = {
 };
 
 export default ticketService;
+
