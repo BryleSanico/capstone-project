@@ -3,15 +3,10 @@ import React, {
   useLayoutEffect,
   useEffect,
   useCallback,
+  useRef,
+  useMemo,
 } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Text,
-  ActivityIndicator,
-  RefreshControl,
-} from "react-native";
+import { View, StyleSheet, FlatList, Text, RefreshControl } from "react-native";
 import {
   useNavigation,
   CompositeNavigationProp,
@@ -32,6 +27,8 @@ import { useFavorites } from "../stores/favorites-store";
 import { useEvents } from "../stores/event-store";
 import { TabParamList } from "../navigation/TabNavigator";
 import { Loader } from "../components/loaders/loader";
+import { searchCache } from "../utils/searchCache";
+import { EmptyState } from "../components/Errors/EmptyState";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -43,27 +40,27 @@ type DiscoverScreenNavigationProp = CompositeNavigationProp<
 export default function DiscoverScreen() {
   const navigation = useNavigation<DiscoverScreenNavigationProp>();
   const {
-    events,
+    _fullEventCache,    // The complete list of all cached events.
+    displayedEvents,    // The paginated list for the UI.
     isLoading,
-    isPaginating,
+    isSyncing,
     hasMore,
     error,
-    fetchEvents,
-    fetchMoreEvents,
+    loadInitialEvents,
+    loadMoreEvents,
+    syncEvents,
     fetchCategories,
   } = useEvents();
-  const { favorites } = useFavorites();
 
+  const { favorites } = useFavorites();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const isFocused = useIsFocused();
-
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
- 
-  // Subscribe to reactive network state
+  const isFocused = useIsFocused();
   const isConnected = useNetworkStatus((state) => state.isConnected);
-  
+  // Ref to prevent syncing on the very first mount
+  const isInitialMount = useRef(true);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       title: "Discover Events",
@@ -73,33 +70,42 @@ export default function DiscoverScreen() {
     });
   }, [navigation]);
 
+  // Debounce search input
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-    }, 500);
-
-    return () => {
-      clearTimeout(handler);
-    };
+    const handler = setTimeout(() => setDebouncedQuery(searchQuery), 500);
+    return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Used useCallback to prevent re-creating the function on every render
-  const handleFetch = useCallback(() => {
-    fetchEvents({ query: debouncedQuery, category: selectedCategory });
-  }, [debouncedQuery, selectedCategory, fetchEvents]);
-
-  // Effect for initial load and filter changes
+  // Initial data load and category change handler
   useEffect(() => {
-    if (isFocused) {
-      handleFetch();
-    }
-  }, [debouncedQuery, selectedCategory, isFocused]);
+    loadInitialEvents({ query: "", category: selectedCategory });
+    fetchCategories();
+  }, [selectedCategory]);
 
+  // Sync data when the screen is re-focused
   useEffect(() => {
-    if (isFocused) {
-      fetchCategories();
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+    } else if (isFocused && !searchQuery) { // Only sync if not actively searching
+      syncEvents({ query: "", category: selectedCategory });
     }
-  }, [fetchCategories, isFocused]);
+  }, [isFocused]);
+
+  // Perform search on the full, unpaginated cache for the best results.
+  const searchResults = useMemo(
+    () => searchCache(_fullEventCache, debouncedQuery),
+    [_fullEventCache, debouncedQuery]
+  );
+
+   // Determine which list to show: search results or the main paginated list.
+  const dataForList = debouncedQuery ? searchResults : displayedEvents;
+
+  // Trigger a network search if local search yields no results and we're online.
+  useEffect(() => {
+    if (debouncedQuery && searchResults.length === 0 && isConnected) {
+      syncEvents({ query: debouncedQuery, category: selectedCategory });
+    }
+  }, [searchResults.length, debouncedQuery, isConnected, syncEvents, selectedCategory]);
 
   const handleEventPress = (event: Event) => {
     const isFavorite = favorites.includes(event.id);
@@ -109,57 +115,69 @@ export default function DiscoverScreen() {
     });
   };
 
-  
+  // Handler for infinite scroll
   const handleLoadMore = () => {
-    if (!isPaginating && hasMore) {
-      fetchMoreEvents({ query: debouncedQuery, category: selectedCategory });
+    if (!isSyncing && hasMore && isConnected && !debouncedQuery) {
+      loadMoreEvents({ query: debouncedQuery, category: selectedCategory });
     }
   };
 
+  // Handler for pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    await handleFetch();
-    setIsRefreshing(false);
-  }, [handleFetch]);
-  
+    await syncEvents({ query: debouncedQuery, category: selectedCategory });
+  }, [syncEvents, debouncedQuery, selectedCategory]);
+
   const renderFooter = () => {
-    if (!isPaginating) return null;
+    if (!isSyncing || !hasMore || debouncedQuery) return null;
     return <Loader size={50} />;
   };
-  
 
   const renderContent = () => {
-    if (error && !isLoading) {
-    return <OfflineState message={error} onRefresh={handleRefresh} />;
+    if ((isLoading || isSyncing) && dataForList.length === 0) {
+      return (
+        <SafeAreaView style={[styles.container, styles.loadingContainer]}>
+          <LoaderSearch size={120} />
+        </SafeAreaView>
+      );
     }
-    
-    if (!isConnected && isFocused) {
-      return <OfflineState message="You are offline. Please check your network connection." onRefresh={handleRefresh} />;
-    }
-    if (isLoading && events.length === 0) {
-    return (
-      <SafeAreaView style={[styles.container, styles.loadingContainer]}>
-        <LoaderSearch size={120} />
-      </SafeAreaView>
-    );
-    }
+
+    // If there are no results, show the appropriate message.
+    if (dataForList.length === 0) {
+      if (!isConnected) {
         return (
+          <OfflineState
+            message="You are offline. Please check your network connection."
+            onRefresh={handleRefresh}
+          />
+        );
+      }
+      if (!isLoading && !isSyncing) {
+        return (
+          <EmptyState icon="warning-outline" title="No events found" message="Try adjusting your search or filters" />
+        );
+      }
+    }
+
+    // Main list rendering from memoize cache
+    return (
       <FlatList
-        data={events}
+        data={dataForList}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => <EventCard event={item} onPress={() => handleEventPress(item)} />}
+        renderItem={({ item }) => (
+          <EventCard event={item} onPress={() => handleEventPress(item)} />
+        )}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
+        onEndReachedThreshold={0.7}
         ListFooterComponent={renderFooter}
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor="#6366f1" />}
-        ListEmptyComponent={!isLoading && !error ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No events found</Text>
-            <Text style={styles.emptySubtext}>Try adjusting your search or filters</Text>
-          </View>
-        ) : null}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={handleRefresh}
+            tintColor="#6366f1"
+          />
+        }
       />
     );
   };
@@ -180,43 +198,34 @@ export default function DiscoverScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
   },
   listContent: {
     paddingTop: 8,
     paddingBottom: 20,
   },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#f8f9fa',
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 100,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#999',
-  },
-    loadingContainer: {
+  loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingTop: 100,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#666",
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#999",
+  },
 });
-

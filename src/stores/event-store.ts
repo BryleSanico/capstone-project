@@ -1,109 +1,270 @@
-import { create } from 'zustand';
-import { Event } from '../types/event';
-import { eventService } from '../services/eventService';
-import { useNetworkStatus } from '../stores/network-store';
+import { create } from "zustand";
+import { Event } from "../types/event";
+import { eventService } from "../services/eventService";
+import { useNetworkStatus } from "../stores/network-store";
+
+const EVENTS_PER_PAGE = 2;
 
 type EventsState = {
-  events: Event[];
-  categories: string[];
-  favoriteEvents: Event[];
-  currentEvent: Event | null;
+  // This holds the full list of all events ever loaded/synced.
+  _fullEventCache: Event[];
+  // This holds only the events currently visible in the FlatList.
+  displayedEvents: Event[];
+  currentPage: number;
+  totalEvents: number;
   isLoading: boolean;
-  isPaginating: boolean;
+  isSyncing: boolean;
   error: string | null;
   hasMore: boolean;
-  fetchEvents: (filters: { query: string; category: string }) => Promise<void>;
-  fetchMoreEvents: (filters: { query: string; category: string }) => Promise<void>;
-  fetchFavoriteEvents: (ids: number[]) => Promise<void>;
-  fetchEventById: (id: number) => Promise<void>;
+  categories: string[];
+  currentEvent: Event | null;
+
+  loadInitialEvents: (filters: {
+    query: string;
+    category: string;
+  }) => Promise<void>;
+  loadMoreEvents: (filters: {
+    query: string;
+    category: string;
+  }) => Promise<void>;
+  syncEvents: (filters: { query: string; category: string }) => Promise<void>;
   fetchCategories: () => Promise<void>;
+  fetchEventById: (id: number) => Promise<void>;
+  decrementEventSlots: (eventId: number, quantity: number) => void;
+  updateEventInCache: (updatedEvent: Event) => void;
 };
 
 export const useEvents = create<EventsState>()((set, get) => ({
-  events: [],
-  categories: ['All'],
-  favoriteEvents: [],
-  currentEvent: null,
+  _fullEventCache: [],
+  displayedEvents: [],
+  currentPage: 1,
+  totalEvents: 0,
   isLoading: false,
-  isPaginating: false,
+  isSyncing: false,
   error: null,
   hasMore: true,
+  categories: ["All"],
+  currentEvent: null,
 
-  fetchEvents: async ({ query, category }) => {
-    // Check network status before making an API call
-    if (!useNetworkStatus.getState().isConnected) {
-      set({ error: "You are offline. Please check your network connection.", isLoading: false, events: [] });
-      return;
-    }
+  loadInitialEvents: async (filters) => {
+    set({ isLoading: true, error: null, currentPage: 1 });
 
-    set({ isLoading: true, error: null });
-    try {
-      const data = await eventService.fetchEvents(0, query, category);
+    const fullCache = await eventService.getCachedEvents();
+
+    if (fullCache.length > 0) {
       set({
-        events: data,
-        hasMore: data.length > 0,
+        _fullEventCache: fullCache,
+        displayedEvents: fullCache.slice(0, EVENTS_PER_PAGE),
+        totalEvents: fullCache.length,
+        hasMore: fullCache.length > EVENTS_PER_PAGE,
         isLoading: false,
       });
-    } catch (err: any) {
-      set({ error: "Sorry, we couldn't load events. Please try again later.", isLoading: false });
+      get().syncEvents(filters); // Sync in background
+    } else {
+      await get().syncEvents(filters); // Sync and show loader
+      set({ isLoading: false });
     }
   },
 
-  fetchMoreEvents: async ({ query, category }) => {
-    const { events, isPaginating } = get();
-    if (isPaginating || !get().hasMore) return;
+  loadMoreEvents: async () => {
+    const {
+      isSyncing,
+      hasMore,
+      currentPage,
+      _fullEventCache,
+      displayedEvents,
+    } = get();
+    if (isSyncing || !hasMore) return;
 
-    // Prevent pagination attempts while offline
+    const nextPage = currentPage + 1;
+    const nextEventsOffset = currentPage * EVENTS_PER_PAGE;
+
+    // First, try to load more from the full local cache
+    if (nextEventsOffset < _fullEventCache.length) {
+      const nextBatch = _fullEventCache.slice(
+        nextEventsOffset,
+        nextEventsOffset + EVENTS_PER_PAGE
+      );
+      set({
+        displayedEvents: [...displayedEvents, ...nextBatch],
+        currentPage: nextPage,
+        hasMore: nextEventsOffset + EVENTS_PER_PAGE < _fullEventCache.length,
+      });
+      return;
+    }
+
+    // If local cache is exhausted, fetch from network
+    if (!useNetworkStatus.getState().isConnected) return;
+
+    set({ isSyncing: true });
+    try {
+      const { events: newEvents, totalCount } = await eventService.fetchEvents(
+        nextPage,
+        EVENTS_PER_PAGE,
+        "",
+        "All",
+        null
+      );
+
+      if (newEvents.length > 0) {
+        const updatedFullCache = [..._fullEventCache, ...newEvents];
+        await eventService.cacheEvents(updatedFullCache);
+        set({
+          _fullEventCache: updatedFullCache,
+          displayedEvents: [...displayedEvents, ...newEvents],
+          currentPage: nextPage,
+          totalEvents: totalCount,
+          hasMore: updatedFullCache.length < totalCount,
+        });
+      } else {
+        set({ hasMore: false });
+      }
+    } catch (err: any) {
+      set({ error: "Could not load more events." });
+    } finally {
+      set({ isSyncing: false });
+    }
+  },
+
+  syncEvents: async (filters) => {
     if (!useNetworkStatus.getState().isConnected) {
+      set({ error: "You are offline." });
       return;
     }
+    set({ isSyncing: true, error: null });
 
-    set({ isPaginating: true });
     try {
-      const page = Math.floor(events.length / 5);
-      const data = await eventService.fetchEvents(page + 1, query, category);
-      set((state) => ({
-        events: [...state.events, ...data],
-        hasMore: data.length > 0,
-        isPaginating: false,
-      }));
-    } catch (err: any) {
-      // Stop paginating
-      set({ isPaginating: false, hasMore: false });
-      console.error("Pagination failed:", err.message);
-    }
-  },
+      const localTimestamp = await eventService.getLastSyncTimestamp();
+      const serverTimestamp = await eventService.getLatestEventTimestamp();
 
-  fetchFavoriteEvents: async (ids: number[]) => {
-    if (ids.length === 0) {
-      set({ favoriteEvents: [] });
-      return;
-    }
-    set({ isLoading: true, error: null });
-    try {
-      const data = await eventService.fetchFavoriteEvents(ids);
-      set({ favoriteEvents: data, isLoading: false });
-    } catch (err: any) {
-      set({ error: err.message, isLoading: false });
-    }
-  },
+      if (
+        localTimestamp &&
+        serverTimestamp &&
+        localTimestamp >= serverTimestamp
+      ) {
+        set({ isSyncing: false });
+        return; // Cache is up-to-date
+      }
 
-  fetchEventById: async (id: number) => {
-    set({ isLoading: true, error: null, currentEvent: null });
-    try {
-      const data = await eventService.fetchEventById(id);
-      set({ currentEvent: data, isLoading: false });
+      // Fetch all updates since last sync, or all events if no cache exists
+      const { events: fetchedEvents, totalCount } =
+        await eventService.fetchEvents(
+          null,
+          null,
+          filters.query,
+          filters.category,
+          localTimestamp
+        );
+
+      const fullCache = await eventService.getCachedEvents();
+      const eventsMap = new Map(fullCache.map((e) => [e.id, e]));
+      fetchedEvents.forEach((event) => eventsMap.set(event.id, event));
+
+      const mergedEvents = Array.from(eventsMap.values()).sort(
+        (a, b) =>
+          new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+      );
+
+      await eventService.cacheEvents(mergedEvents);
+
+      set({
+        _fullEventCache: mergedEvents,
+        displayedEvents: mergedEvents.slice(0, EVENTS_PER_PAGE),
+        currentPage: 1,
+        totalEvents: totalCount > 0 ? totalCount : mergedEvents.length,
+        hasMore: mergedEvents.length > EVENTS_PER_PAGE,
+      });
+
+      if (serverTimestamp) {
+        await eventService.setLastSyncTimestamp(serverTimestamp);
+      }
     } catch (err: any) {
-      set({ error: err.message, isLoading: false });
+      console.error("Sync failed:", err);
+      set({ error: "Failed to sync with the server." });
+    } finally {
+      set({ isSyncing: false });
     }
   },
 
   fetchCategories: async () => {
     try {
       const data = await eventService.fetchCategories();
-      set({ categories: data });
+      set({ categories: [...new Set(data)] });
     } catch (err: any) {
       console.error("Failed to fetch categories:", err.message);
     }
+  },
+
+  fetchEventById: async (id: number) => {
+    const existingEvent = get()._fullEventCache.find((e) => e.id === id);
+    if (existingEvent) {
+      set({ currentEvent: existingEvent, isLoading: false, error: null });
+      return;
+    }
+
+    set({ isLoading: true, error: null, currentEvent: null });
+    try {
+      const data = await eventService.fetchEventById(id);
+      if (data) {
+        set({ currentEvent: data });
+      } else {
+        set({ error: "Event details could not be loaded." });
+      }
+    } catch (err: any) {
+      set({ error: "Failed to load event details." });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  decrementEventSlots: (eventId: number, quantity: number) => {
+    set((state) => {
+      const updateFn = (event: Event) =>
+        event.id === eventId
+          ? {
+              ...event,
+              attendees: event.attendees + quantity,
+              availableSlot: event.availableSlot - quantity,
+            }
+          : event;
+
+      const updatedFullCache = state._fullEventCache.map(updateFn);
+      const updatedDisplayedEvents = state.displayedEvents.map(updateFn);
+      const updatedCurrentEvent =
+        state.currentEvent?.id === eventId
+          ? updateFn(state.currentEvent)
+          : state.currentEvent;
+
+      eventService.cacheEvents(updatedFullCache);
+
+      return {
+        _fullEventCache: updatedFullCache,
+        displayedEvents: updatedDisplayedEvents,
+        currentEvent: updatedCurrentEvent,
+      };
+    });
+  },
+
+  updateEventInCache: (updatedEvent: Event) => {
+    set((state) => {
+      const updateFn = (event: Event) =>
+        event.id === updatedEvent.id ? updatedEvent : event;
+
+      const updatedFullCache = state._fullEventCache.map(updateFn);
+      const updatedDisplayedEvents = state.displayedEvents.map(updateFn);
+      const updatedCurrentEvent =
+        state.currentEvent?.id === updatedEvent.id
+          ? updatedEvent
+          : state.currentEvent;
+
+      eventService.cacheEvents(updatedFullCache);
+      eventService.cacheEventDetails([updatedEvent]);
+
+      return {
+        _fullEventCache: updatedFullCache,
+        displayedEvents: updatedDisplayedEvents,
+        currentEvent: updatedCurrentEvent,
+      };
+    });
   },
 }));

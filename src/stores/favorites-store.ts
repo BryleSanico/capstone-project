@@ -1,145 +1,129 @@
+// filename: src/stores/favorites-store.ts
 import { create } from "zustand";
-import storageService from "../services/storageService";
-import { favoritesService } from "../services/favoritesService";
 import { Alert } from "react-native";
+import { favoritesService } from "../services/favoritesService";
+import { eventService } from "../services/eventService";
 import { getCurrentSession } from "../utils/sessionHelper";
-import { useNetworkStatus } from "./network-store";
 import { Event } from "../types/event";
+import { useNetworkStatus } from "./network-store";
+import storageService from "../services/storageService";
+import { storageKeys } from "../utils/storageKeys";
 
-// Use two distinct keys to separate guest and logged-in user data
-const GUEST_FAVORITES_KEY = "guest_favorite_events";
-const USER_FAVORITES_KEY_PREFIX = "user_favorites"; 
-const EVENTS_CACHE_KEY = "events_cache";
+type CachedFavorites = {
+  ids: number[];
+  lastUpdatedAt: number;
+};
+
+const CACHE_EXPIRATION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+let syncDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 type FavoritesState = {
+  initialFavorites: Set<number>;
   favorites: number[];
+  favoriteEvents: Event[];
   isLoading: boolean;
-  unsyncedIds: number[]; 
+  isSyncing: boolean;
   loadFavorites: () => Promise<void>;
-  toggleFavorite: (event: Event) => Promise<void>;
-  syncGuestFavorites: () => Promise<void>;
-  checkForUnsyncedFavorites: () => Promise<void>;
+  toggleFavorite: (event: Event) => void;
 };
 
 export const useFavorites = create<FavoritesState>()((set, get) => ({
+  initialFavorites: new Set(),
   favorites: [],
+  favoriteEvents: [],
   isLoading: false,
-  unsyncedIds: [],
+  isSyncing: false,
 
   loadFavorites: async () => {
     set({ isLoading: true });
     const session = await getCurrentSession();
     const userId = session?.user?.id;
-    const { isConnected } = useNetworkStatus.getState();
 
-    let ids: number[] = [];
-    // Determine the correct local storage key
-    const storageKey = userId ? `${USER_FAVORITES_KEY_PREFIX}${userId}` : GUEST_FAVORITES_KEY;
-    
-    if (userId && isConnected) {
-         // ONLINE & LOGGED IN: Fetch from DB, with local cache as fallback
+    if (!userId) {
+      set({ favorites: [], favoriteEvents: [], initialFavorites: new Set(), isLoading: false });
+      return;
+    }
+
+    const favoritesCacheKey = storageKeys.getFavoritesIdsKey(userId);
+    const cachedData = await storageService.getItem<CachedFavorites>(favoritesCacheKey);
+    const isCacheExpired = !cachedData || (Date.now() - cachedData.lastUpdatedAt) > CACHE_EXPIRATION_DURATION;
+
+    if (cachedData && !isCacheExpired) {
+      // If valid cache exists, load it and stop.
+      const ids = cachedData.ids;
+      set({ favorites: ids, initialFavorites: new Set(ids) });
+      if (ids.length > 0) {
+        const events = await eventService.fetchEventsByIds(ids);
+        set({ favoriteEvents: events });
+      }
+      set({ isLoading: false });
+    } else if (useNetworkStatus.getState().isConnected) {
+      // If cache is expired or missing, and we're online, fetch from server.
       try {
-        ids = await favoritesService.getFavorites();
-        await storageService.setItem(storageKey, ids);
+        const serverIds = await favoritesService.getFavorites();
+        const serverIdSet = new Set(serverIds);
+        set({ favorites: serverIds, initialFavorites: serverIdSet });
+        
+        if (serverIds.length > 0) {
+          const events = await eventService.fetchEventsByIds(serverIds);
+          set({ favoriteEvents: events });
+        } else {
+          set({ favoriteEvents: [] });
+        }
+        await storageService.setItem(favoritesCacheKey, { ids: serverIds, lastUpdatedAt: Date.now() });
       } catch (error) {
-        console.log("Offline Fallback: Failed to load favorites from DB, using local cache.", error);
-        ids = await storageService.getItem<number[]>(storageKey) || [];
+        console.error("Failed to load favorites from server:", error);
+      } finally {
+        set({ isLoading: false });
       }
     } else {
-      // OFFLINE or GUEST: Load directly from local storage
-      ids = await storageService.getItem<number[]>(storageKey) || [];
-    }
-    set({ favorites: ids, isLoading: false });
-  },
-
-  checkForUnsyncedFavorites: async () => {
-    const session = await getCurrentSession();
-    const userId = session?.user?.id;
-    if (!userId) return;
-
-    // Load both the user's current DB favorites and the guest favorites
-    const userFavorites = get().favorites;
-    const guestFavorites = await storageService.getItem<number[]>(GUEST_FAVORITES_KEY) || [];
-
-    // Find favorites that exist in guest storage but not in the user's account
-    const newFavorites = guestFavorites.filter(id => !userFavorites.includes(id));
-
-    if (newFavorites.length > 0) {
-      set({ unsyncedIds: newFavorites });
-      Alert.alert(
-        "Sync Favorites?",
-        `You have ${newFavorites.length} favorite event(s) saved from when you were browsing as a guest. Would you like to add them to your account?`,
-        [
-          { text: "Not Now", style: "cancel", onPress: () => set({ unsyncedIds: [] }) },
-          { text: "Yes, Sync", onPress: () => get().syncGuestFavorites() },
-        ]
-      );
+      // Offline with no valid cache.
+      set({ isLoading: false });
     }
   },
 
-  syncGuestFavorites: async () => {
-    const session = await getCurrentSession();
-    const userId = session?.user?.id;
-    const { unsyncedIds } = get();
+  toggleFavorite: (event: Event) => {
+    const { favorites, favoriteEvents, isSyncing, initialFavorites } = get();
+    const isCurrentlyFavorite = favorites.includes(event.id);
 
-    if (!userId || unsyncedIds.length === 0) return;
+    const updatedIds = isCurrentlyFavorite ? favorites.filter(id => id !== event.id) : [...favorites, event.id];
+    const updatedEvents = isCurrentlyFavorite ? favoriteEvents.filter(e => e.id !== event.id) : [...favoriteEvents, event];
 
-    try {
-      // Add each unsynced favorite to the database
-      for (const eventId of unsyncedIds) {
-        await favoritesService.addFavorite(eventId, userId);
+    set({ favorites: updatedIds, favoriteEvents: updatedEvents });
+
+    if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
+    
+    syncDebounceTimer = setTimeout(async () => {
+      const { favorites: finalFavorites } = get();
+      const session = await getCurrentSession();
+      const userId = session?.user?.id;
+
+      if (isSyncing || !userId || !useNetworkStatus.getState().isConnected) return;
+
+      set({ isSyncing: true });
+      const initialSet = initialFavorites;
+      const currentSet = new Set(finalFavorites);
+      const added = finalFavorites.filter(id => !initialSet.has(id));
+      const removed = Array.from(initialSet).filter(id => !currentSet.has(id));
+
+      if (added.length === 0 && removed.length === 0) {
+        set({ isSyncing: false });
+        return;
       }
 
-      // Merge the unsynced favorites into the current state
-      set(state => ({
-        favorites: [...new Set([...state.favorites, ...unsyncedIds])], // Corrected to 'favorites'
-        unsyncedIds: [],
-      }));
-
-      Alert.alert("Success!", "Your guest favorites have been added to your account.");
-
-    } catch (error) {
-      console.error("Error syncing guest favorites:", error);
-      Alert.alert("Sync Failed", "We couldn't sync your favorites right now. Please try again later.");
-    }
-  },
-
-  toggleFavorite: async (event: Event) => { 
-    const eventId = event.id; 
-    const session = await getCurrentSession();
-    const userId = session?.user?.id;
-    const { favorites } = get();
-    const isCurrentlyFavorite = favorites.includes(eventId);
-
-    const updatedIds = isCurrentlyFavorite
-      ? favorites.filter((id) => id !== eventId)
-      : [...favorites, eventId];
-    
-    set({ favorites: updatedIds });
-
-    // When a user favorites an event, cache its details for offline use.
-    if (!isCurrentlyFavorite) {
-      const cache = await storageService.getItem<Record<number, Event>>(EVENTS_CACHE_KEY) || {};
-      cache[eventId] = event;
-      await storageService.setItem(EVENTS_CACHE_KEY, cache);
-    }
-
-    const storageKey = userId ? `${USER_FAVORITES_KEY_PREFIX}${userId}` : GUEST_FAVORITES_KEY;
-    await storageService.setItem(storageKey, updatedIds);
-    
-    if (userId) {
       try {
-        if (isCurrentlyFavorite) {
-          await favoritesService.removeFavorite(eventId, userId);
-        } else {
-          await favoritesService.addFavorite(eventId, userId);
-        }
+        await favoritesService.syncFavorites(userId, added, removed);
+        set({ initialFavorites: currentSet });
+        // Update cache timestamp after successful sync
+        const favoritesCacheKey = storageKeys.getFavoritesIdsKey(userId);
+        await storageService.setItem(favoritesCacheKey, { ids: finalFavorites, lastUpdatedAt: Date.now() });
       } catch (error) {
-        set({ favorites }); // Revert on failure
-        await storageService.setItem(storageKey, favorites);
-        Alert.alert("Update Failed", "Could not update your favorites. Please check your connection.");
+        Alert.alert("Sync Failed", "Your favorite changes could not be saved.");
+        set({ favorites: Array.from(initialSet), favoriteEvents: get().favoriteEvents.filter(e => initialSet.has(e.id)) });
+      } finally {
+        set({ isSyncing: false });
       }
-    }
+    }, 2000);
   },
 }));
 

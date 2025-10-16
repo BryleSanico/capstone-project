@@ -1,28 +1,30 @@
-import React, { useEffect, useLayoutEffect } from "react";
+import React, { useCallback, useEffect, useLayoutEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator,
   SafeAreaView,
+  RefreshControl,
 } from "react-native";
 import {
   useNavigation,
   CompositeNavigationProp,
+  useIsFocused,
 } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import Icon from "react-native-vector-icons/Ionicons";
-import { useEvents } from "../stores/event-store";
 import { Event } from "../types/event";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { TabParamList } from "../navigation/TabNavigator";
 import EventCard from "../components/EventCard";
-import { useIsFocused } from "@react-navigation/native";
 import { useFavorites } from "../stores/favorites-store";
 import { Loader } from "../components/loaders/loader";
+import { useNetworkStatus } from "../stores/network-store";
+import { OfflineState } from "../components/Errors/offlineState";
+import { EmptyState } from "../components/Errors/EmptyState";
 
 // Define the navigation tab
 // Note: The screen name here must match the one in TabNavigator.tsx
@@ -34,20 +36,10 @@ type FavoritesScreenNavigationProp = CompositeNavigationProp<
 export default function FavoritesScreen() {
   const navigation = useNavigation<FavoritesScreenNavigationProp>();
   const isFocused = useIsFocused();
-  const { favorites, loadFavorites } = useFavorites();
-  const { favoriteEvents, isLoading, error, fetchFavoriteEvents } = useEvents();
-
-
-  useEffect(() => {
-    loadFavorites();
-  }, [loadFavorites]);
-
-  // Fetch favorite events when the screen is focused or the favorites list changes
-  useEffect(() => {
-    if (isFocused) {
-      fetchFavoriteEvents(favorites);
-    }
-  }, [isFocused, favorites, fetchFavoriteEvents]);
+  
+  // Data comes directly from the favorites store
+  const { favoriteEvents, isLoading, isSyncing, loadFavorites } = useFavorites();
+  const isConnected = useNetworkStatus(state => state.isConnected);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -64,8 +56,29 @@ export default function FavoritesScreen() {
     });
   };
 
+   const handleRefresh = useCallback(() => {
+    loadFavorites();
+  }, [loadFavorites]);
+  
+  const renderEmptyState = () => (
+   <EmptyState
+      hasAction={true}
+      actionText="Explore Events"
+      navigateTo="Discover"
+      icon="heart-outline"
+      title="No Favorites Yet"
+      message=" Start exploring events and tap the heart icon to save your favorites"
+    />
+  );
 
-  if (isLoading) {
+  const renderOfflineState = () => (      
+     <OfflineState
+      message="You are offline. Please check your network connection."
+      onRefresh={handleRefresh}
+    />
+  );
+
+  if (isLoading && favoriteEvents.length === 0) {
     return (
       <SafeAreaView style={[styles.container, styles.loadingContainer]}>
         <Loader size={150} />
@@ -73,37 +86,22 @@ export default function FavoritesScreen() {
     );
   }
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <View style={styles.emptyIconContainer}>
-        <Icon name="heart-outline" size={64} color="#e0e0e0" />
-      </View>
-      <Text style={styles.emptyTitle}>No Favorites Yet</Text>
-      <Text style={styles.emptySubtitle}>
-        Start exploring events and tap the heart icon to save your favorites
-      </Text>
-      <TouchableOpacity
-        style={styles.exploreButton}
-        onPress={() => navigation.navigate("Discover")}
-      >
-        <Text style={styles.exploreButtonText}>Explore Events</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
   return (
     <View style={styles.container}>
       {favoriteEvents.length === 0 ? (
-        renderEmptyState()
+       !isConnected ? renderOfflineState() : renderEmptyState()
       ) : (
         <FlatList
-          data={favoriteEvents}
+          data={favoriteEvents} // Use the new state property
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <EventCard event={item} onPress={() => handleEventPress(item)} />
           )}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={isSyncing} onRefresh={handleRefresh} tintColor="#6366f1" />
+          }
         />
       )}
     </View>
@@ -115,63 +113,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f8f9fa",
   },
-  centerContent: {
+  loadingContainer: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
   listContent: {
     padding: 16,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 32,
-  },
-  emptyIconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 24,
-    borderWidth: 2,
-    borderColor: "#f0f0f0",
-  },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#1a1a1a",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  emptySubtitle: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    lineHeight: 24,
-    marginBottom: 32,
-  },
-  exploreButton: {
-    backgroundColor: "#6366f1",
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 12,
-    shadowColor: "#6366f1",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  exploreButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#fff",
-  },
-    loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
 });

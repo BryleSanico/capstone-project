@@ -4,65 +4,101 @@ import storageService from "../services/storageService";
 import ticketService from "../services/ticketService";
 import { getCurrentSession } from "../utils/sessionHelper";
 import { useNetworkStatus } from "./network-store";
+import { storageKeys } from "../utils/storageKeys"; 
+import { useEvents } from "./event-store"; 
 
-const TICKETS_STORAGE_KEY = "user_tickets";
+type CachedTickets = {
+  tickets: Ticket[];
+  lastUpdatedAt: number;
+};
+
+const CACHE_EXPIRATION_DURATION = 24 * 60 * 60 * 1000;
 
 type TicketsState = {
   tickets: Ticket[];
   isLoading: boolean;
-  addTicket: (ticketData: Omit<Ticket, 'id' | 'purchaseDate'>) => Promise<boolean>;
+  isSyncing: boolean;
+  addTickets: (purchaseRequest: {
+    eventId: number;
+    quantity: number;
+    eventTitle: string;
+    eventDate: string;
+    eventTime: string;
+    eventLocation: string;
+    totalPrice: number;
+  }) => Promise<{ success: boolean; message?: string }>;
   loadTickets: () => Promise<void>;
 };
 
 export const useTickets = create<TicketsState>()((set, get) => ({
   tickets: [],
-  isLoading: true,
+  isLoading: false,
+  isSyncing: false,
 
-  loadTickets: async () => {
+   loadTickets: async () => {
     set({ isLoading: true });
     const session = await getCurrentSession();
-    const { isConnected } = useNetworkStatus.getState();
+    const userId = session?.user?.id;
 
-    if (session?.user && isConnected) {
-       // ONLINE & LOGGED IN: Fetch from DB, with local cache as fallback
+    if (!userId) {
+      set({ tickets: [], isLoading: false });
+      return;
+    }
+    
+    const ticketsCacheKey = storageKeys.getTicketsCacheKey(userId);
+    const cachedData = await storageService.getItem<CachedTickets>(ticketsCacheKey);
+    const isCacheExpired = !cachedData || (Date.now() - cachedData.lastUpdatedAt) > CACHE_EXPIRATION_DURATION;
+
+    if (cachedData && !isCacheExpired) {
+      // If valid cache exists, load it and stop.
+      set({ tickets: cachedData.tickets, isLoading: false });
+    } else if (useNetworkStatus.getState().isConnected) {
+      // If cache is expired or missing, and we're online, fetch from server.
       try {
-        const userTickets = await ticketService.getUserTickets();
-        set({ tickets: userTickets, isLoading: false });
-        await storageService.setItem(TICKETS_STORAGE_KEY, userTickets);
-      } catch (err) {
-        console.error("Offline Fallback: Failed to load tickets from DB, using local cache.", err);
-        const localTickets = await storageService.getItem<Ticket[]>(TICKETS_STORAGE_KEY) || [];
-        set({ tickets: localTickets, isLoading: false });
+        const serverTickets = await ticketService.getUserTickets();
+        set({ tickets: serverTickets });
+        await storageService.setItem(ticketsCacheKey, { tickets: serverTickets, lastUpdatedAt: Date.now() });
+      } catch (error) {
+        console.error("Failed to load tickets from server:", error);
+      } finally {
+        set({ isLoading: false });
       }
+    } else if (cachedData) {
+      // Offline, but we have stale cache data to show.
+      set({ tickets: cachedData.tickets, isLoading: false });
     } else {
-      // OFFLINE or GUEST: Load directly from local storage
-      const localTickets = await storageService.getItem<Ticket[]>(TICKETS_STORAGE_KEY) || [];
-      // Ensure guests see no tickets, as storage is cleared on logout
-      set({ tickets: session?.user ? localTickets : [], isLoading: false });
+      // Offline with no cache at all.
+      set({ isLoading: false });
     }
   },
-
-  addTicket: async (ticketData) => {
+  
+  addTickets: async (purchaseRequest) => {
     const session = await getCurrentSession();
-    if (!session?.user) {
-      alert('Please log in or create an account to purchase tickets.');
-      return false;
+    const userId = session?.user?.id;
+    if (!userId) {
+      return { success: false, message: 'Please log in to purchase tickets.' };
     }
 
-    try {
-      const savedTicket = await ticketService.createTicket(ticketData);
-      const updatedTickets = [savedTicket, ...get().tickets];
+   try {
+      const savedTickets = await ticketService.createTickets(purchaseRequest);
+      const updatedTickets = [...savedTickets, ...get().tickets];
       set({ tickets: updatedTickets });
-      await storageService.setItem(TICKETS_STORAGE_KEY, updatedTickets);
-      return true;
+      
+      await storageService.setItem(storageKeys.getTicketsCacheKey(userId), { tickets: updatedTickets, lastUpdatedAt: Date.now() });
+      
+      useEvents.getState().decrementEventSlots(purchaseRequest.eventId, purchaseRequest.quantity);
+      
+      return { success: true };
     } catch (err: any) {
-      if (err.code === '23505') { // Unique constraint violation
-        alert('You have already purchased tickets for this event.');
-      } else {
-        console.error("Error purchasing ticket:", err);
-        alert('There was an error purchasing your tickets. Please try again.');
+      console.error("Error purchasing tickets:", err);
+      if (err.message?.includes('EVENT_SOLD_OUT')) {
+        return { success: false, message: 'Sorry, this event is now sold out.' };
       }
-      return false;
+      if (err.message?.includes('USER_TICKET_LIMIT_REACHED')) {
+        return { success: false, message: "You've reached the maximum number of tickets for this event." };
+      }
+      useEvents.getState().syncEvents({ query: '', category: 'All' });
+      return { success: false, message: 'There was an error purchasing your tickets.' };
     }
   },
 }));

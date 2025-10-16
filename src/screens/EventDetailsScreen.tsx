@@ -23,6 +23,7 @@ import { useEvents } from "../stores/event-store";
 import { Ticket } from "../types/ticket";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { useTickets } from "../stores/tickets-store";
+import  useEventSubscription  from "../hooks/useEventSubscription";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -38,36 +39,47 @@ type EventDetailsScreenNavigationProp = NativeStackNavigationProp<
 export default function EventDetailsScreen() {
   const route = useRoute<EventDetailsScreenRouteProp>();
   const navigation = useNavigation<EventDetailsScreenNavigationProp>();
-  const { id, initialIsFavorite } = route.params;
+  const { id } = route.params;
   const [isBuying, setIsBuying] = useState(false);
   const [ticketQuantity, setTicketQuantity] = useState(1);
-
+  useEventSubscription(id);
   const { session } = useAuth();
-  const { currentEvent: event, isLoading, fetchEventById } = useEvents(); // Get event data and fetching logic from the events store
-  const { addTicket } = useTickets();
-  const {toggleFavorite, favorites } = useFavorites();
-  // Fetch event details using the centralized store function
+  const { currentEvent: event, isLoading, fetchEventById } = useEvents();
+  const { addTickets, tickets: userTickets } = useTickets();
+  const { toggleFavorite, favorites } = useFavorites();
+  const isFavorite = favorites.includes(id);
+
+  // Calculate how many tickets the current user has already purchased for this event
+  const userTicketsForEvent = userTickets.filter(
+    (ticket) => ticket.eventId === id
+  ).length;
+
+  // triggers the centralized, cache-first fetching logic in the store.
   useEffect(() => {
     fetchEventById(id);
   }, [id, fetchEventById]);
-
-  const isFavorite = favorites.includes(id);
-  const [headerFavorite, setHeaderFavorite] = useState(initialIsFavorite);
-
-  useEffect(() => {
-    setHeaderFavorite(isFavorite);
-  }, [isFavorite]);
 
   useLayoutEffect(() => {
     if (!event) return;
 
     const handleFavoritePress = () => {
+      if (!session) {
+        Alert.alert(
+          "Login Required",
+          "Please log in to save events to your favorites.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Login", onPress: () => navigation.navigate("Login") },
+          ]
+        );
+        return;
+      }
+
       if (Platform.OS !== "web") {
-        const options = {
+        HapticFeedback.trigger("impactLight", {
           enableVibrateFallback: true,
           ignoreAndroidSystemSettings: false,
-        };
-        HapticFeedback.trigger("impactLight", options);
+        });
       }
       toggleFavorite(event);
     };
@@ -89,15 +101,15 @@ export default function EventDetailsScreen() {
             onPress={handleFavoritePress}
           >
             <Icon
-              name={headerFavorite ? "heart" : "heart-outline"}
+              name={isFavorite ? "heart" : "heart-outline"}
               size={20}
-              color={headerFavorite ? "#ff4757" : "#fff"}
+              color={isFavorite ? "#ff4757" : "#fff"}
             />
           </TouchableOpacity>
         </View>
       ),
     });
-  }, [navigation, event, headerFavorite, toggleFavorite]);
+  }, [navigation, event, isFavorite, toggleFavorite]);
 
   const handleSharePress = async () => {
     if (!event) return;
@@ -114,48 +126,63 @@ export default function EventDetailsScreen() {
 
   const handleBuyTickets = async () => {
     if (!event) return;
-    // Prevent guests from buying tickets and prompt them to log in
     if (!session) {
+      Alert.alert("Login Required", "Please log in to purchase tickets.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Login", onPress: () => navigation.navigate("Login") },
+      ]);
+      return;
+    }
+
+    // Perform all validations before proceeding
+    const remainingSlotsForUser =
+      event.userMaxTicketPurchase - userTicketsForEvent;
+    if (ticketQuantity > event.availableSlot) {
       Alert.alert(
-        "Login Required",
-        "Please log in or create an account to purchase tickets.",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Login", onPress: () => navigation.navigate("Login") },
-        ]
+        "Not Enough Tickets",
+        `Sorry, only ${event.availableSlot} tickets are left.`
       );
       return;
     }
+    if (ticketQuantity > remainingSlotsForUser) {
+      Alert.alert(
+        "Ticket Limit Exceeded",
+        `You can only purchase ${remainingSlotsForUser} more ticket(s) for this event.`
+      );
+      return;
+    }
+
     setIsBuying(true);
 
-    const date = new Date(event.startTime);
-    const ticketData: Ticket = {
-      id: Date.now(),
+   const purchaseRequest = {
       eventId: event.id,
-      eventTitle: event.title,
-      eventDate: date.toDateString(),
-      eventTime: date.toTimeString(),
-      eventLocation: event.location,
       quantity: ticketQuantity,
+      eventTitle: event.title,
+      eventDate: event.startTime,
+      eventTime: formatTime(event.startTime),
+      eventLocation: event.location,
       totalPrice: event.price * ticketQuantity,
-      purchaseDate: new Date().toISOString(),
-      qrCode: `EVENT_${event.id}_USER_${session.user.id}`, // unique QR
     };
 
-    const success = await addTicket(ticketData);
+    const { success, message } = await addTickets(purchaseRequest);
+
     setIsBuying(false);
 
-    Alert.alert(
-      "Tickets Purchased!",
-      "You've successfully purchased tickets.",
-      [
-        {
-          text: "View Tickets",
-          onPress: () => navigation.navigate("Main", { screen: "My Tickets" }),
-        },
-        { text: "OK", style: "default" },
-      ]
-    );
+    if (success) {
+      Alert.alert(
+        "Tickets Purchased!",
+        `You've successfully purchased ${ticketQuantity} ticket(s).`,
+        [
+          {
+            text: "View Tickets",
+            onPress: () => navigation.navigate("Main", { screen: "My Tickets" }),
+          },
+          { text: "OK", style: "default" },
+        ]
+      );
+    } else {
+      Alert.alert("Purchase Failed", message || "Could not complete your purchase.");
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -177,23 +204,40 @@ export default function EventDetailsScreen() {
     });
   };
 
-  if (isLoading) {
+  if (isLoading && !event) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6366f1" />
       </SafeAreaView>
     );
   }
-  
 
+  // If null, it means it not in the cache and couldn't be fetched (e.g., offline and never seen).
   if (!event) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Event not found</Text>
+          <Text style={styles.errorText}>
+            Event details not available offline.
+          </Text>
         </View>
       </SafeAreaView>
     );
+  }
+
+  const isSoldOut = event.availableSlot <= 0;
+  const remainingForUser = event.userMaxTicketPurchase - userTicketsForEvent;
+  const maxQuantity = Math.min(event.availableSlot, remainingForUser);
+
+  let purchaseMessage = "Buy Tickets";
+  let isButtonDisabled = isBuying;
+
+  if (isSoldOut) {
+    purchaseMessage = "Sold Out";
+    isButtonDisabled = true;
+  } else if (remainingForUser <= 0) {
+    purchaseMessage = "Ticket Limit Reached";
+    isButtonDisabled = true;
   }
 
   return (
@@ -216,7 +260,6 @@ export default function EventDetailsScreen() {
             Organized by {event.organizer?.fullName || "Unknown User"}
           </Text>
 
-          {/* Event information section */}
           <View style={styles.infoSection}>
             <View style={styles.infoRow}>
               <Icon name="calendar-outline" size={20} color="#6366f1" />
@@ -230,7 +273,6 @@ export default function EventDetailsScreen() {
                 </Text>
               </View>
             </View>
-
             <View style={styles.infoRow}>
               <Icon name="pin-outline" size={20} color="#6366f1" />
               <View style={styles.infoContent}>
@@ -239,15 +281,28 @@ export default function EventDetailsScreen() {
                 <Text style={styles.infoSubtext}>{event.address}</Text>
               </View>
             </View>
-
             <View style={styles.infoRow}>
-              <Icon name="people" size={20} color="#6366f1" />
+              <Icon name="people-outline" size={20} color="#6366f1" />
               <View style={styles.infoContent}>
                 <Text style={styles.infoTitle}>Attendees</Text>
                 <Text style={styles.infoText}>{event.attendees} going</Text>
                 <Text style={styles.infoSubtext}>
-                  {event.capacity - event.attendees} spots left
+                  {isSoldOut
+                    ? "Event is full"
+                    : `${event.availableSlot} spots left`}
                 </Text>
+              </View>
+            </View>
+            <View style={styles.infoRow}>
+              <Icon name="ticket-outline" size={20} color="#6366f1" />
+              <View style={styles.infoContent}>
+                <Text style={styles.infoTitle}>Ticket Limit</Text>
+                <Text
+                  style={styles.infoText}
+                >{`Max ${event.userMaxTicketPurchase} per person`}</Text>
+                <Text
+                  style={styles.infoSubtext}
+                >{`You have ${userTicketsForEvent} ticket(s)`}</Text>
               </View>
             </View>
           </View>
@@ -270,46 +325,58 @@ export default function EventDetailsScreen() {
         </View>
       </ScrollView>
 
-      {/* Ticket Quantity Selector */}
       <View style={styles.bottomSection}>
-        <View style={styles.ticketSelector}>
-          <Text style={styles.ticketLabel}>Tickets</Text>
-          <View style={styles.quantitySelector}>
-            <TouchableOpacity
-              style={styles.quantityButton}
-              onPress={() => setTicketQuantity(Math.max(1, ticketQuantity - 1))}
-            >
-              <Text style={styles.quantityButtonText}>-</Text>
-            </TouchableOpacity>
-            <Text style={styles.quantity}>{ticketQuantity}</Text>
-            <TouchableOpacity
-              style={styles.quantityButton}
-              onPress={() => setTicketQuantity(ticketQuantity + 1)}
-            >
-              <Text style={styles.quantityButtonText}>+</Text>
-            </TouchableOpacity>
+        {!isSoldOut && remainingForUser > 0 && (
+          <View style={styles.ticketSelector}>
+            <Text style={styles.ticketLabel}>Tickets</Text>
+            <View style={styles.quantitySelector}>
+              <TouchableOpacity
+                style={styles.quantityButton}
+                onPress={() =>
+                  setTicketQuantity(Math.max(1, ticketQuantity - 1))
+                }
+              >
+                <Text style={styles.quantityButtonText}>-</Text>
+              </TouchableOpacity>
+              <Text style={styles.quantity}>{ticketQuantity}</Text>
+              <TouchableOpacity
+                style={styles.quantityButton}
+                onPress={() =>
+                  setTicketQuantity(Math.min(ticketQuantity + 1, maxQuantity))
+                }
+              >
+                <Text style={styles.quantityButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-
-        {/* Purchase section */}
+        )}
         <View style={styles.purchaseSection}>
           <View style={styles.priceInfo}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalPrice}>
-              ${(event.price * ticketQuantity).toFixed(2)}
+              {isSoldOut || remainingForUser <= 0
+                ? "$ --"
+                : `$${(event.price * ticketQuantity).toFixed(2)}`}
             </Text>
           </View>
           <TouchableOpacity
-            style={styles.buyButton}
+            style={[
+              styles.buyButton,
+              isButtonDisabled && styles.disabledButton,
+            ]}
             onPress={handleBuyTickets}
-            disabled={isBuying}
+            disabled={isButtonDisabled}
           >
             {isBuying ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <>
-                <Icon name="ticket-outline" size={20} color="#fff" />
-                <Text style={styles.buyButtonText}>Buy Tickets</Text>
+                <Icon
+                  name={isSoldOut ? "close-circle-outline" : "ticket-outline"}
+                  size={20}
+                  color="#fff"
+                />
+                <Text style={styles.buyButtonText}>{purchaseMessage}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -533,13 +600,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
+  disabledButton: {
+    backgroundColor: "#a5b4fc",
+    shadowColor: "transparent",
+    elevation: 0,
+  },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    padding: 20,
   },
   errorText: {
     fontSize: 18,
     color: "#666",
+    textAlign: "center",
   },
 });
