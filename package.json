@@ -19,6 +19,7 @@
     "build:dev": "eas build --profile development",
     "build:preview": "eas build --profile preview",
     "build:production": "eas build --profile production",
+    "release:ios": "bash scripts/release-ios.sh",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
