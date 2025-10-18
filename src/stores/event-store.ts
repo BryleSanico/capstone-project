@@ -1,3 +1,4 @@
+// filename: src/stores/event-store.ts
 import { create } from "zustand";
 import { Event } from "../types/event";
 import { eventService } from "../services/eventService";
@@ -28,6 +29,10 @@ type EventsState = {
     category: string;
   }) => Promise<void>;
   syncEvents: (filters: { query: string; category: string }) => Promise<void>;
+  refreshEvents: (filters: {
+    query: string;
+    category: string;
+  }) => Promise<void>;
   fetchCategories: () => Promise<void>;
   fetchEventById: (id: number) => Promise<void>;
   decrementEventSlots: (eventId: number, quantity: number) => void;
@@ -46,27 +51,95 @@ export const useEvents = create<EventsState>()((set, get) => ({
   categories: ["All"],
   currentEvent: null,
 
-  loadInitialEvents: async (filters) => {
-    set({ isLoading: true, error: null, currentPage: 1 });
+  refreshEvents: async (filters) => {
+    if (!useNetworkStatus.getState().isConnected) {
+      console.log("[Refresh] Cannot refresh while offline.");
+      set({ error: "You are offline." });
+      return;
+    }
 
-    const fullCache = await eventService.getCachedEvents();
+    set({ isSyncing: true, error: null });
+    try {
+      // Clear all the cached data first.
+      await eventService.clearCachedEvents();
+      await eventService.clearCachedEventDetails();
+      console.log("[Refresh] Cleared event caches.");
 
-    if (fullCache.length > 0) {
-      set({
-        _fullEventCache: fullCache,
-        displayedEvents: fullCache.slice(0, EVENTS_PER_PAGE),
-        totalEvents: fullCache.length,
-        hasMore: fullCache.length > EVENTS_PER_PAGE,
-        isLoading: false,
-      });
-      get().syncEvents(filters); // Sync in background
-    } else {
-      await get().syncEvents(filters); // Sync and show loader
-      set({ isLoading: false });
+      // After clearing, call loadInitialEvents which will fetch from the network
+      // as it will find no cache. It also resets the UI state correctly.
+      await get().loadInitialEvents(filters);
+    } catch (err) {
+      console.error("Refresh failed:", err);
+      set({ error: "Failed to refresh events." });
+    } finally {
+      // Ensure the RefreshControl spinner is turned off
+      set({ isSyncing: false });
     }
   },
 
-  loadMoreEvents: async () => {
+  loadInitialEvents: async (filters) => {
+    set({
+      isLoading: true,
+      error: null,
+      currentPage: 1,
+      displayedEvents: [],
+      _fullEventCache: [],
+    });
+
+    const cachedEvents = await eventService.getCachedEvents();
+
+    if (cachedEvents.length > 0) {
+      const firstPage = cachedEvents.slice(0, EVENTS_PER_PAGE);
+      console.log(
+        `[Initial Load] Loaded ${cachedEvents.length} events from cache. Displaying ${firstPage.length}.`
+      );
+
+      set({
+        _fullEventCache: cachedEvents,
+        displayedEvents: firstPage,
+        currentPage: 1,
+        // Correctly determine if more pages exist in the cache.
+        hasMore: firstPage.length < cachedEvents.length,
+        isLoading: false,
+      });
+    } else {
+      if (!useNetworkStatus.getState().isConnected) {
+        set({ error: "You are offline.", isLoading: false });
+        return;
+      }
+
+      set({ isSyncing: true });
+      try {
+        const { events: firstPageEvents, totalCount } =
+          await eventService.fetchEvents(
+            1,
+            EVENTS_PER_PAGE,
+            filters.query,
+            filters.category,
+            null
+          );
+
+        console.log(
+          `[Initial Load] No cache. Fetched ${firstPageEvents.length} initial events from server.`
+        );
+        await eventService.cacheEvents(firstPageEvents);
+
+        set({
+          _fullEventCache: firstPageEvents,
+          displayedEvents: firstPageEvents,
+          currentPage: 1,
+          totalEvents: totalCount,
+          hasMore: firstPageEvents.length < totalCount,
+        });
+      } catch (err: any) {
+        set({ error: "Could not load events." });
+      } finally {
+        set({ isLoading: false, isSyncing: false });
+      }
+    }
+  },
+
+  loadMoreEvents: async (filters) => {
     const {
       isSyncing,
       hasMore,
@@ -76,48 +149,74 @@ export const useEvents = create<EventsState>()((set, get) => ({
     } = get();
     if (isSyncing || !hasMore) return;
 
-    const nextPage = currentPage + 1;
-    const nextEventsOffset = currentPage * EVENTS_PER_PAGE;
+    const isConnected = useNetworkStatus.getState().isConnected;
 
-    // First, try to load more from the full local cache
-    if (nextEventsOffset < _fullEventCache.length) {
-      const nextBatch = _fullEventCache.slice(
-        nextEventsOffset,
-        nextEventsOffset + EVENTS_PER_PAGE
-      );
-      set({
-        displayedEvents: [...displayedEvents, ...nextBatch],
-        currentPage: nextPage,
-        hasMore: nextEventsOffset + EVENTS_PER_PAGE < _fullEventCache.length,
-      });
+    // --- OFFLINE PAGINATION LOGIC ---
+    if (!isConnected) {
+      console.log("[Load More] Offline mode. Trying to load from cache.");
+      const nextOffset = currentPage * EVENTS_PER_PAGE;
+
+      if (nextOffset < _fullEventCache.length) {
+        const nextBatch = _fullEventCache.slice(
+          nextOffset,
+          nextOffset + EVENTS_PER_PAGE
+        );
+        console.log(
+          `[Load More] Loaded ${nextBatch.length} more events from cache.`
+        );
+        set({
+          displayedEvents: [...displayedEvents, ...nextBatch],
+          currentPage: currentPage + 1,
+          hasMore: nextOffset + nextBatch.length < _fullEventCache.length,
+        });
+      } else {
+        console.log("[Load More] No more events in cache to display.");
+        set({ hasMore: false });
+      }
       return;
     }
 
-    // If local cache is exhausted, fetch from network
-    if (!useNetworkStatus.getState().isConnected) return;
-
+    // --- ONLINE FETCH LOGIC ---
     set({ isSyncing: true });
     try {
+      const nextPage = currentPage + 1;
       const { events: newEvents, totalCount } = await eventService.fetchEvents(
         nextPage,
         EVENTS_PER_PAGE,
-        "",
-        "All",
+        filters.query,
+        filters.category,
         null
       );
 
       if (newEvents.length > 0) {
-        const updatedFullCache = [..._fullEventCache, ...newEvents];
+        const displayedIds = new Set(displayedEvents.map((e) => e.id));
+        const uniqueNewEvents = newEvents.filter(
+          (e) => !displayedIds.has(e.id)
+        );
+
+        const newDisplayedEvents = [...displayedEvents, ...uniqueNewEvents];
+
+        console.log(
+          `[Load More] Fetched ${newEvents.length} new events. Total displayed: ${newDisplayedEvents.length}.`
+        );
+
+        const eventsMap = new Map(_fullEventCache.map((e) => [e.id, e]));
+        newEvents.forEach((e) => eventsMap.set(e.id, e));
+        const updatedFullCache = Array.from(eventsMap.values());
+
         await eventService.cacheEvents(updatedFullCache);
+
         set({
           _fullEventCache: updatedFullCache,
-          displayedEvents: [...displayedEvents, ...newEvents],
+          displayedEvents: newDisplayedEvents,
           currentPage: nextPage,
           totalEvents: totalCount,
-          hasMore: updatedFullCache.length < totalCount,
+          // Correctly compare the new displayed count to the server total.
+          hasMore: newDisplayedEvents.length < totalCount,
         });
       } else {
-        set({ hasMore: false });
+        console.log("[Load More] No more events to fetch from server.");
+        set({ hasMore: false, totalEvents: totalCount });
       }
     } catch (err: any) {
       set({ error: "Could not load more events." });
@@ -127,8 +226,7 @@ export const useEvents = create<EventsState>()((set, get) => ({
   },
 
   syncEvents: async (filters) => {
-    if (!useNetworkStatus.getState().isConnected) {
-      set({ error: "You are offline." });
+    if (!useNetworkStatus.getState().isConnected || get().isSyncing) {
       return;
     }
     set({ isSyncing: true, error: null });
@@ -138,16 +236,16 @@ export const useEvents = create<EventsState>()((set, get) => ({
       const serverTimestamp = await eventService.getLatestEventTimestamp();
 
       if (
-        localTimestamp &&
         serverTimestamp &&
-        localTimestamp >= serverTimestamp
+        localTimestamp &&
+        new Date(localTimestamp) >= new Date(serverTimestamp)
       ) {
+        console.log("[Sync] Local data is already up-to-date.");
         set({ isSyncing: false });
-        return; // Cache is up-to-date
+        return;
       }
 
-      // Fetch all updates since last sync, or all events if no cache exists
-      const { events: fetchedEvents, totalCount } =
+      const { events: updatedEvents, totalCount } =
         await eventService.fetchEvents(
           null,
           null,
@@ -156,24 +254,40 @@ export const useEvents = create<EventsState>()((set, get) => ({
           localTimestamp
         );
 
-      const fullCache = await eventService.getCachedEvents();
-      const eventsMap = new Map(fullCache.map((e) => [e.id, e]));
-      fetchedEvents.forEach((event) => eventsMap.set(event.id, event));
+      if (updatedEvents.length > 0) {
+        console.log(
+          `[Sync] Fetched ${updatedEvents.length} new/updated events. New total: ${totalCount}`
+        );
+        const { _fullEventCache } = get();
 
-      const mergedEvents = Array.from(eventsMap.values()).sort(
-        (a, b) =>
-          new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-      );
+        const eventsMap = new Map(_fullEventCache.map((e) => [e.id, e]));
+        updatedEvents.forEach((event) => eventsMap.set(event.id, event));
 
-      await eventService.cacheEvents(mergedEvents);
+        const mergedEvents = Array.from(eventsMap.values()).sort(
+          (a, b) =>
+            new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+        );
 
-      set({
-        _fullEventCache: mergedEvents,
-        displayedEvents: mergedEvents.slice(0, EVENTS_PER_PAGE),
-        currentPage: 1,
-        totalEvents: totalCount > 0 ? totalCount : mergedEvents.length,
-        hasMore: mergedEvents.length > EVENTS_PER_PAGE,
-      });
+        await eventService.cacheEvents(mergedEvents);
+
+        const firstPage = mergedEvents.slice(0, EVENTS_PER_PAGE);
+
+        set({
+          _fullEventCache: mergedEvents,
+          displayedEvents: firstPage,
+          currentPage: 1,
+          totalEvents: totalCount,
+          // After a sync, properly reset hasMore to allow scrolling through the updated cache.
+          hasMore: mergedEvents.length < totalCount,
+        });
+      } else {
+        console.log("[Sync] No new events to sync.");
+        // current cache vs totalCount if available.
+        const { _fullEventCache, totalEvents } = get();
+        if (totalEvents > 0) {
+          set({ hasMore: _fullEventCache.length < totalEvents });
+        }
+      }
 
       if (serverTimestamp) {
         await eventService.setLastSyncTimestamp(serverTimestamp);
@@ -196,13 +310,13 @@ export const useEvents = create<EventsState>()((set, get) => ({
   },
 
   fetchEventById: async (id: number) => {
+    set({ isLoading: true, error: null, currentEvent: null });
     const existingEvent = get()._fullEventCache.find((e) => e.id === id);
     if (existingEvent) {
-      set({ currentEvent: existingEvent, isLoading: false, error: null });
+      set({ currentEvent: existingEvent, isLoading: false });
       return;
     }
 
-    set({ isLoading: true, error: null, currentEvent: null });
     try {
       const data = await eventService.fetchEventById(id);
       if (data) {
@@ -268,3 +382,18 @@ export const useEvents = create<EventsState>()((set, get) => ({
     });
   },
 }));
+
+useNetworkStatus.getState().registerReconnectCallback(async () => {
+  const store = useEvents.getState();
+
+  // Re-enable pagination if it was closed
+  if (!store.hasMore) {
+    useEvents.setState({
+      hasMore: true,
+      error: null,
+      displayedEvents: [...store.displayedEvents],
+    });
+  }
+
+  await store.syncEvents({ query: "", category: "All" });
+});

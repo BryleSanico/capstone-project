@@ -49,6 +49,7 @@ export default function DiscoverScreen() {
     loadInitialEvents,
     loadMoreEvents,
     syncEvents,
+    refreshEvents,
     fetchCategories,
   } = useEvents();
 
@@ -117,19 +118,23 @@ export default function DiscoverScreen() {
 
   // Handler for infinite scroll
   const handleLoadMore = () => {
-    if (!isSyncing && hasMore && isConnected && !debouncedQuery) {
+    if (!isSyncing && hasMore && !debouncedQuery) {
       loadMoreEvents({ query: debouncedQuery, category: selectedCategory });
     }
   };
 
   // Handler for pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    await syncEvents({ query: debouncedQuery, category: selectedCategory });
-  }, [syncEvents, debouncedQuery, selectedCategory]);
+    await refreshEvents({ query: debouncedQuery, category: selectedCategory });
+  }, [refreshEvents, debouncedQuery, selectedCategory]);
 
   const renderFooter = () => {
     if (!isSyncing || !hasMore || debouncedQuery) return null;
-    return <Loader size={50} />;
+     return (
+      <View style={styles.footerContainer}>
+        <Loader size={50} />
+      </View>
+    );
   };
 
   const renderContent = () => {
@@ -169,11 +174,12 @@ export default function DiscoverScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.7}
+        onEndReachedThreshold={0.5}
         ListFooterComponent={renderFooter}
+        extraData={hasMore}
         refreshControl={
           <RefreshControl
-            refreshing={isLoading}
+            refreshing={isSyncing}
             onRefresh={handleRefresh}
             tintColor="#6366f1"
           />
@@ -212,20 +218,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingTop: 100,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#666",
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: "#999",
+    footerContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
   },
 });

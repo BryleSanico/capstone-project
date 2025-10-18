@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.eventdiscoveryticketing"
+      "bundleIdentifier": "app.eventdiscoveryticketing",
+      "entitlements": {
+      "com.apple.developer.networking.wifi-info": true
+    }
     },
     "android": {
       "adaptiveIcon": {

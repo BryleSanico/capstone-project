@@ -1,24 +1,62 @@
-import { create } from 'zustand';
-import NetInfo from '@react-native-community/netinfo';
+// src/stores/network-store.ts
+import { create } from "zustand";
+import NetInfo, { NetInfoState } from "@react-native-community/netinfo";
 
 type NetworkState = {
   isConnected: boolean;
-  initialize: () => () => void; // The function returns an unsubscribe function for cleanup
+  lastKnownState: NetInfoState | null;
+  message: string | null;
+  subscribe: () => void;
+  setMessage: (msg: string | null) => void;
+  registerReconnectCallback: (callback: () => Promise<void>) => void;
 };
 
-export const useNetworkStatus = create<NetworkState>((set) => ({
-  isConnected: true, // Assume online by default
-  initialize: () => {
-    // Subscribe to network state changes and update the store
-    const unsubscribe = NetInfo.addEventListener(state => {
-      set({ isConnected: state.isConnected ?? false });
+let reconnectCallback: (() => Promise<void>) | null = null;
+
+export const useNetworkStatus = create<NetworkState>((set, get) => ({
+  isConnected: true,
+  lastKnownState: null,
+  message: null,
+
+  setMessage: (msg) => set({ message: msg }),
+
+  registerReconnectCallback: (callback) => {
+    reconnectCallback = callback;
+  },
+
+  subscribe: () => {
+    NetInfo.fetch().then((state) => {
+      set({
+        isConnected: state.isConnected ?? false,
+        lastKnownState: state,
+      });
+      console.log(
+        state.isConnected
+          ? "🟢 Connected to the internet"
+          : "🔴 Disconnected from the internet"
+      );
     });
 
-    // Also fetch the initial state when initialized
-    NetInfo.fetch().then(state => {
-      set({ isConnected: state.isConnected ?? false });
+    NetInfo.addEventListener(async (state) => {
+      const prevConnected = get().isConnected;
+      const nowConnected = state.isConnected ?? false;
+
+      if (prevConnected !== nowConnected) {
+        if (nowConnected) {
+          console.log("🟢 Reconnected to the internet");
+          set({ message: "Back online!" });
+
+          // invoke the registered callback dynamically
+          if (reconnectCallback) {
+            await reconnectCallback();
+          }
+        } else {
+          console.log("🔴 Disconnected from the internet");
+          set({ message: "You're offline."});
+        }
+      }
+
+      set({ isConnected: nowConnected, lastKnownState: state });
     });
-    
-    return unsubscribe;
   },
 }));

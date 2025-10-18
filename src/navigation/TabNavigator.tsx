@@ -7,7 +7,6 @@ import DiscoverScreen from '../screens/DiscoverScreen';
 import TicketsScreen from '../screens/TicketScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
-// import { useNetworkReconnector } from '../hooks/useNetworkReconnector';
 
 export type TabParamList = {
   Discover: undefined;
@@ -17,7 +16,6 @@ export type TabParamList = {
 };
 const Tab = createBottomTabNavigator<TabParamList>(); 
 export default function TabNavigator() {
-  //  useNetworkReconnector();
   return (
     <Tab.Navigator
       screenOptions={{

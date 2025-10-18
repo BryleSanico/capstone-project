@@ -1,18 +1,25 @@
 import { create } from 'zustand';
-import { supabase } from "../lib/supabase"; 
+import { supabase } from '../lib/supabase';
 import { AuthError, Session, User } from '@supabase/supabase-js';
 import { useFavorites } from './favorites-store';
 import { useTickets } from './tickets-store';
 import { useNetworkStatus } from './network-store';
-import { cacheManager } from '../services/cacheManager'; 
+import { cacheManager } from '../services/cacheManager';
 
 type AuthState = {
   session: Session | null;
-  user: User | null; 
+  user: User | null;
   isLoading: boolean;
-  initialize: () => void;
-  signInWithPassword: (email: string, pass: string) => Promise<{ error: AuthError | null }>;
-  signUp: (fullName: string, email: string, pass: string) => Promise<{ error: AuthError | null }>;
+  initialize: () => Promise<void>;
+  signInWithPassword: (
+    email: string,
+    pass: string
+  ) => Promise<{ error: AuthError | null }>;
+  signUp: (
+    fullName: string,
+    email: string,
+    pass: string
+  ) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
 };
 
@@ -21,44 +28,75 @@ export const useAuth = create<AuthState>((set, get) => ({
   user: null,
   isLoading: true,
 
-  initialize: () => {
-    useNetworkStatus.getState().initialize();
-
-    supabase.auth.onAuthStateChange(async (_event, session) => {
-      // Get the user from the previous session state before updating.
-      const previousUser = get().user;
-
-      // When the user signs out, clear their specific cache.
-      // This happens when the new session is null and there was a previous user.
-      if (!session && previousUser) {
-        await cacheManager.clearUserSpecificCache(previousUser.id);
-      }
-      
-      // Update the session state for the entire app.
-      set({ session, user: session?.user ?? null });
-
-      // On any auth change, reload favorites and tickets.
-      useFavorites.getState().loadFavorites();
-      useTickets.getState().loadTickets();
-      
-      if (get().isLoading) {
-        set({ isLoading: false });
-      }
+  /**
+   * Initializes the auth listener and loads session state.
+   */
+  initialize: async () => {
+    // Check and set initial session immediately on startup
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    set({
+      session,
+      user: session?.user ?? null,
+      isLoading: false,
     });
 
-    const checkInitialSession = async () => {
-      await supabase.auth.getSession();
-      set({ isLoading: false });
-    };
+    // Subscribe to auth changes only once
+    supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      const prevUser = get().user;
+      const newUser = newSession?.user ?? null;
 
-    checkInitialSession();
+      // Clear cache when user signs out
+      if (!newSession && prevUser) {
+        await cacheManager.clearUserSpecificCache(prevUser.id);
+      }
+
+      // Update the auth state
+      set({
+        session: newSession,
+        user: newUser,
+      });
+
+      // Reload user-specific data only when signed in
+      if (newUser) {
+        await Promise.all([
+          useFavorites.getState().loadFavorites(),
+          useTickets.getState().loadTickets(),
+        ]);
+      }
+    });
   },
 
+  /**
+   * Signs in the user with email and password.
+   */
   signInWithPassword: async (email: string, pass: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: pass,
+    });
+
+    // Sync local caches only after successful sign-in
+    if (!error) {
+      const session = (await supabase.auth.getSession()).data.session;
+      set({
+        session,
+        user: session?.user ?? null,
+      });
+
+      await Promise.all([
+        useFavorites.getState().loadFavorites(),
+        useTickets.getState().loadTickets(),
+      ]);
+    }
+
     return { error };
   },
 
+  /**
+   * Creates a new user account.
+   */
   signUp: async (fullName: string, email: string, pass: string) => {
     const { error } = await supabase.auth.signUp({
       email,
@@ -72,11 +110,21 @@ export const useAuth = create<AuthState>((set, get) => ({
     return { error };
   },
 
+  /**
+   * Signs out the current user.
+   */
   signOut: async () => {
+    const currentUser = get().user;
     await supabase.auth.signOut();
+
+    // Clear cached data for signed-out user
+    if (currentUser) {
+      await cacheManager.clearUserSpecificCache(currentUser.id);
+    }
+
+    set({ session: null, user: null });
   },
 }));
 
-// Initialize the auth listener when the app loads
+// Initialize auth listener once globally
 useAuth.getState().initialize();
-

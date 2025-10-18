@@ -56,6 +56,8 @@ export const eventService = {
   // Caching for DiscoverScreen list
   getCachedEvents: async (): Promise<Event[]> => await storageService.getItem<Event[]>(storageKeys.getEventsCacheKey()) || [],
   cacheEvents: (events: Event[]) => storageService.setItem(storageKeys.getEventsCacheKey(), events),
+  clearCachedEvents: () => storageService.removeItem(storageKeys.getEventsCacheKey()),
+  clearCachedEventDetails: () => storageService.removeItem(storageKeys.getEventsDetailCacheKey()),
   getLastSyncTimestamp: () => storageService.getItem<string>(storageKeys.getEventsSyncKey()),
   setLastSyncTimestamp: (ts: string) => storageService.setItem(storageKeys.getEventsSyncKey(), ts),
   mapSupabaseToEvent,

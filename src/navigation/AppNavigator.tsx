@@ -9,8 +9,6 @@ import TicketDetailsScreen from '../screens/TicketDetailsScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 
-import { useNetworkReconnector } from '../hooks/useNetworkReconnector';
-
 // This is the heart of your type-safe navigation
 export type RootStackParamList = {
   Main: NavigatorScreenParams<TabParamList>;
@@ -23,7 +21,6 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
- useNetworkReconnector();
   return (
 
       <Stack.Navigator screenOptions={{ headerBackTitle: "Back" }}>
