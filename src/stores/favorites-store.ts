@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { Alert } from "react-native";
 import { favoritesService } from "../services/favoritesService";
 import { eventService } from "../services/eventService";
-import { getCurrentSession } from "../utils/sessionHelper";
+import { getCurrentSession } from "../helpers/sessionHelper";
 import { Event } from "../types/event";
 import { useNetworkStatus } from "./network-store";
 import storageService from "../services/storageService";

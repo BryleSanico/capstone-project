@@ -1,18 +1,25 @@
-import { create } from 'zustand';
-import { supabase } from "../lib/supabase"; 
-import { AuthError, Session, User } from '@supabase/supabase-js';
-import { useFavorites } from './favorites-store';
-import { useTickets } from './tickets-store';
-import { useNetworkStatus } from './network-store';
-import { cacheManager } from '../services/cacheManager'; 
+import { create } from "zustand";
+import { supabase } from "../lib/supabase";
+import { AuthError, Session, User } from "@supabase/supabase-js";
+import { useFavorites } from "./favorites-store";
+import { useTickets } from "./tickets-store";
+import { useNetworkStatus } from "./network-store";
+import { cacheManager } from "../services/cacheManager";
 
 type AuthState = {
   session: Session | null;
-  user: User | null; 
+  user: User | null;
   isLoading: boolean;
   initialize: () => void;
-  signInWithPassword: (email: string, pass: string) => Promise<{ error: AuthError | null }>;
-  signUp: (fullName: string, email: string, pass: string) => Promise<{ error: AuthError | null }>;
+  signInWithPassword: (
+    email: string,
+    pass: string
+  ) => Promise<{ error: AuthError | null }>;
+  signUp: (
+    fullName: string,
+    email: string,
+    pass: string
+  ) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
 };
 
@@ -22,8 +29,6 @@ export const useAuth = create<AuthState>((set, get) => ({
   isLoading: true,
 
   initialize: () => {
-
-
     supabase.auth.onAuthStateChange(async (_event, session) => {
       // Get the user from the *previous* session state before updating.
       const previousUser = get().user;
@@ -33,7 +38,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       if (!session && previousUser) {
         await cacheManager.clearUserSpecificCache(previousUser.id);
       }
-      
+
       // Update the session state for the entire app.
       set({ session, user: session?.user ?? null });
 
@@ -41,7 +46,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       // The stores will now handle loading for the new user or clearing state for a guest.
       useFavorites.getState().loadFavorites();
       useTickets.getState().loadTickets();
-      
+
       if (get().isLoading) {
         set({ isLoading: false });
       }
@@ -57,7 +62,10 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   signInWithPassword: async (email: string, pass: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: pass,
+    });
     return { error };
   },
 
@@ -83,4 +91,3 @@ export const useAuth = create<AuthState>((set, get) => ({
 
 // Initialize the auth listener when the app loads
 useAuth.getState().initialize();
-

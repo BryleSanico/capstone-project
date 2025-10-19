@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { Event } from "../types/event";
 import { eventService } from "../services/eventService";
 import { useNetworkStatus } from "../stores/network-store";
+import { mergeAndDedupeEvents } from "../utils/cacheUtils";
 
 const EVENTS_PER_PAGE = 2;
 
@@ -190,21 +191,13 @@ export const useEvents = create<EventsState>()((set, get) => ({
       );
 
       if (newEvents.length > 0) {
-        const displayedIds = new Set(displayedEvents.map((e) => e.id));
-        const uniqueNewEvents = newEvents.filter(
-          (e) => !displayedIds.has(e.id)
-        );
-
-        const newDisplayedEvents = [...displayedEvents, ...uniqueNewEvents];
+        const updatedFullCache = mergeAndDedupeEvents(get()._fullEventCache, newEvents);
+        const newDisplayedEvents = [...displayedEvents, ...newEvents.filter(e => !displayedEvents.some(de => de.id === e.id))];
 
         console.log(
           `[Load More] Fetched ${newEvents.length} new events. Total displayed: ${newDisplayedEvents.length}.`
         );
-
-        const eventsMap = new Map(_fullEventCache.map((e) => [e.id, e]));
-        newEvents.forEach((e) => eventsMap.set(e.id, e));
-        const updatedFullCache = Array.from(eventsMap.values());
-
+        
         await eventService.cacheEvents(updatedFullCache);
 
         set({
@@ -260,14 +253,7 @@ export const useEvents = create<EventsState>()((set, get) => ({
           `[Sync] Fetched ${updatedEvents.length} new/updated events. New total: ${totalCount}`
         );
         const { _fullEventCache } = get();
-
-        const eventsMap = new Map(_fullEventCache.map((e) => [e.id, e]));
-        updatedEvents.forEach((event) => eventsMap.set(event.id, event));
-
-        const mergedEvents = Array.from(eventsMap.values()).sort(
-          (a, b) =>
-            new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-        );
+        const mergedEvents = mergeAndDedupeEvents(_fullEventCache, updatedEvents);
 
         await eventService.cacheEvents(mergedEvents);
 
@@ -279,7 +265,7 @@ export const useEvents = create<EventsState>()((set, get) => ({
           currentPage: 1,
           totalEvents: totalCount,
           // After a sync, properly reset hasMore to allow scrolling through the updated cache.
-          hasMore: mergedEvents.length < totalCount,
+          hasMore: true,
         });
       } else {
         console.log("[Sync] No new events to sync.");
@@ -414,6 +400,5 @@ useNetworkStatus.getState().registerReconnectCallback(async () => {
     console.log("[Reconnect] Event cache is empty. Triggering initial load.");
     await store.loadInitialEvents({ query: "", category: "All" });
   }
-  await store.syncEvents({ query: "", category: "All" });
-
+     await store.syncEvents({ query: "", category: "All" });
 });

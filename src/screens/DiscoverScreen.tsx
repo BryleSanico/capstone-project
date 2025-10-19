@@ -29,6 +29,7 @@ import { TabParamList } from "../navigation/TabNavigator";
 import { Loader } from "../components/loaders/loader";
 import { searchCache } from "../utils/searchCache";
 import { EmptyState } from "../components/Errors/EmptyState";
+import { useDebounce } from "../hooks/useDebounce";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -56,7 +57,7 @@ export default function DiscoverScreen() {
   const { favorites } = useFavorites();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
+  const debouncedQuery = useDebounce(searchQuery, 500);
   const isFocused = useIsFocused();
   const isConnected = useNetworkStatus((state) => state.isConnected);
   // Ref to prevent syncing on the very first mount
@@ -70,12 +71,6 @@ export default function DiscoverScreen() {
       headerShadowVisible: false,
     });
   }, [navigation]);
-
-  // Debounce search input
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedQuery(searchQuery), 500);
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
 
   // Initial data load and category change handler
   useEffect(() => {

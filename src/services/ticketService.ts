@@ -1,7 +1,7 @@
 // filename: src/services/ticketService.ts
 import { supabase } from "../lib/supabase";
 import { Ticket } from "../types/ticket";
-import { getCurrentSession } from "../utils/sessionHelper";
+import { getCurrentSession } from "../helpers/sessionHelper";
 
 // Helper function to map ticket data from RPC function
 const mapRpcToTicket = (item: any): Ticket => ({

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
 import { Ticket } from '@/src/types/ticket';
+import { formatDateMMDDYY } from '../utils/dateFormatter';
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -10,14 +11,6 @@ interface TicketCardProps {
 }
 
 export default function TicketCard({ ticket, onPress }: TicketCardProps) {
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.9}>
@@ -41,7 +34,7 @@ export default function TicketCard({ ticket, onPress }: TicketCardProps) {
           <View style={styles.detailRow}>
             <Icon name="calendar-outline" size={16} color="rgba(255,255,255,0.8)" />
             <Text style={styles.detailText}>
-              {formatDate(ticket.eventDate)} • {ticket.eventTime}
+              {formatDateMMDDYY(ticket.eventDate)} • {ticket.eventTime}
             </Text>
           </View>
           

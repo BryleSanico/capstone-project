@@ -6,6 +6,7 @@ import { Event } from '../types/event';
 import { useFavorites } from '../stores/favorites-store';
 import { useAuth } from '../stores/auth-store';
 import { useNavigation } from '@react-navigation/native';
+import { formatDateMMDD, formatTime } from '../utils/dateFormatter';
 interface EventCardProps {
   event: Event;
   onPress: () => void;
@@ -16,23 +17,6 @@ export default function EventCard({ event, onPress }: EventCardProps) {
   const isEventFavorite = favorites.includes(event.id);
   const { session } = useAuth();
   const navigation = useNavigation();
-  // Updated date/time formatting function
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
-    });
-  };
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
 
   const handleFavoritePress = (e: any) => {
     e.stopPropagation(); // Prevents the main onPress from firing
@@ -82,7 +66,7 @@ export default function EventCard({ event, onPress }: EventCardProps) {
             <Icon name="calendar-outline" size={14} color="#666" />
             <Text style={styles.infoText}>
               {/* Use startTime for both date and time */}
-              {formatDate(event.startTime)} • {formatTime(event.startTime)}
+              {formatDateMMDD(event.startTime)} • {formatTime(event.startTime)}
             </Text>
           </View>
           

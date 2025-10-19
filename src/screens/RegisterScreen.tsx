@@ -18,6 +18,12 @@ import Icon from "react-native-vector-icons/Ionicons";
 import Icon2 from "react-native-vector-icons/FontAwesome";
 import { useAuth } from "../stores/auth-store";
 import { Loader } from "../components/loaders/loader";
+import {
+  isEmail,
+  isRequired,
+  minLength,
+  passwordsMatch,
+} from "../utils/validation";
 
 type RegisterScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -30,27 +36,39 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [errors, setErrors] = useState<{ [key: string]: string | null }>({});
 
   const navigation = useNavigation<RegisterScreenNavigationProp>();
   const { signUp } = useAuth();
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: '',
+      title: "",
       headerTransparent: true,
-      headerTintColor: '#fff',
+      headerTintColor: "#fff",
     });
   }, [navigation]);
-  
+
+  const validate = () => {
+    const newErrors: { [key: string]: string | null } = {};
+    if (!isRequired(name)) newErrors.name = "Full name is required";
+    if (!isRequired(email)) newErrors.email = "Email is required";
+    else if (!isEmail(email)) newErrors.email = "Please enter a valid email";
+    if (!isRequired(password)) newErrors.password = "Password is required";
+    else if (!minLength(password, 6))
+      newErrors.password = "Password must be at least 6 characters";
+    if (!passwordsMatch(password, confirmPassword))
+      newErrors.confirmPassword = "Passwords do not match";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleRegister = async () => {
-    if (!name || !email || !password || !confirmPassword) {
-      Alert.alert("Error", "Please fill in all fields");
-      return;
-    }
-    if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
+    if (!validate()) {
       return;
     }
 
@@ -70,6 +88,14 @@ export default function RegisterScreen() {
       setIsLoading(false);
     }
   };
+
+  const createChangeHandler =
+    (setter: (text: string) => void, fieldName: string) => (text: string) => {
+      setter(text);
+      if (errors[fieldName]) {
+        setErrors((prev) => ({ ...prev, [fieldName]: null }));
+      }
+    };
 
   return (
     <View style={styles.container}>
@@ -95,91 +121,134 @@ export default function RegisterScreen() {
           </LinearGradient>
 
           <View style={styles.formContainer}>
-            <View style={styles.inputContainer}>
-              <View style={styles.inputIcon}>
-                <Icon2 name="user-o" size={20} color="#666" />
-              </View>
-              <TextInput
-                style={styles.input}
-                placeholder="Full Name"
-                placeholderTextColor="#999"
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="words"
-                autoComplete="name"
-                editable={!isLoading}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <View style={styles.inputIcon}>
-                <Icon name="mail-outline" size={20} color="#666" />
-              </View>
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor="#999"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                editable={!isLoading}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <View style={styles.inputIcon}>
-                <Icon name="lock-closed-outline" size={20} color="#666" />
-              </View>
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor="#999"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoComplete="password"
-                editable={!isLoading}
-              />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setShowPassword(!showPassword)}
+            <View style={styles.fieldContainer}>
+              {errors.name && (
+                <Text style={styles.errorText}>{errors.name}</Text>
+              )}
+              <View
+                style={[
+                  styles.inputContainer,
+                  errors.name ? styles.errorInputContainer : null,
+                ]}
               >
-                {showPassword ? (
-                  <Icon name="eye-off" size={20} color="#666" />
-                ) : (
-                  <Icon name="eye" size={20} color="#666" />
-                )}
-              </TouchableOpacity>
+                <View style={styles.inputIcon}>
+                  <Icon2 name="user-o" size={20} color="#666" />
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Full Name"
+                  placeholderTextColor="#999"
+                  value={name}
+                  onChangeText={createChangeHandler(setName, "name")}
+                  autoCapitalize="words"
+                  autoComplete="name"
+                  editable={!isLoading}
+                />
+              </View>
             </View>
 
-            <View style={styles.inputContainer}>
-              <View style={styles.inputIcon}>
-                <Icon name="lock-closed-outline" size={20} color="#666" />
-              </View>
-              <TextInput
-                style={styles.input}
-                placeholder="Confirm Password"
-                placeholderTextColor="#999"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry={!showConfirmPassword}
-                autoCapitalize="none"
-                autoComplete="password"
-                editable={!isLoading}
-              />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+            <View style={styles.fieldContainer}>
+              {errors.email && (
+                <Text style={styles.errorText}>{errors.email}</Text>
+              )}
+              <View
+                style={[
+                  styles.inputContainer,
+                  errors.email ? styles.errorInputContainer : null,
+                ]}
               >
-                {showConfirmPassword ? (
-                  <Icon name="eye-off" size={20} color="#666" />
-                ) : (
-                  <Icon name="eye" size={20} color="#666" />
-                )}
-              </TouchableOpacity>
+                <View style={styles.inputIcon}>
+                  <Icon name="mail-outline" size={20} color="#666" />
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor="#999"
+                  value={email}
+                  onChangeText={createChangeHandler(setEmail, "email")}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  editable={!isLoading}
+                />
+              </View>
+            </View>
+
+            <View style={styles.fieldContainer}>
+              {errors.password && (
+                <Text style={styles.errorText}>{errors.password}</Text>
+              )}
+              <View
+                style={[
+                  styles.inputContainer,
+                  errors.password ? styles.errorInputContainer : null,
+                ]}
+              >
+                <View style={styles.inputIcon}>
+                  <Icon name="lock-closed-outline" size={20} color="#666" />
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  placeholderTextColor="#999"
+                  value={password}
+                  onChangeText={createChangeHandler(setPassword, "password")}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoComplete="password"
+                  editable={!isLoading}
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <Icon name="eye-off" size={20} color="#666" />
+                  ) : (
+                    <Icon name="eye" size={20} color="#666" />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.fieldContainer}>
+              {errors.confirmPassword && (
+                <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+              )}
+              <View
+                style={[
+                  styles.inputContainer,
+                  errors.confirmPassword ? styles.errorInputContainer : null,
+                ]}
+              >
+                <View style={styles.inputIcon}>
+                  <Icon name="lock-closed-outline" size={20} color="#666" />
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Confirm Password"
+                  placeholderTextColor="#999"
+                  value={confirmPassword}
+                  onChangeText={createChangeHandler(
+                    setConfirmPassword,
+                    "confirmPassword"
+                  )}
+                  secureTextEntry={!showConfirmPassword}
+                  autoCapitalize="none"
+                  autoComplete="password"
+                  editable={!isLoading}
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <Icon name="eye-off" size={20} color="#666" />
+                  ) : (
+                    <Icon name="eye" size={20} color="#666" />
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
 
             <View style={styles.buttonContainer}>
@@ -197,7 +266,9 @@ export default function RegisterScreen() {
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                   >
-                    <Text style={styles.registerButtonText}>Create Account</Text>
+                    <Text style={styles.registerButtonText}>
+                      Create Account
+                    </Text>
                   </LinearGradient>
                 </TouchableOpacity>
               )}
@@ -253,14 +324,21 @@ const styles = StyleSheet.create({
     padding: 24,
     marginTop: -120,
   },
+  fieldContainer: {
+    marginBottom: 16,
+  },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#f8f9fa",
     borderRadius: 12,
-    marginBottom: 16,
     paddingHorizontal: 16,
     height: 56,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  errorInputContainer: {
+    borderColor: "#ff4757",
   },
   inputIcon: {
     marginRight: 12,
@@ -273,14 +351,20 @@ const styles = StyleSheet.create({
   eyeIcon: {
     padding: 4,
   },
+  errorText: {
+    color: "#ff4757",
+    fontSize: 12,
+    marginBottom: 4,
+    marginLeft: 4,
+  },
   buttonContainer: {
     height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 8,
   },
   registerButton: {
-    width: '100%',
+    width: "100%",
     borderRadius: 12,
     overflow: "hidden",
     shadowColor: "#6366f1",
@@ -293,8 +377,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 14,
     height: 50,
-    justifyContent: 'center',
-    width: '100%',
+    justifyContent: "center",
+    width: "100%",
   },
   registerButtonText: {
     fontSize: 16,
@@ -317,4 +401,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
-

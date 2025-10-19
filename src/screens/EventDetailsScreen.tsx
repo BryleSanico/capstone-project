@@ -20,10 +20,10 @@ import HapticFeedback from "react-native-haptic-feedback";
 import { useFavorites } from "../stores/favorites-store";
 import { useAuth } from "../stores/auth-store";
 import { useEvents } from "../stores/event-store";
-import { Ticket } from "../types/ticket";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { useTickets } from "../stores/tickets-store";
 import  useEventSubscription  from "../hooks/useEventSubscription";
+import { formatFullDate, formatTime } from "../utils/dateFormatter";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -115,7 +115,7 @@ export default function EventDetailsScreen() {
     if (!event) return;
     try {
       await Share.share({
-        message: `Check out this event: ${event.title} on ${formatDate(
+        message: `Check out this event: ${event.title} on ${formatFullDate(
           event.startTime
         )} at ${event.location}`,
       });
@@ -185,25 +185,6 @@ export default function EventDetailsScreen() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-  };
-
   if (isLoading && !event) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
@@ -266,7 +247,7 @@ export default function EventDetailsScreen() {
               <View style={styles.infoContent}>
                 <Text style={styles.infoTitle}>Date & Time</Text>
                 <Text style={styles.infoText}>
-                  {formatDate(event.startTime)}
+                  {formatFullDate(event.startTime)}
                 </Text>
                 <Text style={styles.infoSubtext}>
                   {formatTime(event.startTime)}

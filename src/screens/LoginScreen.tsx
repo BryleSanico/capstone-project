@@ -17,6 +17,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from '../stores/auth-store';
 import { Loader } from "../components/loaders/loader";
+import { isEmail, isRequired } from "../utils/validation";
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -28,6 +29,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [errors, setErrors] = useState<{ [key: string]: string | null }>({});
 
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { signInWithPassword } = useAuth();
@@ -40,9 +42,25 @@ export default function LoginScreen() {
     });
   }, [navigation]);
 
+  const validate = () => {
+    const newErrors: { [key: string]: string | null } = {};
+
+    if (!isRequired(email)) {
+      newErrors.email = "Email is required";
+    } else if (!isEmail(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    if (!isRequired(password)) {
+      newErrors.password = "Password is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+    if (!validate()) {
       return;
     }
 
@@ -50,12 +68,28 @@ export default function LoginScreen() {
     try {
       const { error } = await signInWithPassword(email, password);
       if (error) {
+        // Use Alert for server-side/authentication errors, not validation
         Alert.alert("Login Error", error.message);
       } else {
         navigation.goBack();
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  // Handlers to clear errors on input change
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    if (errors.email) {
+      setErrors(prev => ({ ...prev, email: null }));
+    }
+  };
+
+  const handlePasswordChange = (text: string) => {
+    setPassword(text);
+    if (errors.password) {
+      setErrors(prev => ({ ...prev, password: null }));
     }
   };
 
@@ -83,48 +117,54 @@ export default function LoginScreen() {
           </LinearGradient>
 
           <View style={styles.formContainer}>
-            <View style={styles.inputContainer}>
-              <View style={styles.inputIcon}>
-                <Icon name="mail-outline" size={20} color="#666" />
+            <View style={styles.fieldContainer}>
+              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+              <View style={[styles.inputContainer, errors.email ? styles.errorInputContainer : null]}>
+                <View style={styles.inputIcon}>
+                  <Icon name="mail-outline" size={20} color="#666" />
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor="#999"
+                  value={email}
+                  onChangeText={handleEmailChange}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  editable={!isLoading}
+                />
               </View>
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor="#999"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                editable={!isLoading}
-              />
             </View>
 
-            <View style={styles.inputContainer}>
-              <View style={styles.inputIcon}>
-                <Icon name="lock-closed-outline" size={20} color="#666" />
+            <View style={styles.fieldContainer}>
+              {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+              <View style={[styles.inputContainer, errors.password ? styles.errorInputContainer : null]}>
+                <View style={styles.inputIcon}>
+                  <Icon name="lock-closed-outline" size={20} color="#666" />
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  placeholderTextColor="#999"
+                  value={password}
+                  onChangeText={handlePasswordChange}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoComplete="password"
+                  editable={!isLoading}
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <Icon name="eye-off" size={20} color="#666" />
+                  ) : (
+                    <Icon name="eye" size={20} color="#666" />
+                  )}
+                </TouchableOpacity>
               </View>
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor="#999"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoComplete="password"
-                editable={!isLoading}
-              />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <Icon name="eye-off" size={20} color="#666" />
-                ) : (
-                  <Icon name="eye" size={20} color="#666" />
-                )}
-              </TouchableOpacity>
             </View>
 
             <TouchableOpacity style={styles.forgotPassword}>
@@ -211,14 +251,21 @@ const styles = StyleSheet.create({
     padding: 24,
     marginTop: -120,
   },
+  fieldContainer: {
+    marginBottom: 16,
+  },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#f8f9fa",
     borderRadius: 12,
-    marginBottom: 16,
     paddingHorizontal: 16,
     height: 56,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  errorInputContainer: {
+    borderColor: '#ff4757',
   },
   inputIcon: {
     marginRight: 12,
@@ -230,6 +277,12 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     padding: 4,
+  },
+  errorText: {
+    color: '#ff4757',
+    fontSize: 12,
+    marginBottom: 4,
+    marginLeft: 4,
   },
   forgotPassword: {
     alignSelf: "flex-end",

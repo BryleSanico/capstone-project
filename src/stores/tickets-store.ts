@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { Ticket } from "../types/ticket";
 import storageService from "../services/storageService";
 import ticketService from "../services/ticketService";
-import { getCurrentSession } from "../utils/sessionHelper";
+import { getCurrentSession } from "../helpers/sessionHelper";
 import { useNetworkStatus } from "./network-store";
 import { storageKeys } from "../utils/storageKeys"; 
 import { useEvents } from "./event-store"; 

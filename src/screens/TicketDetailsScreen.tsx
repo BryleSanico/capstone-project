@@ -16,6 +16,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import QRCode from "react-native-qrcode-svg";
 import { useTickets } from "../stores/tickets-store";
 import { RootStackParamList } from "../navigation/AppNavigator"; 
+import { formatFullDate } from "../utils/dateFormatter";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -66,24 +67,13 @@ export default function TicketDetailsScreen() {
     }
   }, [navigation, ticket]); // Re-run this effect if navigation or ticket changes
 
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
   // These handlers need to be defined within the component scope so they can be
   // passed to navigation.setOptions
   const handleShareTicket = async () => {
     if (!ticket) return;
     try {
       await Share.share({
-        message: `My ticket for ${ticket.eventTitle} on ${formatDate(
+        message: `My ticket for ${ticket.eventTitle} on ${formatFullDate(
           ticket.eventDate
         )}`,
       });
@@ -138,7 +128,7 @@ export default function TicketDetailsScreen() {
                 <View style={styles.detailContent}>
                   <Text style={styles.detailLabel}>Date & Time</Text>
                   <Text style={styles.detailText}>
-                    {formatDate(ticket.eventDate)}
+                    {formatFullDate(ticket.eventDate)}
                   </Text>
                   <Text style={styles.detailSubtext}>{ticket.eventTime}</Text>
                 </View>
