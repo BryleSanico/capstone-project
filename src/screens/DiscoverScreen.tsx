@@ -125,7 +125,9 @@ export default function DiscoverScreen() {
 
   // Handler for pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    await refreshEvents({ query: debouncedQuery, category: selectedCategory });
+    if(isConnected){
+      await refreshEvents({ query: debouncedQuery, category: selectedCategory });
+    }
   }, [refreshEvents, debouncedQuery, selectedCategory]);
 
   const renderFooter = () => {
@@ -147,7 +149,7 @@ export default function DiscoverScreen() {
     }
 
     // If there are no results, show the appropriate message.
-    if (dataForList.length === 0) {
+    if (!isConnected && _fullEventCache.length === 0) {
       if (!isConnected) {
         return (
           <OfflineState
@@ -156,7 +158,7 @@ export default function DiscoverScreen() {
           />
         );
       }
-      if (!isLoading && !isSyncing) {
+      if (isConnected && !isLoading && !isSyncing && dataForList.length === 0) {
         return (
           <EmptyState icon="warning-outline" title="No events found" message="Try adjusting your search or filters" />
         );
@@ -174,7 +176,7 @@ export default function DiscoverScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
+        onEndReachedThreshold={0.7}
         ListFooterComponent={renderFooter}
         extraData={hasMore}
         refreshControl={

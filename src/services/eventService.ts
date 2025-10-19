@@ -44,7 +44,7 @@ const mapSupabaseToEvent = (item: any): Event => {
       avatar: undefined,
     },
     capacity: item.capacity,
-    attendees: item.attendees_count || 0,
+    attendees: item.attendees ?? item.attendees_count,
     tags: item.tags || [],
     updatedAt: item.updated_at,
     availableSlot: item.available_slot,

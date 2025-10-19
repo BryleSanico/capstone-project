@@ -141,13 +141,14 @@ export const useEvents = create<EventsState>()((set, get) => ({
 
   loadMoreEvents: async (filters) => {
     const {
+      isLoading,
       isSyncing,
       hasMore,
       currentPage,
       _fullEventCache,
       displayedEvents,
     } = get();
-    if (isSyncing || !hasMore) return;
+    if (isLoading || isSyncing || !hasMore) return;
 
     const isConnected = useNetworkStatus.getState().isConnected;
 
@@ -241,7 +242,7 @@ export const useEvents = create<EventsState>()((set, get) => ({
         new Date(localTimestamp) >= new Date(serverTimestamp)
       ) {
         console.log("[Sync] Local data is already up-to-date.");
-        set({ isSyncing: false });
+        set({ isSyncing: false, hasMore: true });
         return;
       }
 
@@ -301,6 +302,7 @@ export const useEvents = create<EventsState>()((set, get) => ({
   },
 
   fetchCategories: async () => {
+    if (!useNetworkStatus.getState().isConnected) return;
     try {
       const data = await eventService.fetchCategories();
       set({ categories: [...new Set(data)] });
@@ -361,14 +363,27 @@ export const useEvents = create<EventsState>()((set, get) => ({
 
   updateEventInCache: (updatedEvent: Event) => {
     set((state) => {
-      const updateFn = (event: Event) =>
-        event.id === updatedEvent.id ? updatedEvent : event;
+      // FIX: Replace the simple update function with a smart merge.
+      const updateFn = (event: Event) => {
+        if (event.id === updatedEvent.id) {
+          // 1. Start with the existing event data in the cache.
+          // 2. Spread all new data from the incoming 'updatedEvent'.
+          // 3. Critically, if 'updatedEvent.attendees' is null/undefined,
+          //    fall back to the 'event.attendees' we already have.
+          return {
+            ...event,
+            ...updatedEvent,
+            attendees: updatedEvent.attendees ?? event.attendees ?? 0,
+          };
+        }
+        return event;
+      };
 
       const updatedFullCache = state._fullEventCache.map(updateFn);
       const updatedDisplayedEvents = state.displayedEvents.map(updateFn);
       const updatedCurrentEvent =
         state.currentEvent?.id === updatedEvent.id
-          ? updatedEvent
+          ? updateFn(state.currentEvent)
           : state.currentEvent;
 
       eventService.cacheEvents(updatedFullCache);
@@ -395,5 +410,10 @@ useNetworkStatus.getState().registerReconnectCallback(async () => {
     });
   }
 
+  if (store._fullEventCache.length === 0) {
+    console.log("[Reconnect] Event cache is empty. Triggering initial load.");
+    await store.loadInitialEvents({ query: "", category: "All" });
+  }
   await store.syncEvents({ query: "", category: "All" });
+
 });
