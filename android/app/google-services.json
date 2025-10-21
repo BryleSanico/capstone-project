@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "346504774877",
+    "project_id": "event-discovery-d9a28",
+    "storage_bucket": "event-discovery-d9a28.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:346504774877:android:5dd03344c96334c0ebc734",
+        "android_client_info": {
+          "package_name": "app.eventdiscoveryticketing"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5kZ4bQe9yX4QwG0CZcsoBIsfIkXa2SrU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
