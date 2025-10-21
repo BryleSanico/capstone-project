@@ -5,6 +5,7 @@ import { useFavorites } from "./favorites-store";
 import { useTickets } from "./tickets-store";
 import { useNetworkStatus } from "./network-store";
 import { cacheManager } from "../services/cacheManager";
+import { notificationService } from "../services/notificationService";
 
 type AuthState = {
   session: Session | null;
@@ -35,7 +36,15 @@ export const useAuth = create<AuthState>((set, get) => ({
 
       // When the user signs out, clear their specific cache.
       // This happens when the new session is null and there was a previous user.
-      if (!session && previousUser) {
+      if (session?.user) {
+        // Initialize push notification service (register + listeners)
+        await notificationService.initialize(session.user.id);
+
+      } else if (!session && previousUser) {
+        console.log("👋 Signed out:", previousUser.email);
+
+        // Cleanup when user signs out
+        await notificationService.unregisterPushNotifications(previousUser.id);
         await cacheManager.clearUserSpecificCache(previousUser.id);
       }
 
@@ -83,8 +92,6 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   signOut: async () => {
-    // Calling signOut will trigger the onAuthStateChange listener above.
-    // The listener will handle clearing the cache and resetting the session.
     await supabase.auth.signOut();
   },
 }));
