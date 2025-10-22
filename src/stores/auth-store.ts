@@ -3,7 +3,6 @@ import { supabase } from "../lib/supabase";
 import { AuthError, Session, User } from "@supabase/supabase-js";
 import { useFavorites } from "./favorites-store";
 import { useTickets } from "./tickets-store";
-import { useNetworkStatus } from "./network-store";
 import { cacheManager } from "../services/cacheManager";
 import { notificationService } from "../services/notificationService";
 
@@ -31,43 +30,36 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   initialize: () => {
     supabase.auth.onAuthStateChange(async (_event, session) => {
-      // Get the user from the *previous* session state before updating.
-      const previousUser = get().user;
+      set({ session, user: session?.user ?? null, isLoading: true });
 
-      // When the user signs out, clear their specific cache.
-      // This happens when the new session is null and there was a previous user.
+      // If a user is logged in, initialize their services and load their data.
       if (session?.user) {
-        // Initialize push notification service (register + listeners)
         await notificationService.initialize(session.user.id);
-
-      } else if (!session && previousUser) {
-        console.log("👋 Signed out:", previousUser.email);
-
-        // Cleanup when user signs out
-        await notificationService.unregisterPushNotifications(previousUser.id);
-        await cacheManager.clearUserSpecificCache(previousUser.id);
+        // Load data for the newly logged-in user.
+        await Promise.all([
+          useFavorites.getState().loadFavorites(),
+          useTickets.getState().loadTickets(),
+        ]);
+      } else {
+        // If no user, ensure stores are cleared (handles initial guest state).
+        useFavorites.getState().clearUserFavorites();
+        useTickets.getState().clearUserTickets();
       }
 
-      // Update the session state for the entire app.
-      set({ session, user: session?.user ?? null });
-
-      // On any auth change, reload favorites and tickets.
-      // The stores will now handle loading for the new user or clearing state for a guest.
-      useFavorites.getState().loadFavorites();
-      useTickets.getState().loadTickets();
-
+      // Done with initial loading/state changes.
       if (get().isLoading) {
         set({ isLoading: false });
       }
     });
 
-    const checkInitialSession = async () => {
-      await supabase.auth.getSession();
-      // The onAuthStateChange listener will handle setting state and initial loading.
-      set({ isLoading: false });
-    };
-
-    checkInitialSession();
+    // Manually check the session on app start, the listener will handle the rest.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      // The onAuthStateChange listener will fire if the session state changes.
+      // If it doesn't fire, we know the initial state is 'logged out'.
+      if (!session && get().isLoading) {
+        set({ isLoading: false });
+      }
+    });
   },
 
   signInWithPassword: async (email: string, pass: string) => {
@@ -78,7 +70,7 @@ export const useAuth = create<AuthState>((set, get) => ({
     return { error };
   },
 
-  signUp: async (fullName: string, email: string, pass: string) => {
+  signUp: async (fullName: string, email: string, pass:string) => {
     const { error } = await supabase.auth.signUp({
       email,
       password: pass,
@@ -91,10 +83,32 @@ export const useAuth = create<AuthState>((set, get) => ({
     return { error };
   },
 
+  // Centralized and atomic sign-out logic.
   signOut: async () => {
-    await supabase.auth.signOut();
+    const currentUser = get().user;
+    if (!currentUser) return;
+
+    // synchronously clear the state of other stores.
+    useTickets.getState().clearUserTickets();
+    useFavorites.getState().clearUserFavorites();
+    console.log("Zustand state cleared for tickets and favorites.");
+
+    // Perform asynchronous cleanup operations.
+    await notificationService.unregisterPushNotifications(currentUser.id);
+    await cacheManager.clearUserSpecificCache(currentUser.id);
+    
+    // Sign out from Supabase, which will trigger onAuthStateChange.
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+        console.error("Error signing out:", error.message);
+    }
+
+    // Manually set local auth state to null to ensure immediate UI update,
+    // even before the onAuthStateChange listener fires.
+    set({ session: null, user: null });
+    console.log("Sign-out process complete.");
   },
 }));
 
-// Initialize the auth listener when the app loads
+// Initialize the auth listener when the app loads.
 useAuth.getState().initialize();

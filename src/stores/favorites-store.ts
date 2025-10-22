@@ -1,4 +1,3 @@
-// filename: src/stores/favorites-store.ts
 import { create } from "zustand";
 import { Alert } from "react-native";
 import { favoritesService } from "../services/favoritesService";
@@ -25,6 +24,7 @@ type FavoritesState = {
   isSyncing: boolean;
   loadFavorites: () => Promise<void>;
   toggleFavorite: (event: Event) => void;
+  clearUserFavorites: () => void; // Add this action
 };
 
 export const useFavorites = create<FavoritesState>()((set, get) => ({
@@ -33,6 +33,16 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
   favoriteEvents: [],
   isLoading: false,
   isSyncing: false,
+
+  // Add this new synchronous action to clear state
+  clearUserFavorites: () => {
+    set({
+      favorites: [],
+      favoriteEvents: [],
+      initialFavorites: new Set(),
+      isLoading: false,
+    });
+  },
 
   loadFavorites: async () => {
     set({ isLoading: true });
@@ -61,8 +71,7 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
       // If cache is expired or missing, and we're online, fetch from server.
       try {
         const serverIds = await favoritesService.getFavorites();
-        const serverIdSet = new Set(serverIds);
-        set({ favorites: serverIds, initialFavorites: serverIdSet });
+        set({ favorites: serverIds, initialFavorites: new Set(serverIds) });
         
         if (serverIds.length > 0) {
           const events = await eventService.fetchEventsByIds(serverIds);
@@ -76,9 +85,17 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
       } finally {
         set({ isLoading: false });
       }
-    } else {
+    } else if (cachedData) {
       // Offline with no valid cache.
-      set({ isLoading: false });
+        const ids = cachedData.ids;
+        set({ favorites: ids, initialFavorites: new Set(ids), isLoading: false });
+        if(ids.length > 0){
+            const events = await eventService.fetchEventsByIds(ids);
+            set({ favoriteEvents: events});
+        }
+    }
+     else {
+      set({ isLoading: false, favorites: [], favoriteEvents: [] });
     }
   },
 
@@ -126,4 +143,3 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
     }, 2000);
   },
 }));
-
