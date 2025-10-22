@@ -104,6 +104,7 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          <View style={styles.headerWrapper}>
           <LinearGradient
             colors={["#6366f1", "#8b5cf6"]}
             style={styles.header}
@@ -115,7 +116,7 @@ export default function LoginScreen() {
               <Text style={styles.subtitle}>Sign in to continue</Text>
             </View>
           </LinearGradient>
-
+          </View>
           <View style={styles.formContainer}>
             <View style={styles.fieldContainer}>
               {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
@@ -225,14 +226,33 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
+
+  headerWrapper: {
+    marginHorizontal: 0,
+    marginVertical: 0,
+    borderRadius: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#6366f1",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+
   header: {
-    paddingBottom: 80,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
   },
   headerText: {
     backgroundColor: "transparent",
-    marginTop: 100,
+    marginVertical: Platform.OS === "ios" ? 120 : 100,
     marginBottom: 80,
     marginLeft: 40,
   },
@@ -249,7 +269,7 @@ const styles = StyleSheet.create({
   formContainer: {
     flex: 0,
     padding: 24,
-    marginTop: -120,
+    marginVertical: -60
   },
   fieldContainer: {
     marginBottom: 16,

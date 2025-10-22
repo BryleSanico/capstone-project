@@ -10,11 +10,13 @@ import {
   Share,
   Platform,
   ActivityIndicator,
+  Animated,
 } from "react-native";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { SafeAreaView } from "react-native-safe-area-context";
 import LinearGradient from "react-native-linear-gradient";
+import { BlurView } from "@react-native-community/blur";
 import Icon from "react-native-vector-icons/Ionicons";
 import HapticFeedback from "react-native-haptic-feedback";
 import { useFavorites } from "../stores/favorites-store";
@@ -48,7 +50,8 @@ export default function EventDetailsScreen() {
   const { addTickets, tickets: userTickets } = useTickets();
   const { toggleFavorite, favorites } = useFavorites();
   const isFavorite = favorites.includes(id);
-
+  const scrollY = new Animated.Value(0);
+  
   // Calculate how many tickets the current user has already purchased for this event
   const userTicketsForEvent = userTickets.filter(
     (ticket) => ticket.eventId === id
@@ -221,9 +224,37 @@ export default function EventDetailsScreen() {
     isButtonDisabled = true;
   }
 
+    const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 150],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
+
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+    
+    <SafeAreaView style={styles.container}>
+          <Animated.View style={[styles.blurHeader, { opacity: headerOpacity }]}>
+        {Platform.OS === 'ios' ? (
+          // --- iOS: Use BlurView ---
+          <BlurView
+            style={StyleSheet.absoluteFill}
+            blurType="light" // Or 'dark', 'xlight', etc.
+            blurAmount={15} // Adjust blur intensity
+          />
+        ) : (
+          // --- Android: Use a semi-transparent View as fallback ---
+          <View style={[StyleSheet.absoluteFill, styles.androidBlurFallback]} />
+        )}
+      </Animated.View>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+      >
         <View style={styles.imageContainer}>
           <Image source={{ uri: event.imageUrl }} style={styles.image} />
           <LinearGradient
@@ -372,6 +403,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
+  blurHeader: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: Platform.OS === "ios" ? 100 : 60, 
+    zIndex: 10,
+  },
+   androidBlurFallback: {
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -396,7 +438,7 @@ const styles = StyleSheet.create({
   },
   categoryBadge: {
     position: "absolute",
-    top: 100,
+    top: 60,
     left: 16,
     backgroundColor: "rgba(99, 102, 241, 0.9)",
     paddingHorizontal: 16,
