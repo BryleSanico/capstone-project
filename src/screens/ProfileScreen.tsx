@@ -1,5 +1,5 @@
 // src/screens/ProfileScreen.tsx
-import React, { useEffect, useLayoutEffect } from 'react';
+import React, { useLayoutEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,58 +7,73 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-} from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import Icon from 'react-native-vector-icons/Ionicons';
+  ActivityIndicator,
+  SafeAreaView,
+  Platform,
+} from "react-native";
+import LinearGradient from "react-native-linear-gradient";
+import Icon from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
 import MaterialIcon from "react-native-vector-icons/MaterialCommunityIcons";
 import { getIconComponent } from "../utils/iconLoader";
 import { MenuItem } from "../types/menu";
-import { useTickets } from '../stores/tickets-store'; 
-import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { TabParamList } from '../navigation/TabNavigator';
-import { RootStackParamList } from '../navigation/AppNavigator';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useAuth } from '../stores/auth-store';
-import { useFavorites } from '../stores/favorites-store';
+import { useTickets } from "../stores/tickets-store";
+import {
+  CompositeNavigationProp,
+  useNavigation,
+} from "@react-navigation/native";
+import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { TabParamList } from "../navigation/TabNavigator";
+import { RootStackParamList } from "../navigation/AppNavigator";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useAuth } from "../stores/auth-store";
+import { useFavorites } from "../stores/favorites-store";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
 type ProfileScreenNavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<TabParamList, 'Profile'>,
+  BottomTabNavigationProp<TabParamList, "Profile">,
   NativeStackNavigationProp<RootStackParamList>
 >;
 
 export default function ProfileScreen() {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { tickets } = useTickets();
   const { favorites } = useFavorites();
   const { user, signOut } = useAuth();
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: 'Profile',
-      headerStyle: { backgroundColor: '#fff' },
-      headerTitleStyle: { fontWeight: '700', fontSize: 20 },
+      title: "Profile",
+      headerStyle: { backgroundColor: "#fff" },
+      headerTitleStyle: { fontWeight: "700", fontSize: 20 },
     });
   }, [navigation]);
 
- 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to log out?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Logout",
         style: "destructive",
-        onPress: () => {signOut()}, 
+        onPress: async () => {
+          setIsLoggingOut(true);
+          try {
+            await signOut();
+          } catch (error) {
+            console.error("Logout failed:", error);
+            Alert.alert("Error", "Could not log out. Please try again.");
+          } finally {
+            setIsLoggingOut(false);
+          }
+        },
       },
     ]);
   };
 
-
   const handleLogin = () => {
-    navigation.navigate('Login');
+    navigation.navigate("Login");
   };
 
   const menuItems: MenuItem[] = [
@@ -72,7 +87,7 @@ export default function ProfileScreen() {
       icon: { name: "heart-o", library: "FontAwesome" },
       title: "Favorite Events",
       subtitle: `${favorites.length} events saved`,
-      onPress: () => navigation.navigate('My Favorites'),
+      onPress: () => navigation.navigate("My Favorites"),
     },
     {
       icon: { name: "settings-outline", library: "Ionicons" },
@@ -90,14 +105,6 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      {/* <Stack.Screen
-        options={{
-          title: "Profile",
-          headerStyle: { backgroundColor: "#fff" },
-          headerTitleStyle: { fontWeight: "700", fontSize: 20 },
-        }}
-      /> */}
-
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <LinearGradient
           colors={["#6366f1", "#8b5cf6"]}
@@ -108,8 +115,12 @@ export default function ProfileScreen() {
           <View style={styles.avatarContainer}>
             <FontAwesomeIcon name="user" size={40} color="#fff" />
           </View>
-          <Text style={styles.userName}>{user?.user_metadata.full_name || "Guest"}</Text>
-          <Text style={styles.userEmail}>{user?.user_metadata.email || "guest@example.com"}</Text>
+          <Text style={styles.userName}>
+            {user?.user_metadata.full_name || "Guest"}
+          </Text>
+          <Text style={styles.userEmail}>
+            {user?.email || "guest@example.com"}
+          </Text>
         </LinearGradient>
 
         <View style={styles.statsContainer}>
@@ -134,6 +145,7 @@ export default function ProfileScreen() {
                 key={index}
                 style={styles.menuItem}
                 onPress={item.onPress}
+                disabled={!user} // Disable if not logged in
               >
                 <View style={styles.menuIcon}>
                   <IconComponent
@@ -151,11 +163,20 @@ export default function ProfileScreen() {
           })}
         </View>
 
-        {/* Conditionally render Login or Logout button */}
         {user ? (
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <MaterialIcon name="logout" size={20} color="#ff4757" />
-            <Text style={styles.logoutText}>Logout</Text>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+            disabled={isLoggingOut} // Disable button while logging out
+          >
+            {isLoggingOut ? (
+              <ActivityIndicator color="#ff4757" />
+            ) : (
+              <>
+                <MaterialIcon name="logout" size={20} color="#ff4757" />
+                <Text style={styles.logoutText}>Logout</Text>
+              </>
+            )}
           </TouchableOpacity>
         ) : (
           <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
@@ -175,10 +196,15 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  profileHeader: {
+
+    profileHeader: {
     alignItems: "center",
-    padding: 7,
-    margin: 7,
+    paddingLeft: Platform.OS === "ios" ? 8 : 16,
+    paddingRight: Platform.OS === "ios" ? 8 : 16,
+    marginLeft: Platform.OS === "ios" ? 8 : 16,
+    marginRight: Platform.OS === "ios" ? 8 : 16,
+    marginBottom: 24,
+    marginTop: 24,
     borderRadius: 20,
     shadowColor: "#6366f1",
     shadowOffset: { width: 0, height: 8 },
@@ -186,6 +212,7 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 12,
   },
+  
   avatarContainer: {
     width: 80,
     height: 80,
@@ -194,7 +221,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
-    marginTop:25
+    marginTop: 25,
   },
   userName: {
     fontSize: 24,
@@ -205,7 +232,7 @@ const styles = StyleSheet.create({
   userEmail: {
     fontSize: 16,
     color: "rgba(255,255,255,0.8)",
-    marginBottom: 25
+    marginBottom: 25,
   },
   statsContainer: {
     flexDirection: "row",
@@ -293,13 +320,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ff4757",
     gap: 8,
+    minHeight: 50, // for loader
   },
   logoutText: {
     fontSize: 16,
     fontWeight: "600",
     color: "#ff4757",
   },
-    loginButton: {
+  loginButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -309,7 +337,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     gap: 8,
-    shadowColor: '#6366f1',
+    shadowColor: "#6366f1",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -317,7 +345,7 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: "600",
+    color: "#fff",
   },
 });

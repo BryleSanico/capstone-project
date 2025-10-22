@@ -28,6 +28,7 @@ type TicketsState = {
     totalPrice: number;
   }) => Promise<{ success: boolean; message?: string }>;
   loadTickets: () => Promise<void>;
+  clearUserTickets: () => void; // Add this action
 };
 
 export const useTickets = create<TicketsState>()((set, get) => ({
@@ -35,13 +36,17 @@ export const useTickets = create<TicketsState>()((set, get) => ({
   isLoading: false,
   isSyncing: false,
 
-   loadTickets: async () => {
+  clearUserTickets: () => {
+    set({ tickets: [], isLoading: false });
+  },
+
+  loadTickets: async () => {
     set({ isLoading: true });
     const session = await getCurrentSession();
     const userId = session?.user?.id;
 
     if (!userId) {
-      set({ tickets: [], isLoading: false });
+      set({ tickets: [], isLoading: false }); // Ensure state is cleared for guests
       return;
     }
     
@@ -53,7 +58,7 @@ export const useTickets = create<TicketsState>()((set, get) => ({
       // If valid cache exists, load it and stop.
       set({ tickets: cachedData.tickets, isLoading: false });
     } else if (useNetworkStatus.getState().isConnected) {
-      // If cache is expired or missing, and we're online, fetch from server.
+      // If cache is expired or missing, and connected to the network, fetch from server.
       try {
         const serverTickets = await ticketService.getUserTickets();
         set({ tickets: serverTickets });
@@ -68,7 +73,7 @@ export const useTickets = create<TicketsState>()((set, get) => ({
       set({ tickets: cachedData.tickets, isLoading: false });
     } else {
       // Offline with no cache at all.
-      set({ isLoading: false });
+      set({ isLoading: false, tickets: [] });
     }
   },
   
@@ -102,4 +107,3 @@ export const useTickets = create<TicketsState>()((set, get) => ({
     }
   },
 }));
-
