@@ -51,7 +51,6 @@ export default function DiscoverScreen() {
     loadMoreEvents,
     syncEvents,
     refreshEvents,
-    fetchCategories,
   } = useEvents();
 
   const { favorites } = useFavorites();
@@ -75,8 +74,7 @@ export default function DiscoverScreen() {
   // Initial data load and category change handler
   useEffect(() => {
     loadInitialEvents({ query: "", category: selectedCategory });
-    fetchCategories();
-  }, [selectedCategory]);
+  }, [selectedCategory, loadInitialEvents]);
 
   // Sync data when the screen is re-focused
   useEffect(() => {
