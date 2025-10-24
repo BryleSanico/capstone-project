@@ -138,18 +138,5 @@ export const eventService = {
     }
     return cachedEvents;
   },
-
-   async fetchCategories(): Promise<string[]> {
-    if (!useNetworkStatus.getState().isConnected) {
-      return ['All', 'Music', 'Technology', 'Food & Drink', 'Arts & Culture'];
-    }
-    const { data, error } = await supabase.rpc('get_distinct_categories');
-    if (error) {
-      console.error("Failed to fetch categories:", error.message);
-      return ['All', 'Music', 'Technology', 'Food & Drink', 'Arts & Culture'];
-    }
-    const categoryNames = data.map((c: { category: string }) => c.category);
-    return ['All', ...categoryNames];
-  },
 };
 
