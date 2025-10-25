@@ -41,8 +41,8 @@ type DiscoverScreenNavigationProp = CompositeNavigationProp<
 export default function DiscoverScreen() {
   const navigation = useNavigation<DiscoverScreenNavigationProp>();
   const {
-    _fullEventCache,    // The complete list of all cached events.
-    displayedEvents,    // The paginated list for the UI.
+    _fullEventCache,
+    displayedEvents,
     isLoading,
     isSyncing,
     hasMore,
@@ -59,7 +59,6 @@ export default function DiscoverScreen() {
   const debouncedQuery = useDebounce(searchQuery, 500);
   const isFocused = useIsFocused();
   const isConnected = useNetworkStatus((state) => state.isConnected);
-  // Ref to prevent syncing on the very first mount
   const isInitialMount = useRef(true);
 
   useLayoutEffect(() => {
@@ -71,30 +70,34 @@ export default function DiscoverScreen() {
     });
   }, [navigation]);
 
-  // Initial data load and category change handler
+  // Loads from cache AND triggers a background freshness check
   useEffect(() => {
     loadInitialEvents({ query: "", category: selectedCategory });
   }, [selectedCategory, loadInitialEvents]);
 
-  // Sync data when the screen is re-focused
+  // When the screen is re-focused check cache freshness and sync
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
-    } else if (isFocused && !searchQuery) { // Only sync if not actively searching
-      syncEvents({ query: "", category: selectedCategory });
+      return; // Don't run on first mount
     }
-  }, [isFocused]);
 
-  // Perform search on the full, unpaginated cache for the best results.
+    if (isFocused && !searchQuery) {
+      console.log(
+        "[Focus] Screen focused. Calling syncEvents to check freshness."
+      );
+      syncEvents({ query: "", category: "All" });
+    }
+  }, [isFocused, searchQuery, syncEvents]); 
+
   const searchResults = useMemo(
     () => searchCache(_fullEventCache, debouncedQuery),
     [_fullEventCache, debouncedQuery]
   );
 
-   // Determine which list to show: search results or the main paginated list.
   const dataForList = debouncedQuery ? searchResults : displayedEvents;
 
-  // Trigger a network search if local search yields no results and we're online.
+   // Trigger a network search if local search yields no results and we're online.
   useEffect(() => {
     if (debouncedQuery && searchResults.length === 0 && isConnected) {
       syncEvents({ query: debouncedQuery, category: selectedCategory });
@@ -118,14 +121,16 @@ export default function DiscoverScreen() {
 
   // Handler for pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    if(isConnected){
+    if (isConnected) {
       await refreshEvents({ query: debouncedQuery, category: selectedCategory });
     }
-  }, [refreshEvents, debouncedQuery, selectedCategory]);
+  }, [refreshEvents, debouncedQuery, selectedCategory, isConnected]);
 
   const renderFooter = () => {
-    if (!isSyncing || !hasMore || debouncedQuery) return null;
-     return (
+    // Only show footer loader if we are syncing (fetching)
+    // and not in a search query.
+    if (!isSyncing || debouncedQuery) return null;
+    return (
       <View style={styles.footerContainer}>
         <Loader size={50} />
       </View>
@@ -133,7 +138,7 @@ export default function DiscoverScreen() {
   };
 
   const renderContent = () => {
-    if ((isLoading || isSyncing) && dataForList.length === 0) {
+   if ((isLoading || isSyncing) && dataForList.length === 0) {
       return (
         <SafeAreaView style={[styles.container, styles.loadingContainer]}>
           <LoaderSearch size={120} />
@@ -141,24 +146,26 @@ export default function DiscoverScreen() {
       );
     }
 
-    // If there are no results, show the appropriate message.
+    // Show offline state if offline AND cache is empty
     if (!isConnected && _fullEventCache.length === 0) {
-      if (!isConnected) {
-        return (
-          <OfflineState
-            message="You are offline. Please check your network connection."
-            onRefresh={handleRefresh}
-          />
-        );
-      }
-      if (isConnected && !isLoading && !isSyncing && dataForList.length === 0) {
-        return (
-          <EmptyState icon="warning-outline" title="No events found" message="Try adjusting your search or filters" />
-        );
-      }
+      return (
+        <OfflineState
+          message="You are offline. Please check your network connection."
+          onRefresh={handleRefresh}
+        />
+      );
+    }
+    if (isConnected && !isLoading && !isSyncing && dataForList.length === 0) {
+      return (
+        <EmptyState
+          icon="warning-outline"
+          title="No events found"
+          message="Try adjusting your search or filters"
+        />
+      );
     }
 
-    // Main list rendering from memoize cache
+    // Main list rendering
     return (
       <FlatList
         data={dataForList}
@@ -170,11 +177,11 @@ export default function DiscoverScreen() {
         contentContainerStyle={styles.listContent}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.7}
-        ListFooterComponent={renderFooter}
-        extraData={hasMore}
+        ListFooterComponent={renderFooter} // Call renderFooter
+        extraData={hasMore || isSyncing} // Re-render footer when sync status changes
         refreshControl={
           <RefreshControl
-            refreshing={isSyncing}
+            refreshing={isSyncing && !isLoading} // Show pull-to-refresh only on network sync
             onRefresh={handleRefresh}
             tintColor="#6366f1"
           />
@@ -213,8 +220,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-    footerContainer: {
+  footerContainer: {
     paddingVertical: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
 });
+

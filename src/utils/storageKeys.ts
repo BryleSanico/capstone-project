@@ -13,7 +13,7 @@ const EVENTS_CACHE_KEY = "discover_events_cache";
 const LAST_EVENTS_SYNC_KEY = "last_events_sync";
 const EVENTS_DETAIL_CACHE_KEY = "events_detail_cache";
 const NOTIFICATION_PERMISSION_REJECTION_COUNT_KEY = "notification_permission_rejection_count"; // New Key
-
+const EVENTS_TOTAL_COUNT_KEY = "events_total_count";
 
 export const storageKeys = {
   // --- User-Specific Keys ---
@@ -26,5 +26,7 @@ export const storageKeys = {
   getEventsCacheKey: () => EVENTS_CACHE_KEY,
   getEventsSyncKey: () => LAST_EVENTS_SYNC_KEY,
   getEventsDetailCacheKey: () => EVENTS_DETAIL_CACHE_KEY,
-  getNotificationRejectionCountKey: () => NOTIFICATION_PERMISSION_REJECTION_COUNT_KEY, // New Getter
+  getNotificationRejectionCountKey: () => NOTIFICATION_PERMISSION_REJECTION_COUNT_KEY, 
+  getEventsTotalCountKey: () => EVENTS_TOTAL_COUNT_KEY,
+  
 };
