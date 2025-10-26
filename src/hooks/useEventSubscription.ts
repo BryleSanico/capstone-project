@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useEvents } from '../stores/event-store';
-import { eventMapper } from "../utils/mappers/eventMapper";
+import { eventMapper } from '../utils/mappers/eventMapper';
 
 /**
  * A custom hook that subscribes to real-time updates for a single event.
@@ -30,6 +30,7 @@ export default function useEventSubscription(eventId: number | null) {
         (payload) => {
           console.log('🟢 Real-time event update received!', payload.new);
 
+          // FIX: Use the exported eventMapper from the service
           const updatedEvent = eventMapper(payload.new);
           
           // Update the central Zustand store with the new event data.
