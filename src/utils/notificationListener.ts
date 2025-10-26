@@ -1,7 +1,6 @@
-// src/services/notificationListener.ts
-import messaging from "@react-native-firebase/messaging";
+import { getMessaging, onMessage, setBackgroundMessageHandler } from "@react-native-firebase/messaging";
 import notifee, { AndroidImportance } from "@notifee/react-native";
-
+import { DEFAULT_NOTIFICATION_CHANNEL } from "../constants/firebaseConstants";
 /**
  * Utility: Safely convert any value into string for display
  */
@@ -30,7 +29,7 @@ const handleForegroundMessage = async (remoteMessage: any) => {
     title,
     body,
     android: {
-      channelId: "default",
+      channelId: DEFAULT_NOTIFICATION_CHANNEL.id,
       importance: AndroidImportance.HIGH,
       pressAction: { id: "default" },
     },
@@ -41,11 +40,12 @@ const handleForegroundMessage = async (remoteMessage: any) => {
  * Register listeners for foreground & background
  */
 export const setupNotificationListeners = () => {
+  const messaging = getMessaging();
   // Foreground listener
-  messaging().onMessage(handleForegroundMessage);
+  onMessage(messaging, handleForegroundMessage);
 
   // Background/quit state handler
-  messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+  setBackgroundMessageHandler(messaging, async (remoteMessage) => {
     console.log(" Background message:", remoteMessage);
 
     const title = toSafeString(
@@ -61,7 +61,7 @@ export const setupNotificationListeners = () => {
       title,
       body,
       android: {
-        channelId: "default",
+        channelId: DEFAULT_NOTIFICATION_CHANNEL.id,
         importance: AndroidImportance.HIGH,
         pressAction: { id: "default" },
       },
