@@ -1,19 +1,11 @@
 import { create } from "zustand";
 import { Alert } from "react-native";
 import { favoritesService } from "../services/favoritesService";
-import { eventService } from "../services/eventService";
 import { getCurrentSession } from "../helpers/sessionHelper";
 import { Event } from "../types/event";
 import { useNetworkStatus } from "./network-store";
-import storageService from "../services/storageService";
-import { storageKeys } from "../utils/storageKeys";
+import { handleAsyncAction } from "../utils/storeUtils";
 
-type CachedFavorites = {
-  ids: number[];
-  lastUpdatedAt: number;
-};
-
-const CACHE_EXPIRATION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 let syncDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 type FavoritesState = {
@@ -22,9 +14,10 @@ type FavoritesState = {
   favoriteEvents: Event[];
   isLoading: boolean;
   isSyncing: boolean;
+  error: string | null; // Required for handleAsyncAction
   loadFavorites: () => Promise<void>;
   toggleFavorite: (event: Event) => void;
-  clearUserFavorites: () => void; // Add this action
+  clearUserFavorites: () => void;
 };
 
 export const useFavorites = create<FavoritesState>()((set, get) => ({
@@ -33,113 +26,74 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
   favoriteEvents: [],
   isLoading: false,
   isSyncing: false,
+  error: null,
 
-  // Add this new synchronous action to clear state
   clearUserFavorites: () => {
     set({
       favorites: [],
       favoriteEvents: [],
       initialFavorites: new Set(),
       isLoading: false,
+      error: null,
     });
   },
 
   loadFavorites: async () => {
-    set({ isLoading: true });
-    const session = await getCurrentSession();
-    const userId = session?.user?.id;
-
-    if (!userId) {
-      set({ favorites: [], favoriteEvents: [], initialFavorites: new Set(), isLoading: false });
-      return;
-    }
-
-    const favoritesCacheKey = storageKeys.getFavoritesIdsKey(userId);
-    const cachedData = await storageService.getItem<CachedFavorites>(favoritesCacheKey);
-    const isCacheExpired = !cachedData || (Date.now() - cachedData.lastUpdatedAt) > CACHE_EXPIRATION_DURATION;
-
-    if (cachedData && !isCacheExpired) {
-      // If valid cache exists, load it and stop.
-      const ids = cachedData.ids;
-      set({ favorites: ids, initialFavorites: new Set(ids) });
-      if (ids.length > 0) {
-        const events = await eventService.fetchEventsByIds(ids);
-        set({ favoriteEvents: events });
-      }
-      set({ isLoading: false });
-    } else if (useNetworkStatus.getState().isConnected) {
-      // If cache is expired or missing, and we're online, fetch from server.
-      try {
-        const serverIds = await favoritesService.getFavorites();
-        set({ favorites: serverIds, initialFavorites: new Set(serverIds) });
-        
-        if (serverIds.length > 0) {
-          const events = await eventService.fetchEventsByIds(serverIds);
-          set({ favoriteEvents: events });
-        } else {
-          set({ favoriteEvents: [] });
-        }
-        await storageService.setItem(favoritesCacheKey, { ids: serverIds, lastUpdatedAt: Date.now() });
-      } catch (error) {
-        console.error("Failed to load favorites from server:", error);
-      } finally {
-        set({ isLoading: false });
-      }
-    } else if (cachedData) {
-      // Offline with no valid cache.
-        const ids = cachedData.ids;
-        set({ favorites: ids, initialFavorites: new Set(ids), isLoading: false });
-        if(ids.length > 0){
-            const events = await eventService.fetchEventsByIds(ids);
-            set({ favoriteEvents: events});
-        }
-    }
-     else {
-      set({ isLoading: false, favorites: [], favoriteEvents: [] });
-    }
+    await handleAsyncAction(set, get, "isLoading", async () => {
+      const { events, ids } = await favoritesService.getFavoriteEvents();
+      return {
+        favoriteEvents: events,
+        favorites: ids,
+        initialFavorites: new Set(ids),
+      };
+    });
   },
 
   toggleFavorite: (event: Event) => {
-    const { favorites, favoriteEvents, isSyncing, initialFavorites } = get();
+    const { favorites, favoriteEvents } = get();
     const isCurrentlyFavorite = favorites.includes(event.id);
 
+    // Optimistic UI update
     const updatedIds = isCurrentlyFavorite ? favorites.filter(id => id !== event.id) : [...favorites, event.id];
     const updatedEvents = isCurrentlyFavorite ? favoriteEvents.filter(e => e.id !== event.id) : [...favoriteEvents, event];
 
     set({ favorites: updatedIds, favoriteEvents: updatedEvents });
 
+    // Debounce and sync
     if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
     
     syncDebounceTimer = setTimeout(async () => {
-      const { favorites: finalFavorites } = get();
+      // Get the *latest* state from inside the timer
+      const { favorites: finalFavorites, initialFavorites: currentInitial } = get();
       const session = await getCurrentSession();
       const userId = session?.user?.id;
 
-      if (isSyncing || !userId || !useNetworkStatus.getState().isConnected) return;
-
-      set({ isSyncing: true });
-      const initialSet = initialFavorites;
-      const currentSet = new Set(finalFavorites);
-      const added = finalFavorites.filter(id => !initialSet.has(id));
-      const removed = Array.from(initialSet).filter(id => !currentSet.has(id));
-
-      if (added.length === 0 && removed.length === 0) {
-        set({ isSyncing: false });
-        return;
+      if (get().isSyncing || !userId || !useNetworkStatus.getState().isConnected) {
+        return; // Skip sync
       }
 
+      set({ isSyncing: true, error: null });
+
       try {
-        await favoritesService.syncFavorites(userId, added, removed);
-        set({ initialFavorites: currentSet });
-        // Update cache timestamp after successful sync
-        const favoritesCacheKey = storageKeys.getFavoritesIdsKey(userId);
-        await storageService.setItem(favoritesCacheKey, { ids: finalFavorites, lastUpdatedAt: Date.now() });
+        // Call the "fat service" method
+        const newInitialSet = await favoritesService.syncFavoriteChanges(
+          userId,
+          finalFavorites,
+          currentInitial
+        );
+        
+        // Success: update the "source of truth" set
+        set({ initialFavorites: newInitialSet });
       } catch (error) {
+        // Error: Revert state and show alert
         Alert.alert("Sync Failed", "Your favorite changes could not be saved.");
-        set({ favorites: Array.from(initialSet), favoriteEvents: get().favoriteEvents.filter(e => initialSet.has(e.id)) });
+        set({ 
+          favorites: Array.from(currentInitial), 
+          favoriteEvents: get().favoriteEvents.filter(e => currentInitial.has(e.id)) 
+        });
       } finally {
         set({ isSyncing: false });
       }
-    }, 2000);
+    }, 2000); // 2-second debounce
   },
 }));
