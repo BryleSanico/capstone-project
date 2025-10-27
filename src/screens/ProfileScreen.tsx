@@ -88,7 +88,7 @@ export default function ProfileScreen() {
       icon: { name: "heart-o", library: "FontAwesome" },
       title: "Favorite Events",
       subtitle: `${favorites.length} events saved`,
-      onPress: () => navigation.navigate("My Favorites"),
+      onPress: () => navigation.navigate("Favorites"),
     },
     {
       icon: { name: "settings-outline", library: "Ionicons" },

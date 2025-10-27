@@ -5,6 +5,7 @@ import { useFavorites } from "./favorites-store";
 import { useTickets } from "./tickets-store";
 import { cacheManager } from "../services/cacheManager";
 import { notificationService } from "../services/notificationService";
+import { useMyEvents } from "./my-event-store";
 
 type AuthState = {
   session: Session | null;
@@ -39,11 +40,13 @@ export const useAuth = create<AuthState>((set, get) => ({
         await Promise.all([
           useFavorites.getState().loadFavorites(),
           useTickets.getState().loadTickets(),
+          useMyEvents.getState().loadMyEvents(),
         ]);
       } else {
         // If no user, ensure stores are cleared (handles initial guest state).
         useFavorites.getState().clearUserFavorites();
         useTickets.getState().clearUserTickets();
+        useMyEvents.getState().clearUserEvents();
       }
 
       // Done with initial loading/state changes.
@@ -91,6 +94,7 @@ export const useAuth = create<AuthState>((set, get) => ({
     // synchronously clear the state of other stores.
     useTickets.getState().clearUserTickets();
     useFavorites.getState().clearUserFavorites();
+    useMyEvents.getState().clearUserEvents();
     console.log("Zustand state cleared for tickets and favorites.");
 
     // Perform asynchronous cleanup operations.
