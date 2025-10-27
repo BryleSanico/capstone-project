@@ -30,7 +30,7 @@ public class AppDelegate: ExpoAppDelegate {
       in: window,
       launchOptions: launchOptions)
 #endif
-    RNSplashScreen.show()
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
