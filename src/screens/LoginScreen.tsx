@@ -19,6 +19,8 @@ import { useAuth } from '../stores/auth-store';
 import { Loader } from "../components/loaders/loader";
 import { isEmail, isRequired } from "../utils/validation";
 
+// Define the types for route and navigation
+// Note: The screen name here must match the one in AppNavigator.tsx
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "Login"
