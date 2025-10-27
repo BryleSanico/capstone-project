@@ -25,6 +25,8 @@ import {
   passwordsMatch,
 } from "../utils/validation";
 
+// Define the types for route and navigation
+// Note: The screen name here must match the one in AppNavigator.tsx
 type RegisterScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "Register"
