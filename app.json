@@ -1,41 +1,40 @@
 {
-  "expo": {
-    "name": "Event Discovery & Ticketing",
-    "slug": "event-discovery-ticketing",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
+  "name": "EventDiscoveryTicketing",
+  "displayName": "EventDiscoveryTicketing",
+  "slug": "event-discovery-ticketing",
+  "version": "1.0.0",
+  "orientation": "portrait",
+  "icon": "./assets/images/icon.png",
+  "scheme": "myapp",
+  "userInterfaceStyle": "automatic",
+  "newArchEnabled": true,
+  "splash": {
+    "image": "./assets/images/splash-icon.png",
+    "resizeMode": "contain",
+    "backgroundColor": "#ffffff"
+  },
+  "ios": {
+    "supportsTablet": true,
+    "bundleIdentifier": "app.eventdiscoveryticketing"
+  },
+  "android": {
+    "adaptiveIcon": {
+      "foregroundImage": "./assets/images/adaptive-icon.png",
       "backgroundColor": "#ffffff"
     },
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "app.eventdiscoveryticketing",
-      "entitlements": {
-      "com.apple.developer.networking.wifi-info": true
+    "package": "app.eventdiscoveryticketing"
+  },
+  "web": {
+    "favicon": "./assets/images/favicon.png"
+  },
+  "plugins": [],
+  "experiments": {
+    "typedRoutes": true
+  },
+  "extra": {
+    "eas": {
+      "projectId": "bb5e00a4-4d4a-45d6-9dfc-8206163b63b3"
     }
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "app.eventdiscoveryticketing",
-      "permissions": [
-        "android.permission.VIBRATE"
-      ]
-    },
-    "web": {
-      "favicon": "./assets/images/favicon.png"
-    },
-    "plugins": [],
-    "experiments": {
-      "typedRoutes": true
-    }
-  }
+  },
+  "owner": "brylesanico"
 }
