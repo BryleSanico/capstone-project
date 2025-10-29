@@ -1,31 +1,31 @@
 // src/navigation/TabNavigator.tsx
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import React from "react";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Icon from "react-native-vector-icons/Ionicons";
 import Icon2 from "react-native-vector-icons/FontAwesome";
-import DiscoverScreen from '../screens/DiscoverScreen';
-import TicketsScreen from '../screens/TicketScreen';
-import ProfileScreen from '../screens/ProfileScreen';
-import FavoritesScreen from '../screens/FavoritesScreen';
+import DiscoverScreen from "../screens/DiscoverScreen";
+import TicketsScreen from "../screens/TicketScreen";
+import ProfileScreen from "../screens/ProfileScreen";
+import MyEventsScreen from "../screens/MyEventsScreen";
 
 export type TabParamList = {
   Discover: undefined;
-  'My Favorites': undefined;
-  'My Tickets': undefined;
+  "My Events": undefined;
+  "My Tickets": undefined;
   Profile: undefined;
 };
-const Tab = createBottomTabNavigator<TabParamList>(); 
+const Tab = createBottomTabNavigator<TabParamList>();
 export default function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: '#6366f1',
-        tabBarInactiveTintColor: '#999',
-        headerShown: true, 
+        tabBarActiveTintColor: "#6366f1",
+        tabBarInactiveTintColor: "#999",
+        headerShown: true,
         tabBarStyle: {
-          backgroundColor: '#fff',
+          backgroundColor: "#fff",
           borderTopWidth: 1,
-          borderTopColor: '#f0f0f0',
+          borderTopColor: "#f0f0f0",
           paddingTop: 8,
           paddingBottom: 8,
           paddingLeft: 15,
@@ -34,9 +34,9 @@ export default function TabNavigator() {
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: '600',
+          fontWeight: "600",
           marginTop: 4,
-          textAlign: "center"
+          textAlign: "center",
         },
         tabBarItemStyle: {
           flex: 1,
@@ -48,15 +48,19 @@ export default function TabNavigator() {
         component={DiscoverScreen}
         options={{
           tabBarLabel: "Discover",
-          tabBarIcon: ({ color, size }) => <Icon name="search-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="search-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
-        name="My Favorites"
-        component={FavoritesScreen}
+        name="My Events"
+        component={MyEventsScreen}
         options={{
-          tabBarLabel: "Favorites",
-          tabBarIcon: ({ color, size }) => <Icon name="heart-outline" size={size} color={color} />,
+          tabBarLabel: "My Events",
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="calendar-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -64,14 +68,18 @@ export default function TabNavigator() {
         component={TicketsScreen}
         options={{
           tabBarLabel: "My Tickets",
-          tabBarIcon: ({ color, size }) => <Icon name="ticket-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="ticket-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <Icon2 name="user-o" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Icon2 name="user-o" size={size} color={color} />
+          ),
         }}
       />
     </Tab.Navigator>

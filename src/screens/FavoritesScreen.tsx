@@ -26,11 +26,11 @@ import { useNetworkStatus } from "../stores/network-store";
 import { OfflineState } from "../components/Errors/offlineState";
 import { EmptyState } from "../components/Errors/EmptyState";
 
-// Define the navigation tab
-// Note: The screen name here must match the one in TabNavigator.tsx
-type FavoritesScreenNavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<TabParamList, "My Favorites">,
-  NativeStackNavigationProp<RootStackParamList>
+// Define the types for route and navigation
+// Note: The screen name here must match the one in AppNavigator.tsx
+type FavoritesScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "Favorites"
 >;
 
 export default function FavoritesScreen() {

@@ -18,3 +18,18 @@ export interface Event {
   availableSlot: number;
   userMaxTicketPurchase: number;
 }
+
+// Represents the data captured by the Event form screen
+export type EventFormData = {
+  title: string;
+  description: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:MM
+  location: string;
+  address: string;
+  price: string;
+  category: string;
+  capacity: string;
+  tags: string;
+  userMaxTicketPurchase: string;
+};
