@@ -17,7 +17,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from '../stores/auth-store';
 import { Loader } from "../components/loaders/loader";
-import { isEmail, isRequired } from "../utils/validation";
+import { isEmail, isRequired } from "../utils/validations/validation";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx

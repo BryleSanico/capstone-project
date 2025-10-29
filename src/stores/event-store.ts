@@ -61,7 +61,7 @@ const _updateEventInState = (
       : state.currentEvent;
 
   if (updatedEvent) {
-    eventService.cacheEventDetails([updatedEvent]);
+    eventService.cacheEventDetails([updatedEvent]); 
   }
 
   return {
@@ -215,17 +215,29 @@ export const useEvents = create<EventsState>()((set, get) => {
 
     updateEventInCache: (updatedEvent: Event) => {
       set((state) =>
-        _updateEventInState(state, updatedEvent.id, (event) => ({
-          ...event,
-          ...updatedEvent,
-          attendees: updatedEvent.attendees ?? event.attendees ?? 0,
-        }))
+        _updateEventInState(state, updatedEvent.id, (event) => {
+           // We are only updating the fields from the server response.
+           // We should PRESERVE the existing organizer data if the incoming 
+           // updatedEvent does not contain a populated profile object.
+           const updatedData = {
+              ...event,
+              ...updatedEvent,
+              // Preserve existing organizer data if the new data is the placeholder
+              organizer: updatedEvent.organizer.fullName !== "Community Event" 
+                         ? updatedEvent.organizer 
+                         : event.organizer,
+              attendees: updatedEvent.attendees ?? event.attendees ?? 0,
+            };
+
+            // Ensure the update cascades correctly if the event being updated 
+            // is the one that has the correct organizer (the one from cache).
+            return updatedData;
+        })
       );
     },
   };
 });
 
-// --- Category Subscriber ---
 // Moved outside the create() call to prevent initialization error.
 useEvents.subscribe((state, prevState) => {
   if (state._fullEventCache !== prevState._fullEventCache) {
