@@ -1,11 +1,12 @@
-import { EventFormData } from '../types/event';
-import { isRequired } from './validation';
+import { EventFormData } from '../../types/event';
+import { isRequired } from '../validations/validation';
 
 export type EventFormErrors = {
   // Allow keys matching EventFormData fields
   [key in keyof EventFormData]?: string;
 } & {
   general?: string;
+  imageUrl?: string;
 };
 
 // Basic validation rules
