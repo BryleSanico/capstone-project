@@ -23,14 +23,13 @@ export interface Event {
 export type EventFormData = {
   title: string;
   description: string;
-  imageUrl: string; // Add if you have an image input
   date: string; // YYYY-MM-DD
   time: string; // HH:MM
   location: string;
   address: string;
-  price: string; // Input is string, convert before sending
+  price: string;
   category: string;
-  capacity: string; // Input is string, convert before sending
-  tags: string; // Comma-separated string for simplicity
-  userMaxTicketPurchase: string; // Input is string
+  capacity: string;
+  tags: string;
+  userMaxTicketPurchase: string;
 };
