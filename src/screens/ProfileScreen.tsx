@@ -14,7 +14,6 @@ import {
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
-import MaterialIcon from "react-native-vector-icons/MaterialCommunityIcons";
 import { getIconComponent } from "../utils/iconLoader";
 import { MenuItem } from "../types/menu";
 import { useTickets } from "../stores/tickets-store";
@@ -175,7 +174,7 @@ export default function ProfileScreen() {
               <ActivityIndicator color="#ff4757" />
             ) : (
               <>
-                <MaterialIcon name="logout" size={20} color="#ff4757" />
+                <Icon name="exit-outline" size={20} color="#ff4757" />
                 <Text style={styles.logoutText}>Logout</Text>
               </>
             )}

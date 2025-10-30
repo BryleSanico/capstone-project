@@ -1,8 +1,7 @@
 // src/screens/TicketsScreen.tsx
 import React, { useCallback, useEffect, useLayoutEffect } from "react";
-import { View, Text, StyleSheet, FlatList } from "react-native";
+import { View, Text, StyleSheet, FlatList, Platform, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Icon from "react-native-vector-icons/Ionicons";
 import TicketCard from "../components/TicketCard";
 import { useTickets } from "../stores/tickets-store";
 import { Ticket } from "../types/ticket";
@@ -17,6 +16,8 @@ import { TabParamList } from "../navigation/TabNavigator";
 import { Loader } from "../components/loaders/loader";
 import { RefreshControl } from "react-native-gesture-handler";
 import { EmptyState } from "../components/Errors/EmptyState";
+import { LinearGradient } from "react-native-linear-gradient";
+import Icon from "react-native-vector-icons/Ionicons"
 
 // Define the navigation tab
 // Note: The screen name here must match the one in TabNavigator.tsx
@@ -34,6 +35,7 @@ export default function TicketsScreen() {
       title: "My Tickets",
       headerStyle: { backgroundColor: "#fff" },
       headerTitleStyle: { fontWeight: "700", fontSize: 20 },
+      headerShown: false,
     });
   }, [navigation]);
 
@@ -54,7 +56,22 @@ export default function TicketsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <View style={styles.header}>
+              <LinearGradient
+                colors={["#8b5cf6", "#6366f1"]}
+                style={styles.headerGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.headerContent}>
+                  <View>
+                    <Text style={styles.headerTitle}>My Tickets</Text>
+                    <Text style={styles.headerSubtitle}>{tickets.length} purchased ticket</Text>
+                  </View>
+                </View>
+              </LinearGradient>
+            </View>
       <View style={styles.content}>
         {tickets.length === 0 ? (
           <EmptyState icon="ticket-outline" title="No Tickets Yet" message="Your purchased tickets will appear here" />
@@ -97,7 +114,46 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   listContent: {
-    paddingTop: 16,
-    paddingBottom: 32,
+    marginHorizontal: 20,
+
   },
+    header: {
+      marginHorizontal: 0,
+      borderRadius: 20,
+      ...Platform.select({
+        ios: {
+      shadowColor: "#6366f1",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 12,
+      marginTop: 0
+        },
+        android: {
+          elevation: 8,
+          marginVertical: 0,
+        },
+      }),
+    },
+    headerGradient: {
+      paddingHorizontal: 0,
+      paddingVertical: 0,
+    },
+    headerContent: {
+      marginVertical: 25,
+      marginHorizontal: 15,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    headerTitle: {
+      fontSize: 28,
+      fontWeight: "800",
+      color: "#fff",
+      marginBottom: 4,
+    },
+    headerSubtitle: {
+      fontSize: 14,
+      color: "rgba(255, 255, 255, 0.9)",
+      fontWeight: "500",
+    },
 });

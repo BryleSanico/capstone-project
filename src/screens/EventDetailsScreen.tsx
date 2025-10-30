@@ -90,7 +90,8 @@ export default function EventDetailsScreen() {
     navigation.setOptions({
       title: "",
       headerTransparent: true,
-      headerTintColor: "#fff",
+      headerTintColor: "#000000ff",
+      headerTitleStyle: { fontWeight: "700", fontSize: 20 },
       headerRight: () => (
         <View style={styles.headerButtons}>
           <TouchableOpacity

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
 import { Ticket } from '@/src/types/ticket';
@@ -15,7 +15,10 @@ export default function TicketCard({ ticket, onPress }: TicketCardProps) {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.9}>
       <LinearGradient
-        colors={['#6366f1', '#8b5cf6']}
+        // colors={['#6366f1', '#5c8dfeff']}
+        // colors={['#5a72ea', '#7b9aff']}
+        // colors={['#4f46e5', '#3b82f6']}
+        colors={['#5865f2', '#8897f5']}
         style={styles.card}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -65,26 +68,26 @@ export default function TicketCard({ ticket, onPress }: TicketCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 5,
-    marginBottom: 5,
+    flex: 1,
   },
   card: {
+    marginVertical: 10,
     borderRadius: 16,
-    padding: 10,
     position: 'relative',
     shadowColor: '#6366f1',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 12,
+    backgroundColor: 'rgba(255,255,255,0.05)'
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 16,
-    marginLeft: 8,
-    marginTop: 8
+    marginLeft: 25,
+    marginTop: 20
   },
   ticketInfo: {
     flex: 1,
@@ -110,12 +113,12 @@ const styles = StyleSheet.create({
   },
   details: {
     marginBottom: 16,
-    marginLeft: 8,
+    marginLeft: 25,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 5,
   },
   detailText: {
     fontSize: 14,
@@ -127,13 +130,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 25,
+    marginBottom: 20,
   },
   price: {
     fontSize: 20,
     fontWeight: '700',
     color: '#fff',
-    marginLeft: 8,
+    marginLeft: 25,
   },
   tapToView: {
     fontSize: 12,
@@ -143,7 +146,7 @@ const styles = StyleSheet.create({
   },
   ticketHoles: {
     position: 'absolute',
-    right: 12,
+    right: -6,
     top: '40%',
     transform: [{ translateY: -40 }],
     gap: 8,
@@ -152,6 +155,6 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#e1e2e3ff',
+    backgroundColor: Platform.OS === "ios" ? '#dde4eaff' : '#e8eff5ff',
   },
 });
