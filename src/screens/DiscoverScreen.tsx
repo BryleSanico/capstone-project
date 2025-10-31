@@ -147,7 +147,7 @@ export default function DiscoverScreen() {
     }
 
     // Show offline state if offline AND cache is empty
-    if (!isConnected && _fullEventCache.length === 0) {
+    if (error && _fullEventCache.length === 0) {
       return (
         <OfflineState
           message="You are offline. Please check your network connection."
