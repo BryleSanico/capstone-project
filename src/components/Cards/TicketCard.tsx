@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
 import { Ticket } from '@/src/types/ticket';
-import { formatDateMMDDYY } from '../utils/dateFormatter';
+import { formatDateMMDDYY } from '../../utils/dateFormatter';
 
 interface TicketCardProps {
   ticket: Ticket;

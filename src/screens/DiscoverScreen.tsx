@@ -14,7 +14,7 @@ import {
 } from "@react-navigation/native";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import EventCard from "../components/EventCard";
+import EventCard from "../components/Cards/EventCard";
 import SearchBar from "../components/SearchBar";
 import CategoryFilter from "../components/CategoryFilter";
 import { Event } from "../types/event";

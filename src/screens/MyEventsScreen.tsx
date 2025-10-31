@@ -1,50 +1,90 @@
 // src/screens/MyEventsScreen.tsx
-import React, { useCallback, useLayoutEffect } from "react";
+import React, { useCallback, useLayoutEffect, useState, useMemo } from 'react';
 import {
-  View,
   StyleSheet,
-  Text,
   FlatList,
   Alert,
   RefreshControl,
   TouchableOpacity,
   Platform,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   CompositeNavigationProp,
   useNavigation,
-} from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useMyEvents } from "../stores/my-event-store";
-import { Loader } from "../components/loaders/loader";
-import { EmptyState } from "../components/Errors/EmptyState";
-import MyEventCard from "../components/MyEventCard";
-import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
-import { TabParamList } from "../navigation/TabNavigator";
-import { RootStackParamList } from "../navigation/AppNavigator";
-import FeatherIcon from "react-native-vector-icons/Feather"
-import LinearGradient from "react-native-linear-gradient";
+} from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useMyEvents } from '../stores/my-event-store';
+import { Loader } from '../components/loaders/loader';
+import { EmptyState } from '../components/Errors/EmptyState';
+import MyEventCard from '../components/Cards/MyEventCard';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { TabParamList } from '../navigation/TabNavigator';
+import { RootStackParamList } from '../navigation/AppNavigator';
+import FeatherIcon from 'react-native-vector-icons/Feather';
+
+import ScreenHeader from '../components/ScreenHeader';
+import TabSelector from '../components/TabSelector';
+import {
+  TabKey,
+  TabItem,
+  TAB_KEYS,
+  TAB_CONFIG,
+} from '../types/navigation';
+import { filterEventsByDate } from '../utils/filterUtils'; 
 
 // Define the navigation tab
 // Note: The screen name here must match the one in TabNavigator.tsx
 type MyEventsScreenNavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<TabParamList, "My Events">,
+  BottomTabNavigationProp<TabParamList, 'My Events'>,
   NativeStackNavigationProp<RootStackParamList>
 >;
 
 export default function MyEventsScreen() {
   const navigation = useNavigation<MyEventsScreenNavigationProp>();
   const { myEvents, isLoading, loadMyEvents, deleteEvent } = useMyEvents();
+  const [selectedTab, setSelectedTab] = useState<TabKey>(TAB_KEYS.UPCOMING);
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: "",
-      headerStyle: { backgroundColor: "#fff" },
-      headerTitleStyle: { fontWeight: "700", fontSize: 20 },
       headerShown: false,
     });
   }, [navigation]);
+
+  // Memoize the filtering of events into upcoming and past
+  const { upcoming: upcomingEvents, past: pastEvents } = useMemo(() => {
+    const now = new Date().getTime(); // Get timestamp once
+    // Call the centralized utility function
+    return filterEventsByDate(myEvents, now);
+  }, [myEvents]); // Re-runs only when myEvents changes
+
+  // Data to pass to the FlatList based on the selected tab
+  const dataForList =
+    selectedTab === TAB_KEYS.UPCOMING ? upcomingEvents : pastEvents;
+
+  // Tabs data for the reusable component
+  const tabs: TabItem[] = [
+    {
+      key: TAB_KEYS.UPCOMING,
+      title: TAB_CONFIG[TAB_KEYS.UPCOMING].title,
+      count: upcomingEvents.length,
+    },
+    {
+      key: TAB_KEYS.PAST,
+      title: TAB_CONFIG[TAB_KEYS.PAST].title,
+      count: pastEvents.length,
+    },
+  ];
+
+  // The "Create Event" button to pass to the header
+  const createEventButton = (
+    <TouchableOpacity
+      style={styles.createButton}
+      onPress={() => navigation.navigate('EventForm', {})}
+    >
+      <FeatherIcon name="plus" size={24} color="#8b5cf6" />
+    </TouchableOpacity>
+  );
 
   const handleRefresh = useCallback(() => {
     loadMyEvents();
@@ -52,13 +92,13 @@ export default function MyEventsScreen() {
 
   const handleDeletePress = (eventId: number, title: string) => {
     Alert.alert(
-      "Delete Event",
+      'Delete Event',
       `Are you sure you want to delete "${title}"? This action cannot be undone.`,
       [
-        { text: "Cancel", style: "cancel" },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: "Delete",
-          style: "destructive",
+          text: 'Delete',
+          style: 'destructive',
           onPress: () => deleteEvent(eventId),
         },
       ]
@@ -66,15 +106,35 @@ export default function MyEventsScreen() {
   };
 
   const handleEditPress = (eventId: number) => {
-    navigation.navigate("EventForm", { eventId });
+    navigation.navigate('EventForm', { eventId });
   };
 
   const handleEventPress = (eventId: number) => {
-    navigation.navigate("EventDetails", {
+    navigation.navigate('EventDetails', {
       id: eventId,
       initialIsFavorite: false,
     });
   };
+
+  const renderEmptyList = () => (
+    <EmptyState
+      icon={
+        selectedTab === TAB_KEYS.UPCOMING
+          ? 'calendar-outline'
+          : 'checkmark-done-outline'
+      }
+      title={
+        selectedTab === TAB_KEYS.UPCOMING
+          ? 'No Upcoming Events'
+          : 'No Past Events'
+      }
+      message={
+        selectedTab === TAB_KEYS.UPCOMING
+          ? 'You have no events scheduled for the future.'
+          : 'You have no completed events.'
+      }
+    />
+  );
 
   if (isLoading) {
     return (
@@ -85,28 +145,18 @@ export default function MyEventsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
-      <View style={styles.header}>
-        <LinearGradient
-          colors={["#8b5cf6", "#6366f1"]}
-          style={styles.headerGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <View style={styles.headerContent}>
-            <View>
-              <Text style={styles.headerTitle}>My Events</Text>
-              <Text style={styles.headerSubtitle}>{myEvents.length} events created</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.createButton}
-              onPress={() => navigation.navigate("EventForm", {})}
-            >
-              <FeatherIcon name="plus" size={24} color="#8b5cf6" />
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
-      </View>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader
+        title="My Events"
+        subtitle={`${myEvents.length} events created`}
+        rightContent={createEventButton}
+      />
+
+      <TabSelector
+        tabs={tabs}
+        selectedTabKey={selectedTab}
+        onSelectTab={(key) => setSelectedTab(key as TabKey)}
+      />
 
       {myEvents.length === 0 ? (
         <EmptyState
@@ -116,7 +166,7 @@ export default function MyEventsScreen() {
         />
       ) : (
         <FlatList
-          data={myEvents}
+          data={dataForList}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <MyEventCard
@@ -126,7 +176,10 @@ export default function MyEventsScreen() {
               onDelete={() => handleDeletePress(item.id, item.title)}
             />
           )}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+              styles.listContent,
+              dataForList.length === 0 && styles.emptyStateContainer,
+            ]}
           refreshControl={
             <RefreshControl
               refreshing={isLoading}
@@ -134,6 +187,7 @@ export default function MyEventsScreen() {
               tintColor="#6366f1"
             />
           }
+          ListEmptyComponent={renderEmptyList}
         />
       )}
     </SafeAreaView>
@@ -143,66 +197,35 @@ export default function MyEventsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: '#f8f9fa',
   },
   createButton: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
   },
-  header: {
-    marginHorizontal: 0,
-    borderRadius: 20,
-    ...Platform.select({
-      ios: {
-    shadowColor: "#6366f1",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    marginTop: 0
-      },
-      android: {
-        elevation: 8,
-        marginVertical: 0,
-      },
-    }),
-  },
-  headerGradient: {
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-  },
-  headerContent: {
-    marginVertical: 25,
-    marginHorizontal: 15,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#fff",
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.9)",
-    fontWeight: "500",
-  },
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   listContent: {
-    marginTop: Platform.OS === "ios" ? 10 : 10,
+    marginTop: Platform.OS === 'ios' ? 10 : 10,
+    paddingBottom: 20,
+  },
+  emptyStateContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 60,
   },
 });
+

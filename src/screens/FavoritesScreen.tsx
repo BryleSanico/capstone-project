@@ -19,7 +19,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import { Event } from "../types/event";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { TabParamList } from "../navigation/TabNavigator";
-import EventCard from "../components/EventCard";
+import EventCard from "../components/Cards/EventCard";
 import { useFavorites } from "../stores/favorites-store";
 import { Loader } from "../components/loaders/loader";
 import { useNetworkStatus } from "../stores/network-store";
