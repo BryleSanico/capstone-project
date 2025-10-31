@@ -15,7 +15,7 @@ import {
 } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMyEvents } from '../stores/my-event-store';
-import { Loader } from '../components/loaders/loader';
+import { Loader } from '../components/LazyLoaders/loader';
 import { EmptyState } from '../components/Errors/EmptyState';
 import MyEventCard from '../components/Cards/MyEventCard';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';

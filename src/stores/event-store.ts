@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { Event } from "../types/event";
 import { eventService } from "../services/eventService";
 import { handleAsyncAction } from "../utils/storeUtils";
-import { prefetchImages } from "../utils/imageCache";
+import { prefetchImages } from "../utils/caching/imageCache";
 
 const EVENTS_PER_PAGE = 3;
 

@@ -1,5 +1,3 @@
-import { Asset } from 'react-native-image-picker';
-
 /**
  * A set of pure, reusable functions for validating user input in forms.
  */

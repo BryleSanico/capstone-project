@@ -1,4 +1,4 @@
-import { Event } from '../types/event';
+import { Event } from '../../types/event';
 
 /**
  * Performs a local, case-insensitive search on an array of events.

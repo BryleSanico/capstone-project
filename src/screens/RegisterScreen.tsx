@@ -17,7 +17,7 @@ import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
 import Icon2 from "react-native-vector-icons/FontAwesome";
 import { useAuth } from "../stores/auth-store";
-import { Loader } from "../components/loaders/loader";
+import { Loader } from "../components/LazyLoaders/loader";
 import {
   isEmail,
   isRequired,

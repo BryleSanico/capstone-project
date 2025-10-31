@@ -21,7 +21,7 @@ import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { TabParamList } from "../navigation/TabNavigator";
 import EventCard from "../components/Cards/EventCard";
 import { useFavorites } from "../stores/favorites-store";
-import { Loader } from "../components/loaders/loader";
+import { Loader } from "../components/LazyLoaders/loader";
 import { useNetworkStatus } from "../stores/network-store";
 import { OfflineState } from "../components/Errors/offlineState";
 import { EmptyState } from "../components/Errors/EmptyState";

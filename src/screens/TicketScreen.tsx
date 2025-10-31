@@ -13,7 +13,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { TabParamList } from '../navigation/TabNavigator';
-import { Loader } from '../components/loaders/loader';
+import { Loader } from '../components/LazyLoaders/loader';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { EmptyState } from '../components/Errors/EmptyState';
 import ScreenHeader from '../components/ScreenHeader';
