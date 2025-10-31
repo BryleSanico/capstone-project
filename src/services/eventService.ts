@@ -5,6 +5,7 @@ import { useNetworkStatus } from "../stores/network-store";
 import { storageKeys } from "../utils/storageKeys";
 import { eventMapper } from "../utils/mappers/eventMapper";
 import { mergeAndDedupeEvents } from "../utils/cacheUtils";
+import { prefetchImages } from "../utils/imageCache";
 
 const EVENTS_PER_PAGE = 3;
 
@@ -105,7 +106,7 @@ async function fetchEvents(params: {
   if (error) throw error;
 
   const result = data[0] || { events: [], total_count: 0 };
-  const events = (result.events || []).map(eventMapper);
+  const events: Event[] = (result.events || []).map(eventMapper);
 
   if (params.page === 1) {
     await storageService.setItem(
@@ -141,6 +142,9 @@ async function fetchUpdatedCachedEvents(
 
   const events = data.map(eventMapper);
   await cacheEventDetails(events); // Cache the updated details
+  prefetchImages(events.map((e: Event) => e.imageUrl)).catch((err: any) => {
+    console.warn("[ImageCache] Background prefetch failed for sync:", err);
+  });
   return events;
 }
 
@@ -162,7 +166,7 @@ async function getInitialEvents(filters: {
 }): Promise<{ events: Event[]; total: number }> {
   const cachedEventIds = await getCachedEventListIds();
 
-  if (cachedEventIds.length > 0) {
+  if (cachedEventIds.length > 0 && useNetworkStatus.getState().isConnected) {
     console.log(
       `[Initial Load] Found ${cachedEventIds.length} event IDs in list cache. Hydrating...`
     );
@@ -182,7 +186,7 @@ async function getInitialEvents(filters: {
   }
 
   console.log("[Initial Load] No cache. Fetching from server...");
-  // FIX: Call the standalone fetchEvents() function
+  // Call the standalone fetchEvents() function
   const { events: firstPageEvents, totalCount } = await fetchEvents({
     page: 1,
     limit: EVENTS_PER_PAGE,
@@ -210,7 +214,7 @@ async function getMoreEvents(
   console.log("[Load More] Fetching new events from server...");
 
   const nextPage = currentPage + 1;
-  // FIX: Call the standalone fetchEvents() function
+  // Call the standalone fetchEvents() function
   const { events: newEvents, totalCount } = await fetchEvents({
     page: nextPage,
     limit: EVENTS_PER_PAGE,
@@ -219,6 +223,13 @@ async function getMoreEvents(
   });
 
   if (newEvents.length > 0) {
+    console.log(`[Load More] Prefetching ${newEvents.length} new images...`);
+    try {
+      await prefetchImages(newEvents.map((e: Event) => e.imageUrl));
+      console.log("[Load More] Image prefetch complete.");
+    } catch (err: any) {
+      console.warn("[Load More] Image prefetch failed, but proceeding:", err);
+    }
     const updatedFullCache = mergeAndDedupeEvents(currentFullCache, newEvents);
     await cacheEventListIds(updatedFullCache.map((e) => e.id));
     return { events: updatedFullCache, total: totalCount };
@@ -292,7 +303,6 @@ async function fetchEventsByIds(ids: number[]): Promise<Event[]> {
 
       const fetchedEvents = data.map(eventMapper);
       await cacheEventDetails(fetchedEvents);
-
       return [...cachedEvents, ...fetchedEvents];
     } catch (error) {
       console.error(
@@ -322,7 +332,7 @@ async function syncEventCache(
     return null;
   }
 
-  // FIX: Call standalone helper functions
+  // Get timestamp of last sync
   const localTimestamp = await getLastSyncTimestamp();
   const serverTimestamp = await getLatestEventTimestamp();
 
@@ -353,6 +363,9 @@ async function syncEventCache(
     if (serverTimestamp) {
       await setLastSyncTimestamp(serverTimestamp);
     }
+    const visibleEvents = mergedEvents.slice(0, EVENTS_PER_PAGE * 2);
+    await prefetchImages(visibleEvents.map(e => e.imageUrl));
+  
     return mergedEvents;
   } else {
     console.log("[Sync] No cached events required updates.");
@@ -376,7 +389,6 @@ async function refreshEventCache(filters: {
 
   console.log("[Refresh] Clearing event caches.");
   await clearCachedEvents();
-  await clearCachedEventDetails();
   return getInitialEvents(filters);
 }
 

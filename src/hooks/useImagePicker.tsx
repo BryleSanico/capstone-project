@@ -45,6 +45,8 @@ export const useImagePicker = () => {
       {
         mediaType: 'photo',
         quality: 0.7,
+        maxWidth: 1280,
+        maxHeight: 1280,
         includeBase64: true,
       },
       (response) => {
