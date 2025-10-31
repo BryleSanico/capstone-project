@@ -20,14 +20,14 @@ import CategoryFilter from "../components/CategoryFilter";
 import { Event } from "../types/event";
 import { OfflineState } from "../components/Errors/offlineState";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LoaderSearch } from "../components/loaders/loaderSearch";
+import { LoaderSearch } from "../components/LazyLoaders/loaderSearch";
 import { useNetworkStatus } from "../stores/network-store";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { useFavorites } from "../stores/favorites-store";
 import { useEvents } from "../stores/event-store";
 import { TabParamList } from "../navigation/TabNavigator";
-import { Loader } from "../components/loaders/loader";
-import { searchCache } from "../utils/searchCache";
+import { Loader } from "../components/LazyLoaders/loader";
+import { searchCache } from "../utils/caching/searchCache";
 import { EmptyState } from "../components/Errors/EmptyState";
 import { useDebounce } from "../hooks/useDebounce";
 

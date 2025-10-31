@@ -8,7 +8,7 @@ import { eventMapper } from "../utils/mappers/eventMapper";
 import { eventService } from "./eventService";
 import { Asset } from "react-native-image-picker";
 import { toByteArray } from "react-native-quick-base64";
-import { combineDateTime, parseTags } from "../utils/eventDataHelper";
+import { combineDateTime, parseTags } from "../helpers/eventDataHelper";
 
 const CACHE_EXPIRATION_DURATION = 1 * 60 * 60 * 1000; // 1 hour
 const BUCKET_NAME = "event-images";

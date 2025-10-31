@@ -5,7 +5,7 @@ import { useNetworkStatus } from "../stores/network-store";
 import { storageKeys } from "../utils/storageKeys";
 import { eventMapper } from "../utils/mappers/eventMapper";
 import { mergeAndDedupeEvents } from "../utils/cacheUtils";
-import { prefetchImages } from "../utils/imageCache";
+import { prefetchImages } from "../utils/caching/imageCache";
 
 const EVENTS_PER_PAGE = 3;
 
