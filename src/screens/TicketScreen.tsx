@@ -1,28 +1,35 @@
 // src/screens/TicketsScreen.tsx
-import React, { useCallback, useEffect, useLayoutEffect } from "react";
-import { View, Text, StyleSheet, FlatList, Platform, TouchableOpacity } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import TicketCard from "../components/TicketCard";
-import { useTickets } from "../stores/tickets-store";
-import { Ticket } from "../types/ticket";
+import React, { useCallback, useLayoutEffect, useState, useMemo } from 'react';
+import { View, Text, StyleSheet, FlatList, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import TicketCard from '../components/Cards/TicketCard';
+import { useTickets } from '../stores/tickets-store';
+import { Ticket } from '../types/ticket';
 import {
   useNavigation,
   CompositeNavigationProp,
-} from "@react-navigation/native";
-import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../navigation/AppNavigator";
-import { TabParamList } from "../navigation/TabNavigator";
-import { Loader } from "../components/loaders/loader";
-import { RefreshControl } from "react-native-gesture-handler";
-import { EmptyState } from "../components/Errors/EmptyState";
-import { LinearGradient } from "react-native-linear-gradient";
-import Icon from "react-native-vector-icons/Ionicons"
+} from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
+import { TabParamList } from '../navigation/TabNavigator';
+import { Loader } from '../components/loaders/loader';
+import { RefreshControl } from 'react-native-gesture-handler';
+import { EmptyState } from '../components/Errors/EmptyState';
+import ScreenHeader from '../components/ScreenHeader';
+import TabSelector from '../components/TabSelector';
+import {
+  TabKey,
+  TabItem,
+  TAB_KEYS,
+  TAB_CONFIG,
+} from '../types/navigation';
+import { filterTicketsByDate } from '../utils/filterUtils'; 
 
 // Define the navigation tab
 // Note: The screen name here must match the one in TabNavigator.tsx
 type TicketsScreenNavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<TabParamList, "My Tickets">,
+  BottomTabNavigationProp<TabParamList, 'My Tickets'>,
   NativeStackNavigationProp<RootStackParamList>
 >;
 
@@ -30,22 +37,66 @@ export default function TicketsScreen() {
   const navigation = useNavigation<TicketsScreenNavigationProp>();
   const { tickets, isLoading, loadTickets } = useTickets();
 
+  const [selectedTab, setSelectedTab] = useState<TabKey>(TAB_KEYS.UPCOMING);
+
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: "My Tickets",
-      headerStyle: { backgroundColor: "#fff" },
-      headerTitleStyle: { fontWeight: "700", fontSize: 20 },
       headerShown: false,
     });
   }, [navigation]);
 
+  // Memoize the filtering of tickets into upcoming and past
+  const { upcoming: upcomingTickets, past: pastTickets } = useMemo(() => {
+    const now = new Date().getTime(); // Get timestamp once
+    // Call the centralized utility function
+    return filterTicketsByDate(tickets, now);
+  }, [tickets]); // Re-runs only when tickets changes
+
+  // Data to pass to the FlatList based on the selected tab
+  const dataForList =
+    selectedTab === TAB_KEYS.UPCOMING ? upcomingTickets : pastTickets;
+
+  // Tabs data for the reusable component
+  const tabs: TabItem[] = [
+    {
+      key: TAB_KEYS.UPCOMING,
+      title: TAB_CONFIG[TAB_KEYS.UPCOMING].title,
+      count: upcomingTickets.length,
+    },
+    {
+      key: TAB_KEYS.PAST,
+      title: TAB_CONFIG[TAB_KEYS.PAST].title,
+      count: pastTickets.length,
+    },
+  ];
+
   const handleTicketPress = (ticket: Ticket) => {
-    navigation.navigate("TicketDetails", { id: ticket.id });
+    navigation.navigate('TicketDetails', { id: ticket.id });
   };
 
   const handleRefresh = useCallback(() => {
     loadTickets();
   }, [loadTickets]);
+
+  const renderEmptyList = () => (
+    <EmptyState
+      icon={
+        selectedTab === TAB_KEYS.UPCOMING
+          ? 'ticket-outline'
+          : 'checkmark-done-outline'
+      }
+      title={
+        selectedTab === TAB_KEYS.UPCOMING
+          ? 'No Upcoming Tickets'
+          : 'No Past Tickets'
+      }
+      message={
+        selectedTab === TAB_KEYS.UPCOMING
+          ? 'Tickets for future events will appear here.'
+          : 'Your completed event tickets.'
+      }
+    />
+  );
 
   if (isLoading) {
     return (
@@ -56,28 +107,30 @@ export default function TicketsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
-      <View style={styles.header}>
-              <LinearGradient
-                colors={["#8b5cf6", "#6366f1"]}
-                style={styles.headerGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.headerContent}>
-                  <View>
-                    <Text style={styles.headerTitle}>My Tickets</Text>
-                    <Text style={styles.headerSubtitle}>{tickets.length} purchased ticket</Text>
-                  </View>
-                </View>
-              </LinearGradient>
-            </View>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader
+        title="My Tickets"
+        subtitle={`${tickets.length} purchased ticket${
+          tickets.length !== 1 ? 's' : ''
+        }`}
+      />
+
+      <TabSelector
+        tabs={tabs}
+        selectedTabKey={selectedTab}
+        onSelectTab={(key) => setSelectedTab(key as TabKey)}
+      />
+
       <View style={styles.content}>
         {tickets.length === 0 ? (
-          <EmptyState icon="ticket-outline" title="No Tickets Yet" message="Your purchased tickets will appear here" />
+          <EmptyState
+            icon="ticket-outline"
+            title="No Tickets Yet"
+            message="Your purchased tickets will appear here."
+          />
         ) : (
           <FlatList
-            data={tickets}
+            data={dataForList}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <TicketCard
@@ -86,9 +139,18 @@ export default function TicketsScreen() {
               />
             )}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContent}
-            refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} tintColor="#6366f1" />
-          }
+            contentContainerStyle={[
+              styles.listContent,
+              dataForList.length === 0 && styles.emptyStateContainer,
+            ]}
+            refreshControl={
+              <RefreshControl
+                refreshing={isLoading}
+                onRefresh={handleRefresh}
+                tintColor="#6366f1"
+              />
+            }
+            ListEmptyComponent={renderEmptyList}
           />
         )}
       </View>
@@ -99,61 +161,26 @@ export default function TicketsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: '#f8f9fa',
   },
   content: {
     flex: 1,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    fontSize: 16,
-    color: "#666",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   listContent: {
     marginHorizontal: 20,
-
+    paddingTop: 10,
+    paddingBottom: 20,
   },
-    header: {
-      marginHorizontal: 0,
-      borderRadius: 20,
-      ...Platform.select({
-        ios: {
-      shadowColor: "#6366f1",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.2,
-      shadowRadius: 12,
-      marginTop: 0
-        },
-        android: {
-          elevation: 8,
-          marginVertical: 0,
-        },
-      }),
-    },
-    headerGradient: {
-      paddingHorizontal: 0,
-      paddingVertical: 0,
-    },
-    headerContent: {
-      marginVertical: 25,
-      marginHorizontal: 15,
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-    },
-    headerTitle: {
-      fontSize: 28,
-      fontWeight: "800",
-      color: "#fff",
-      marginBottom: 4,
-    },
-    headerSubtitle: {
-      fontSize: 14,
-      color: "rgba(255, 255, 255, 0.9)",
-      fontWeight: "500",
-    },
+    emptyStateContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 60,
+  },
 });
+

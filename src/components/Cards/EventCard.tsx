@@ -2,11 +2,11 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
-import { Event } from '../types/event';
-import { useFavorites } from '../stores/favorites-store';
-import { useAuth } from '../stores/auth-store';
+import { Event } from '../../types/event';
+import { useFavorites } from '../../stores/favorites-store';
+import { useAuth } from '../../stores/auth-store';
 import { useNavigation } from '@react-navigation/native';
-import { formatDateMMDD, formatTime } from '../utils/dateFormatter';
+import { formatDateMMDD, formatTime } from '../../utils/dateFormatter';
 interface EventCardProps {
   event: Event;
   onPress: () => void;
