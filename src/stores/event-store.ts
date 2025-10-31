@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { Event } from "../types/event";
 import { eventService } from "../services/eventService";
 import { handleAsyncAction } from "../utils/storeUtils";
+import { prefetchImages } from "../utils/imageCache";
 
 const EVENTS_PER_PAGE = 3;
 
@@ -94,6 +95,12 @@ export const useEvents = create<EventsState>()((set, get) => {
         const { events, total } = await eventService.getInitialEvents(filters);
         const firstPage = events.slice(0, EVENTS_PER_PAGE);
 
+        // Prefetch images for first page and next page
+        const imagesToPrefetch = events
+          .slice(0, EVENTS_PER_PAGE * 2)
+          .map(event => event.imageUrl);
+        await prefetchImages(imagesToPrefetch);
+
         return {
           _fullEventCache: events,
           displayedEvents: firstPage,
@@ -107,7 +114,7 @@ export const useEvents = create<EventsState>()((set, get) => {
     loadMoreEvents: async (filters) => {
       const { currentPage, _fullEventCache, displayedEvents, hasMore } = get();
       if (get().isSyncing || !hasMore) return;
-
+      
       // Try loading from local cache first
       const nextOffset = currentPage * EVENTS_PER_PAGE;
       if (nextOffset < _fullEventCache.length) {

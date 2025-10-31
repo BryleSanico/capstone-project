@@ -35,18 +35,12 @@ async function _getCurrentOrganizerData() {
 // Invalidate all relevant caches
 async function invalidateCaches(userId?: string) {
   try {
-    console.log("[invalidateCaches] Starting cache invalidation...");
+    console.log("[invalidateCaches] Starting 'My Events' cache invalidation...");
     if (userId) {
       await storageService.removeItem(storageKeys.getMyEventsCacheKey(userId));
       console.log("[invalidateCaches] Removed myEvents cache.");
     }
-    await eventService.clearCachedEvents();
-    console.log("[invalidateCaches] Cleared discover events cache.");
-    await eventService.clearCachedEventDetails();
-    console.log("[invalidateCaches] Cleared event details cache.");
-    await storageService.removeItem(storageKeys.getEventsTotalCountKey());
-    console.log("[invalidateCaches] Removed total count cache.");
-    console.log("[invalidateCaches] Finished.");
+    console.log("[invalidateCaches] Finished 'My Events' invalidation.");
   } catch (error) {
     console.error("[invalidateCaches] Error during cache invalidation:", error);
   }

@@ -4,6 +4,7 @@ import { myEventsService } from "../services/myEventsService";
 import { handleAsyncAction } from "../utils/storeUtils";
 import { Alert } from "react-native";
 import { Asset } from "react-native-image-picker";
+import { useEvents } from "../stores/event-store";
 
 type MyEventsState = {
   myEvents: Event[];
@@ -50,6 +51,10 @@ export const useMyEvents = create<MyEventsState>()((set, get) => ({
     try {
       // Call the service to delete from DB and clear caches
       await myEventsService.deleteEvent(eventId);
+      // Refresh the Discover screen's list.
+      // This will safely re-fetch Page 1 and rebuild the ID list
+      // *without* destroying the detail cache
+      useEvents.getState().refreshEvents({ query: "", category: "All" });
     } catch (err: any) {
       console.error("Failed to delete event:", err);
       // Revert state on failure
@@ -76,6 +81,9 @@ export const useMyEvents = create<MyEventsState>()((set, get) => ({
       set((state) => ({
         myEvents: [newEvent!, ...state.myEvents],
       }));
+
+      // Propagate the change to the global event cache
+      useEvents.getState().updateEventInCache(newEvent!); 
 
       // handleAsyncAction expects a promise returning partial state
       return { myEvents: [newEvent!, ...get().myEvents] };
@@ -117,6 +125,9 @@ export const useMyEvents = create<MyEventsState>()((set, get) => ({
       const newEvents = get().myEvents.map((e) =>
         e.id === updatedEvent!.id ? updatedEvent! : e
       );
+
+      // Propagate the change to the global event cache
+      useEvents.getState().updateEventInCache(updatedEvent!);
 
       return { myEvents: newEvents };
     });
