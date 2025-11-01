@@ -264,7 +264,7 @@ export default function EventFormScreen() {
                         Tap to select image
                       </Text>
                       <Text style={styles.imageSizeText}>
-                        (Max 3MB, JPG/PNG)
+                        (Max 2MB, JPG/PNG)
                       </Text>
                     </View>
                   )}

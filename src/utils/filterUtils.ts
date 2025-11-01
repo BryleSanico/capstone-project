@@ -73,11 +73,18 @@ export function filterTicketsByDate(
   const ticketsWithTimestamp: TicketWithTimestamp[] = tickets.map((ticket) => {
     let timestamp = 0;
     try {
-      const eventDateTimeString = `${ticket.eventDate}T${ticket.eventTime}:00`;
-      timestamp = new Date(eventDateTimeString).getTime();
+      timestamp = new Date(ticket.eventDate).getTime();
+
+      if (isNaN(timestamp)) {
+         // Fallback in case eventDate is NOT a valid string, to prevent crash
+         console.warn(`Invalid date string for ticket ${ticket.id}: ${ticket.eventDate}`);
+         timestamp = 0;
+      }
+
     } catch (e) {
       console.error(
-        `Invalid date/time for ticket ${ticket.id}: ${ticket.eventDate} ${ticket.eventTime}`
+        `Error parsing date for ticket ${ticket.id}: ${ticket.eventDate}`,
+        e
       );
     }
     return { ticket, timestamp };
@@ -85,3 +92,4 @@ export function filterTicketsByDate(
 
   return getFilteredLists(ticketsWithTimestamp, now, (item) => item.ticket);
 }
+
