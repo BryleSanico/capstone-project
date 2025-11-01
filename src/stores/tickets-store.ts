@@ -62,6 +62,9 @@ export const useTickets = create<TicketsState>()((set, get) => ({
       if (err.message?.includes('USER_TICKET_LIMIT_REACHED')) {
         return { success: false, message: "You've reached the maximum number of tickets for this event." };
       }
+      if (err.message?.includes('EVENT_NOT_FOUND')) {
+        return { success: false, message: "Sorry, this event is deleted by the organizer." };
+      }
       
       // Trigger a sync on the events store just in case
       // (e.g., if slots were off)

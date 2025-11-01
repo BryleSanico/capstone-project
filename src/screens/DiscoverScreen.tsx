@@ -6,7 +6,7 @@ import React, {
   useRef,
   useMemo,
 } from "react";
-import { View, StyleSheet, FlatList, Text, RefreshControl } from "react-native";
+import { View, StyleSheet, FlatList, RefreshControl } from "react-native";
 import {
   useNavigation,
   CompositeNavigationProp,
