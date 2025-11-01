@@ -5,9 +5,9 @@ import {
   validateFileSize,
   hasBase64Data,
 } from '../utils/validations/validation';
-import { checkAndRequestPhotoPermission } from '../utils/permissions';
+import { checkAndRequestPhotoPermission } from '../utils/validations/permissions';
 
-const MAX_FILE_SIZE_MB = 3;
+const MAX_FILE_SIZE_MB = 2;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
 
 /**
@@ -44,9 +44,9 @@ export const useImagePicker = () => {
     launchImageLibrary(
       {
         mediaType: 'photo',
-        quality: 0.7,
-        maxWidth: 1280,
-        maxHeight: 1280,
+        quality: 0.5,
+        maxWidth: 1024,
+        maxHeight: 1024,
         includeBase64: true,
       },
       (response) => {
