@@ -5,6 +5,7 @@ import storageService from "./storageService";
 import { storageKeys } from "../utils/storageKeys";
 import { useNetworkStatus } from "../stores/network-store";
 import { Event } from "../types/event";
+import { withRetry } from "../utils/networkUtils";
 
 type CachedFavorites = {
   ids: number[];
@@ -20,9 +21,10 @@ const CACHE_EXPIRATION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
  * [PRIVATE] Fetches the user's complete list of favorite event IDs from the server.
  */
 async function getFavorites(): Promise<number[]> {
-  const { data, error } = await supabase.rpc("get_user_favorites", {
+  const { data, error } = await withRetry(() =>
+  supabase.rpc("get_user_favorites", {
     last_sync_time: null, // Pass null to get the full list
-  });
+  }));
 
   if (error) {
     console.error("Error fetching favorites:", error);
@@ -43,11 +45,13 @@ async function syncFavorites(
     return; // No changes to sync
   }
 
-  const { error } = await supabase.rpc("batch_update_favorites", {
+  const { error } = await withRetry(() =>
+  supabase.rpc("batch_update_favorites", {
     p_user_id: userId,
     p_added_ids: addedIds,
     p_removed_ids: removedIds,
-  });
+  })
+);
 
   if (error) {
     console.error("Error batch syncing favorites:", error);

@@ -22,6 +22,7 @@ import {
   FIREBASE_PERMISSION_CODE,
   FIREBASE_PERMISSION_STATUS,
 } from "../constants/firebaseConstants";
+import { withRetry } from "../utils/networkUtils";
 
 type FirebaseAuthorizationStatusType =
   (typeof FIREBASE_PERMISSION_CODE)[keyof typeof FIREBASE_PERMISSION_CODE];
@@ -243,10 +244,11 @@ class NotificationService {
 
       if (token) {
         console.log("FCM Token obtained:", token.substring(0, 10) + "..."); // Log truncated token
-        const { error } = await supabase
+        const { error } = await withRetry(() =>
+        supabase
           .from("profiles")
           .update({ fcm_token: token })
-          .eq("id", userId);
+          .eq("id", userId));
         if (error) {
           console.error("Error saving FCM token:", error);
         } else {
@@ -259,10 +261,11 @@ class NotificationService {
       // Listen for token refresh
       onTokenRefresh(messaging, async (newToken) => {
         console.log("FCM token refreshed:", newToken.substring(0, 10) + "...");
-        const { error: refreshError } = await supabase
+        const { error: refreshError } = await withRetry(() =>
+        supabase
           .from("profiles")
           .update({ fcm_token: newToken })
-          .eq("id", userId);
+          .eq("id", userId));
         if (refreshError)
           console.error("Error saving refreshed FCM token:", refreshError);
       });
@@ -274,10 +277,11 @@ class NotificationService {
   async unregisterPushNotifications(userId?: string) {
     if (!userId) return;
     try {
-      const { error } = await supabase
+      const { error } = await withRetry(() =>
+      supabase
         .from("profiles")
         .update({ fcm_token: null })
-        .eq("id", userId);
+        .eq("id", userId));
 
       if (error) {
         console.error("Failed to nullify FCM token on server:", error);
