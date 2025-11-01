@@ -78,10 +78,6 @@ export const useMyEvents = create<MyEventsState>()((set, get) => ({
       newEvent = await myEventsService.createEvent(fullFormData, imageAsset);
       console.log("[Store createEvent] Service returned:", newEvent);
 
-      set((state) => ({
-        myEvents: [newEvent!, ...state.myEvents],
-      }));
-
       // Propagate the change to the global event cache
       useEvents.getState().updateEventInCache(newEvent!); 
 
