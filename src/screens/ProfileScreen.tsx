@@ -27,7 +27,6 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "../stores/auth-store";
 import { useFavorites } from "../stores/favorites-store";
-import { transparent } from "react-native-paper/lib/typescript/styles/themes/v2/colors";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx

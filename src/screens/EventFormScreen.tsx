@@ -25,7 +25,6 @@ import {
   hasValidationErrors,
   EventFormErrors,
 } from "../utils/validations/eventValidation";
-import { format } from "date-fns";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useDateTimePicker } from "../hooks/useDateTimePicker";
 import { useImagePicker } from "../hooks/useImagePicker";
@@ -68,6 +67,7 @@ export default function EventFormScreen() {
     );
   const [errors, setErrors] = useState<EventFormErrors>({});
   const [isLoading, setIsLoading] = useState<boolean>(isEditMode);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const {
     imageAsset,
@@ -164,7 +164,7 @@ export default function EventFormScreen() {
     }
   };
   const handleSubmit = async () => {
-    if (isSyncing) return; // Prevent double submit
+    if (isSubmitting || isSyncing) return; // Prevent multiple submissions
     if (!session) {
       Alert.alert("Login Required", "Please login to manage events.");
       return;
@@ -188,6 +188,9 @@ export default function EventFormScreen() {
       Alert.alert("Validation Error", "Please check the required fields.");
       return;
     }
+
+    // Disable the button immediately
+    setIsSubmitting(true);
 
     // NOTE: No local isSubmitting state. State rely on the store's isSyncing.
     let result = null;
@@ -488,12 +491,12 @@ export default function EventFormScreen() {
             <TouchableOpacity
               style={[
                 styles.submitButton,
-                isSyncing && styles.submitButtonDisabled, // Use isSyncing
+                 (isSyncing || isSubmitting) && styles.submitButtonDisabled, // Use isSyncing
               ]}
               onPress={handleSubmit}
-              disabled={isSyncing}
+              disabled={isSyncing || isSubmitting}
             >
-              {isSyncing ? (
+              {(isSyncing || isSubmitting) ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text style={styles.submitButtonText}>
