@@ -5,10 +5,10 @@ import storageService from "./storageService";
 import { storageKeys } from "../utils/storageKeys";
 import { useNetworkStatus } from "../stores/network-store";
 import { eventMapper } from "../utils/mappers/eventMapper";
-import { eventService } from "./eventService";
 import { Asset } from "react-native-image-picker";
 import { toByteArray } from "react-native-quick-base64";
 import { combineDateTime, parseTags } from "../helpers/eventDataHelper";
+import { withRetry } from "../utils/networkUtils";
 
 const CACHE_EXPIRATION_DURATION = 1 * 60 * 60 * 1000; // 1 hour
 const BUCKET_NAME = "event-images";
@@ -219,9 +219,10 @@ async function deleteEvent(eventId: number): Promise<void> {
   const session = await getCurrentSession();
   const userId = session?.user?.id;
   if (!userId) throw new Error("User must be logged in.");
-  const { error } = await supabase.rpc("delete_user_event", {
+  const { error } = await withRetry(() =>
+  supabase.rpc("delete_user_event", {
     p_event_id: eventId,
-  });
+  }));
   if (error) {
     throw new Error(error.message);
   }
@@ -268,7 +269,8 @@ async function createEvent(
   let data: any;
   let error: any;
   try {
-    const response = await supabase.rpc("create_event", params);
+    const response = await withRetry(() =>
+    supabase.rpc("create_event", params));
     data = response.data;
     error = response.error;
   } catch (rpcError: any) {
@@ -351,7 +353,8 @@ async function updateEvent(
   const startTime = combineDateTime(formData.date, formData.time);
   if (!startTime) throw new Error("Invalid Date or Time format.");
 
-  const { data, error } = await supabase.rpc("update_user_event", {
+  const { data, error } = await withRetry(() =>
+  supabase.rpc("update_user_event", {
     p_event_id: eventId,
     p_title: formData.title,
     p_description: formData.description,
@@ -365,7 +368,7 @@ async function updateEvent(
     p_tags: parseTags(formData.tags),
     p_user_max_ticket_purchase:
       parseInt(formData.userMaxTicketPurchase, 10) || 10,
-  });
+  }));
 
   if (error) {
     console.error(`[updateEvent] RPC Error:`, error);

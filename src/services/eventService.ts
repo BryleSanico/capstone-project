@@ -6,6 +6,7 @@ import { storageKeys } from "../utils/storageKeys";
 import { eventMapper } from "../utils/mappers/eventMapper";
 import { mergeAndDedupeEvents } from "../utils/cacheUtils";
 import { prefetchImages } from "../utils/caching/imageCache";
+import { withRetry } from "../utils/networkUtils";
 
 const EVENTS_PER_PAGE = 3;
 
@@ -95,13 +96,15 @@ async function fetchEvents(params: {
   category?: string;
   lastSyncTimestamp?: string | null;
 }): Promise<{ events: Event[]; totalCount: number }> {
-  const { data, error } = await supabase.rpc("get_paginated_events", {
-    p_page: params.page ?? null,
-    p_limit: params.limit ?? null,
-    p_query: params.query ?? "",
-    p_category: params.category ?? "All",
-    p_last_updated: params.lastSyncTimestamp ?? null,
-  });
+  const { data, error } = await withRetry(() => 
+    supabase.rpc("get_paginated_events", {
+      p_page: params.page ?? null,
+      p_limit: params.limit ?? null,
+      p_query: params.query ?? "",
+      p_category: params.category ?? "All",
+      p_last_updated: params.lastSyncTimestamp ?? null,
+    })
+  );
 
   if (error) throw error;
 
@@ -115,8 +118,7 @@ async function fetchEvents(params: {
     );
   }
 
-  await cacheEventDetails(events); // Automatically cache the detailed data for any event that fetched
-
+  await cacheEventDetails(events); // Automatically cache the detailed data for any event that fetched  
   return {
     events: events,
     totalCount: result.total_count,
@@ -132,16 +134,19 @@ async function fetchUpdatedCachedEvents(
 ): Promise<Event[]> {
   if (cachedIds.length === 0) return [];
 
-  const { data, error } = await supabase.rpc("get_updated_cached_events", {
-    p_event_ids: cachedIds,
-    p_last_updated: lastSyncTimestamp,
-  });
+  const { data, error } = await withRetry(() => 
+    supabase.rpc("get_updated_cached_events", {
+      p_event_ids: cachedIds,
+      p_last_updated: lastSyncTimestamp,
+    })
+  );
 
   if (error) throw error;
   if (!data || data.length === 0) return [];
 
   const events = data.map(eventMapper);
   await cacheEventDetails(events); // Cache the updated details
+  // Asynchronously prefetch images for the fetched events.
   prefetchImages(events.map((e: Event) => e.imageUrl)).catch((err: any) => {
     console.warn("[ImageCache] Background prefetch failed for sync:", err);
   });
@@ -149,9 +154,11 @@ async function fetchUpdatedCachedEvents(
 }
 
 async function getLatestEventTimestamp(): Promise<string | null> {
-  const { data, error } = await supabase
-    .rpc("get_latest_event_timestamp")
-    .single();
+  const { data, error } = await withRetry(() => 
+    supabase
+      .rpc("get_latest_event_timestamp")
+      .single()
+  );
   if (error && error.code !== "PGRST116") throw error;
   return data as string | null;
 }
@@ -194,6 +201,15 @@ async function getInitialEvents(filters: {
     category: filters.category,
   });
 
+   if (firstPageEvents.length > 0) {
+    console.log(`[Initial Load] Prefetching ${firstPageEvents.length} new images...`);
+    try {
+      await prefetchImages(firstPageEvents.map((e: Event) => e.imageUrl));
+      console.log("[Initial Load] Image prefetch complete.");
+    } catch (err: any) {
+      console.warn("[Initial Load] Image prefetch failed, but proceeding:", err);
+    }
+  }
   await cacheEventListIds(firstPageEvents.map((e) => e.id));
 
   return { events: firstPageEvents, total: totalCount };
@@ -223,6 +239,7 @@ async function getMoreEvents(
   });
 
   if (newEvents.length > 0) {
+    // Await the prefetching of new images *before* updating the cache and state
     console.log(`[Load More] Prefetching ${newEvents.length} new images...`);
     try {
       await prefetchImages(newEvents.map((e: Event) => e.imageUrl));
@@ -256,14 +273,20 @@ async function fetchEventById(id: number): Promise<Event | null> {
   console.log(
     `[Fetch By ID] Event ${id} not in cache. Fetching from network...`
   );
-  const { data, error } = await supabase.rpc("get_events_by_ids", {
-    event_ids: [id],
-  });
+  const { data, error } = await withRetry(() => 
+    supabase.rpc("get_events_by_ids", {
+      event_ids: [id],
+    })
+  );
   if (error) throw error;
   if (!data || data.length === 0) return null;
 
   const event = eventMapper(data[0]);
   await cacheEventDetails([event]);
+  // Asynchronously prefetch images for the fetched events.
+  prefetchImages([event.imageUrl]).catch((err: any) => {
+    console.warn("[ImageCache] Background prefetch failed for fetchEventById:", err);
+  });
   return event;
 }
 
@@ -296,13 +319,19 @@ async function fetchEventsByIds(ids: number[]): Promise<Event[]> {
       console.log(
         `[Fetch By IDs] Fetching ${idsToFetch.length} events from network.`
       );
-      const { data, error } = await supabase.rpc("get_events_by_ids", {
-        event_ids: idsToFetch,
-      });
+      const { data, error } = await withRetry(() => 
+        supabase.rpc("get_events_by_ids", {
+          event_ids: idsToFetch,
+        })
+      );
       if (error) throw error;
 
       const fetchedEvents = data.map(eventMapper);
       await cacheEventDetails(fetchedEvents);
+      // Asynchronously prefetch images for the fetched events.
+      prefetchImages(fetchedEvents.map((e: Event) => e.imageUrl)).catch((err: any) => {
+        console.warn("[ImageCache] Background prefetch failed for fetchEventsByIds:", err);
+      });
       return [...cachedEvents, ...fetchedEvents];
     } catch (error) {
       console.error(
@@ -345,7 +374,7 @@ async function syncEventCache(
     return null;
   }
 
-  // FIX: Call standalone helper function
+  // Call standalone helper function
   const updatedEvents = await fetchUpdatedCachedEvents(
     cachedIds,
     localTimestamp || "2025-01-01T00:00:00Z"

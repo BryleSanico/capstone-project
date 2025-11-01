@@ -2,6 +2,28 @@ import React, { useEffect, useRef, useState } from "react";
 import { Snackbar } from "react-native-paper";
 import { useNetworkStatus } from "../../stores/network-store";
 
+/**
+ * Determines the snackbar color based on the message.
+ * Green for success ("Back online!"), Red for errors.
+ */
+const getSnackbarColor = (message: string | null): string => {
+  if (!message) return "#16a34a"; // Default green
+  
+  const lowerCaseMessage = message.toLowerCase();
+  
+  // List of error-indicating keywords
+  if (
+    lowerCaseMessage.includes("offline") ||
+    lowerCaseMessage.includes("slow") ||
+    lowerCaseMessage.includes("failed") ||
+    lowerCaseMessage.includes("wrong")
+  ) {
+    return "#b91c1c"; // Red
+  }
+  
+  return "#16a34a"; // Green for "Back online!"
+};
+
 export const NetworkSnackbar = () => {
   const { message, setMessage } = useNetworkStatus();
   const [visible, setVisible] = useState(false);
@@ -24,11 +46,17 @@ export const NetworkSnackbar = () => {
         setVisible(true);
       }
     }
-  }, [message]);
+  }, [message, currentMessage, visible]);
 
   const handleDismiss = () => {
     setVisible(false);
-    setTimeout(() => setMessage(null), 250);
+    // Wait for dismiss animation to finish before clearing
+    setTimeout(() => {
+      // Only clear the message if it's the one we're showing
+      if (message === currentMessage) {
+        setMessage(null);
+      }
+    }, 250);
   };
 
   return (
@@ -37,10 +65,11 @@ export const NetworkSnackbar = () => {
       onDismiss={handleDismiss}
       duration={2500}
       style={{
-        backgroundColor: currentMessage?.includes("offline") ? "#b91c1c" : "#16a34a",
+        backgroundColor: getSnackbarColor(currentMessage),
       }}
     >
       {currentMessage}
     </Snackbar>
   );
 };
+

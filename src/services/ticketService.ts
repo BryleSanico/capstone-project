@@ -6,6 +6,7 @@ import storageService from "./storageService";
 import { storageKeys } from "../utils/storageKeys";
 import { useNetworkStatus } from "../stores/network-store";
 import { ticketMapper } from "../utils/mappers/ticketMapper";
+import { withRetry } from "../utils/networkUtils";
 
 const CACHE_EXPIRATION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -22,9 +23,10 @@ async function _fetchUserTickets(): Promise<Ticket[]> {
   const session = await getCurrentSession();
   if (!session?.user) return [];
 
-  const { data, error } = await supabase.rpc('get_user_tickets', {
+  const { data, error } = await withRetry(() =>
+  supabase.rpc('get_user_tickets', {
       last_sync_time: null // Always get the full list
-  });
+  }));
 
   if (error) {
     console.error("Error fetching user tickets:", error.message);
@@ -48,7 +50,8 @@ async function _createTicketsRPC(ticketPurchaseRequest: {
   const session = await getCurrentSession();
   if (!session?.user) throw new Error("User must be logged in to purchase tickets.");
 
-  const { data, error } = await supabase.rpc('purchase_tickets', {
+  const { data, error } = await withRetry(() =>
+  supabase.rpc('purchase_tickets', {
     p_event_id: ticketPurchaseRequest.eventId,
     p_user_id: session.user.id,
     p_quantity: ticketPurchaseRequest.quantity,
@@ -57,7 +60,7 @@ async function _createTicketsRPC(ticketPurchaseRequest: {
     p_event_time: ticketPurchaseRequest.eventTime,
     p_event_location: ticketPurchaseRequest.eventLocation,
     p_total_price: ticketPurchaseRequest.totalPrice,
-  });
+  }));
 
   if (error) {
     console.error("Error creating tickets:", error.message);
