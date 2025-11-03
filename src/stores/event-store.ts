@@ -5,6 +5,7 @@ import { handleAsyncAction } from "../utils/system/storeUtils";
 import { prefetchImages } from "../utils/cache/imageCache";
 import storageService from "../services/storageService"; 
 import { storageKeys } from "../utils/cache/storageKeys";
+import { cacheEventDetails } from '../services/cache/eventCacheService';
 
 const EVENTS_PER_PAGE = 3;
 
@@ -64,7 +65,7 @@ const _updateEventInState = (
       : state.currentEvent;
 
   if (updatedEvent) {
-    eventService.cacheEventDetails([updatedEvent]); 
+    cacheEventDetails([updatedEvent]);
   }
 
   return {
