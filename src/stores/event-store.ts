@@ -3,6 +3,8 @@ import { Event } from "../types/event";
 import { eventService } from "../services/eventService";
 import { handleAsyncAction } from "../utils/storeUtils";
 import { prefetchImages } from "../utils/caching/imageCache";
+import storageService from "../services/storageService"; 
+import { storageKeys } from "../utils/storageKeys";
 
 const EVENTS_PER_PAGE = 3;
 
@@ -130,7 +132,7 @@ export const useEvents = create<EventsState>()((set, get) => {
         set({
           displayedEvents: [...displayedEvents, ...nextBatch],
           currentPage: currentPage + 1,
-          hasMore: nextOffset + nextBatch.length < _fullEventCache.length || true,
+          hasMore: nextOffset + nextBatch.length < get().totalEvents,
         });
         return;
       }
@@ -160,23 +162,25 @@ export const useEvents = create<EventsState>()((set, get) => {
       await handleAsyncAction(set, get, "isSyncing", async () => {
         const { 
           _fullEventCache: oldCache, 
-          displayedEvents: oldDisplayed 
+          displayedEvents: oldDisplayed,
+          totalEvents: oldTotal 
         } = get();
         
-        const newFullCache = await eventService.syncEventCache(oldCache);
+        const newFullCache = await eventService.syncEventCache(oldCache, filters); 
 
         if (newFullCache) {
-          // Data has changed. Update the *displayed* events with the new data, without resetting the scroll.
-          const newEventsMap = new Map(newFullCache.map(e => [e.id, e]));
+          const newTotal = await storageService.getItem<number>(
+            storageKeys.getEventsTotalCountKey()
+          ) ?? oldTotal; 
 
-          // Create new displayedEvents array by replacing old data with new
-          const newDisplayedMapped = oldDisplayed
-            .map(oldEvent => newEventsMap.get(oldEvent.id)) // Get the new version
-            .filter(Boolean) as Event[]; // Filter out any that were deleted
+          const newDisplayedMapped = newFullCache
+            .slice(0, oldDisplayed.length);
 
           return {
             _fullEventCache: newFullCache,
             displayedEvents: newDisplayedMapped,
+            totalEvents: newTotal, 
+            hasMore: newDisplayedMapped.length < newTotal, 
           };
         }
         return {};
