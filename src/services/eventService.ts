@@ -10,7 +10,7 @@ import { withRetry } from "../utils/networkUtils";
 
 const EVENTS_PER_PAGE = 3;
 
-// --- "Private" Helpers ---
+// Private Helpers
 /**
  * Gets the detailed event cache (normalized).
  * @returns A record map of eventId -> Event.
@@ -66,7 +66,7 @@ async function hydrateEventsFromCache(ids: number[]): Promise<Event[]> {
   return ids.map((id) => detailCache[id]).filter(Boolean) as Event[];
 }
 
-// --- "Public" Methods ---
+// Public Methods
 
 async function clearCachedEvents() {
   return storageService.removeItem(storageKeys.getEventsCacheKey());
@@ -251,7 +251,46 @@ async function getMoreEvents(
     await cacheEventListIds(updatedFullCache.map((e) => e.id));
     return { events: updatedFullCache, total: totalCount };
   } else {
-    return { events: currentFullCache, total: totalCount };
+    // When reached the end of pagination.
+    // Instead of a full sync, just check for *new* items (Page 1)
+    // and *append* them to the bottom for a smooth UX.
+    console.log(
+      "[Load More] Reached end of pagination. Checking for new events..."
+    );
+
+    const localTimestamp = await getLastSyncTimestamp();
+    const { events: brandNewEvents, totalCount: newTotalCount } = await fetchEvents({
+      lastSyncTimestamp: localTimestamp || "2025-01-01T00:00:00Z",
+      query: filters.query,
+      category: filters.category,
+      page: 1,
+      limit: EVENTS_PER_PAGE,
+    });
+
+    if (brandNewEvents.length > 0) {
+      console.log(`[Load More] Found ${brandNewEvents.length} new events at the top.`);
+      
+      // Prefetch their images
+      try {
+        await prefetchImages(brandNewEvents.map((e: Event) => e.imageUrl));
+      } catch (err: any) {
+        console.warn("[Load More] Image prefetch failed for new events:", err);
+      }
+      
+      // Merge them (appends them to the end)
+      const updatedFullCache = mergeAndDedupeEvents(currentFullCache, brandNewEvents);
+      // Save this temporarily "unsorted" list. It will be
+      // fixed by the sync on the next app open.
+      await cacheEventListIds(updatedFullCache.map((e) => e.id));
+      await storageService.setItem(storageKeys.getEventsTotalCountKey(), newTotalCount);
+      
+      return { events: updatedFullCache, total: newTotalCount };
+
+    } else {
+      // No new events found anywhere
+      console.log("[Load More] No new events found. List is exhausted.");
+      return { events: currentFullCache, total: totalCount };
+    }
   }
 }
 
@@ -349,16 +388,11 @@ async function fetchEventsByIds(ids: number[]): Promise<Event[]> {
  * Synchronizes the local cache with the server.
  */
 async function syncEventCache(
-  currentFullCache: Event[]
+  currentFullCache: Event[],
+  filters: { query: string; category: string } 
 ): Promise<Event[] | null> {
   if (!useNetworkStatus.getState().isConnected) {
     throw new Error("Offline. Cannot sync.");
-  }
-
-  const cachedIds = currentFullCache.map((e) => e.id);
-  if (cachedIds.length === 0) {
-    console.log("[Sync] No cached events available for comparison.");
-    return null;
   }
 
   // Get timestamp of last sync
@@ -374,35 +408,65 @@ async function syncEventCache(
     return null;
   }
 
-  // Call standalone helper function
+// "SMART SYNC" LOGIC
+  
+  // 1. Check for updates to events *already in our cache*.
+  const cachedIds = currentFullCache.map(e => e.id);
   const updatedEvents = await fetchUpdatedCachedEvents(
     cachedIds,
     localTimestamp || "2025-01-01T00:00:00Z"
   );
+  
+  // 2. Check for *new* events (Page 1 only).
+  const { events: newEvents, totalCount } = await fetchEvents({
+    lastSyncTimestamp: localTimestamp || "2025-01-01T00:00:00Z",
+    query: filters.query,
+    category: filters.category,
+    page: 1,
+    limit: EVENTS_PER_PAGE,
+  });
 
-  if (updatedEvents.length > 0) {
+  // 3. Update total count in storage
+  await storageService.setItem(
+    storageKeys.getEventsTotalCountKey(),
+    totalCount
+  );
+  
+  // 4. Merge results if we found anything
+  if (updatedEvents.length > 0 || newEvents.length > 0) {
     console.log(
-      `[Sync] Found ${updatedEvents.length} updated events from server.`
+      `[Sync] Found ${updatedEvents.length} updated events and ${newEvents.length} new events.`
     );
+    
+    // Prefetch images for *new* events (updated ones were prefetched already)
+    try {
+      await prefetchImages(newEvents.map((e: Event) => e.imageUrl));
+    } catch (err: any) {
+      console.warn("[Sync] Image prefetch failed for new events:", err);
+    }
+    
+    // Merge new data into our full cache
+    const combinedChanges = [...updatedEvents, ...newEvents];
+    let mergedEvents = mergeAndDedupeEvents(currentFullCache, combinedChanges);
 
-    const mergedEvents = mergeAndDedupeEvents(currentFullCache, updatedEvents);
+    // Re-sort the entire cache to ensure new events are at the top
+    mergedEvents.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
 
     await cacheEventListIds(mergedEvents.map((e) => e.id));
 
     if (serverTimestamp) {
       await setLastSyncTimestamp(serverTimestamp);
     }
-    const visibleEvents = mergedEvents.slice(0, EVENTS_PER_PAGE * 2);
-    await prefetchImages(visibleEvents.map(e => e.imageUrl));
-  
     return mergedEvents;
+    
   } else {
-    console.log("[Sync] No cached events required updates.");
+    console.log("[Sync] No new or updated events found.");
     if (serverTimestamp) {
       await setLastSyncTimestamp(serverTimestamp);
     }
     return null;
   }
+  // END SYNC LOGIC
 }
 
 /**
