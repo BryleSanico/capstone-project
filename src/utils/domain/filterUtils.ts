@@ -1,7 +1,7 @@
-// src/utils/filterUtils.ts
-import { Event } from '../types/event';
-import { Ticket } from '../types/ticket';
-import { EventWithTimestamp, TicketWithTimestamp } from '../types/navigation';
+// src/utils/domain/filterUtils.ts
+import { Event } from '../../types/event';
+import { Ticket } from '../../types/ticket';
+import { EventWithTimestamp, TicketWithTimestamp } from '../../types/navigation';
 
 /**
  * A reusable, optimized function to filter and sort data into

@@ -1,4 +1,4 @@
-import { useNetworkStatus } from '../stores/network-store';
+import { useNetworkStatus } from '../../stores/network-store';
 
 // Constants 
 const DEFAULT_REQUEST_TIMEOUT = 8000; // 8 seconds per attempt

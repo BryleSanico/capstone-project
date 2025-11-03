@@ -1,12 +1,12 @@
 // filename: src/services/ticketService.ts
 import { supabase } from "../lib/supabase";
 import { Ticket } from "../types/ticket";
-import { getCurrentSession } from "../helpers/sessionHelper";
+import { getCurrentSession } from "../utils/system/sessionHelper";
 import storageService from "./storageService";
-import { storageKeys } from "../utils/storageKeys";
+import { storageKeys } from "../utils/cache/storageKeys";
 import { useNetworkStatus } from "../stores/network-store";
 import { ticketMapper } from "../utils/mappers/ticketMapper";
-import { withRetry } from "../utils/networkUtils";
+import { withRetry } from "../utils/network/networkUtils";
 
 const CACHE_EXPIRATION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 

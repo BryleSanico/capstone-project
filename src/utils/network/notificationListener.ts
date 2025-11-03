@@ -1,6 +1,6 @@
 import { getMessaging, onMessage, setBackgroundMessageHandler } from "@react-native-firebase/messaging";
 import notifee, { AndroidImportance } from "@notifee/react-native";
-import { DEFAULT_NOTIFICATION_CHANNEL } from "../constants/firebaseConstants";
+import { DEFAULT_NOTIFICATION_CHANNEL } from "../../constants/firebaseConstants";
 /**
  * Utility: Safely convert any value into string for display
  */

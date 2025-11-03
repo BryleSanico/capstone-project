@@ -1,4 +1,4 @@
-import { Event } from '../types/event';
+import { Event } from '../../types/event';
 
 /**
  * Merges a new array of events into an existing cache. It updates existing
