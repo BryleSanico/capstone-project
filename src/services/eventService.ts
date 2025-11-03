@@ -2,11 +2,11 @@ import { supabase } from "../lib/supabase";
 import { Event } from "../types/event";
 import storageService from "./storageService";
 import { useNetworkStatus } from "../stores/network-store";
-import { storageKeys } from "../utils/storageKeys";
+import { storageKeys } from "../utils/cache/storageKeys";
 import { eventMapper } from "../utils/mappers/eventMapper";
-import { mergeAndDedupeEvents } from "../utils/cacheUtils";
-import { prefetchImages } from "../utils/caching/imageCache";
-import { withRetry } from "../utils/networkUtils";
+import { mergeAndDedupeEvents } from "../utils/cache/cacheUtils";
+import { prefetchImages } from "../utils/cache/imageCache";
+import { withRetry } from "../utils/network/networkUtils";
 
 const EVENTS_PER_PAGE = 3;
 

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { Event, EventFormData } from "../types/event";
 import { myEventsService } from "../services/myEventsService";
-import { handleAsyncAction } from "../utils/storeUtils";
+import { handleAsyncAction } from "../utils/system/storeUtils";
 import { Alert } from "react-native";
 import { Asset } from "react-native-image-picker";
 import { useEvents } from "../stores/event-store";

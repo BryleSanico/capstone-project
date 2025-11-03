@@ -1,5 +1,5 @@
 import storageService from './storageService';
-import { storageKeys } from '../utils/storageKeys';
+import { storageKeys } from '../utils/cache/storageKeys';
 
 /**
  * Manages the clearing of user-specific data from local storage on sign-out.

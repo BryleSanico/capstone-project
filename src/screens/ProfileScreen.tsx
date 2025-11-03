@@ -14,7 +14,7 @@ import {
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
-import { getIconComponent } from "../utils/iconLoader";
+import { getIconComponent } from "../utils/ui/iconLoader";
 import { MenuItem } from "../types/menu";
 import { useTickets } from "../stores/tickets-store";
 import {

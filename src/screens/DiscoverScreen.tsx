@@ -27,7 +27,7 @@ import { useFavorites } from "../stores/favorites-store";
 import { useEvents } from "../stores/event-store";
 import { TabParamList } from "../navigation/TabNavigator";
 import { Loader } from "../components/LazyLoaders/loader";
-import { searchCache } from "../utils/caching/searchCache";
+import { searchCache } from "../utils/cache/searchCache";
 import { EmptyState } from "../components/Errors/EmptyState";
 import { useDebounce } from "../hooks/useDebounce";
 

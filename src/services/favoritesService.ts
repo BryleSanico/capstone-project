@@ -1,11 +1,11 @@
 import { supabase } from "../lib/supabase";
 import { eventService } from "./eventService";
-import { getCurrentSession } from "../helpers/sessionHelper";
+import { getCurrentSession } from "../utils/system/sessionHelper";
 import storageService from "./storageService";
-import { storageKeys } from "../utils/storageKeys";
+import { storageKeys } from "../utils/cache/storageKeys";
 import { useNetworkStatus } from "../stores/network-store";
 import { Event } from "../types/event";
-import { withRetry } from "../utils/networkUtils";
+import { withRetry } from "../utils/network/networkUtils";
 
 type CachedFavorites = {
   ids: number[];

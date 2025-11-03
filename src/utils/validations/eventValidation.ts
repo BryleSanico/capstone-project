@@ -1,5 +1,5 @@
 import { EventFormData } from '../../types/event';
-import { isRequired } from '../validations/validation';
+import { isRequired } from './validation';
 
 export type EventFormErrors = {
   // Allow keys matching EventFormData fields

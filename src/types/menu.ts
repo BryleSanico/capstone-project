@@ -1,4 +1,4 @@
-import { IconLibrary } from "../utils/iconLoader";
+import { IconLibrary } from "../utils/ui/iconLoader";
 
 export type MenuItem = {
   icon: {

@@ -1,14 +1,14 @@
 import { supabase } from "../lib/supabase";
 import { Event, EventFormData } from "../types/event";
-import { getCurrentSession } from "../helpers/sessionHelper";
+import { getCurrentSession } from "../utils/system/sessionHelper";
 import storageService from "./storageService";
-import { storageKeys } from "../utils/storageKeys";
+import { storageKeys } from "../utils/cache/storageKeys";
 import { useNetworkStatus } from "../stores/network-store";
 import { eventMapper } from "../utils/mappers/eventMapper";
 import { Asset } from "react-native-image-picker";
 import { toByteArray } from "react-native-quick-base64";
-import { combineDateTime, parseTags } from "../helpers/eventDataHelper";
-import { withRetry } from "../utils/networkUtils";
+import { combineDateTime, parseTags } from "../utils/domain/eventDataHelper";
+import { withRetry } from "../utils/network/networkUtils";
 
 const CACHE_EXPIRATION_DURATION = 1 * 60 * 60 * 1000; // 1 hour
 const BUCKET_NAME = "event-images";

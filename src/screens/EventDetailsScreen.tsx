@@ -25,7 +25,7 @@ import { useEvents } from "../stores/event-store";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { useTickets } from "../stores/tickets-store";
 import  useEventSubscription  from "../hooks/useEventSubscription";
-import { formatFullDate, formatTime } from "../utils/dateFormatter";
+import { formatFullDate, formatTime } from "../utils/formatters/dateFormatter";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx

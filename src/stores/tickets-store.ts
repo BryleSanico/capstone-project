@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { Ticket } from "../types/ticket";
 import ticketService from "../services/ticketService";
 import { useEvents } from "./event-store"; 
-import { handleAsyncAction } from "../utils/storeUtils";
+import { handleAsyncAction } from "../utils/system/storeUtils";
 
 type TicketsState = {
   tickets: Ticket[];

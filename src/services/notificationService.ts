@@ -5,9 +5,9 @@ import notifee, {
 } from "@notifee/react-native";
 import { Alert, Platform } from "react-native";
 import { supabase } from "../lib/supabase";
-import { setupNotificationListeners } from "../utils/notificationListener";
+import { setupNotificationListeners } from "../utils/network/notificationListener";
 import storageService from "./storageService";
-import { storageKeys } from "../utils/storageKeys";
+import { storageKeys } from "../utils/cache/storageKeys";
 import "../lib/firebase"; // Initialize firebase
 import {
   getToken,
@@ -22,7 +22,7 @@ import {
   FIREBASE_PERMISSION_CODE,
   FIREBASE_PERMISSION_STATUS,
 } from "../constants/firebaseConstants";
-import { withRetry } from "../utils/networkUtils";
+import { withRetry } from "../utils/network/networkUtils";
 
 type FirebaseAuthorizationStatusType =
   (typeof FIREBASE_PERMISSION_CODE)[keyof typeof FIREBASE_PERMISSION_CODE];

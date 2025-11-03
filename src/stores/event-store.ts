@@ -1,10 +1,10 @@
 import { create } from "zustand";
 import { Event } from "../types/event";
 import { eventService } from "../services/eventService";
-import { handleAsyncAction } from "../utils/storeUtils";
-import { prefetchImages } from "../utils/caching/imageCache";
+import { handleAsyncAction } from "../utils/system/storeUtils";
+import { prefetchImages } from "../utils/cache/imageCache";
 import storageService from "../services/storageService"; 
-import { storageKeys } from "../utils/storageKeys";
+import { storageKeys } from "../utils/cache/storageKeys";
 
 const EVENTS_PER_PAGE = 3;
 

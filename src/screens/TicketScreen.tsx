@@ -24,7 +24,7 @@ import {
   TAB_KEYS,
   TAB_CONFIG,
 } from '../types/navigation';
-import { filterTicketsByDate } from '../utils/filterUtils'; 
+import { filterTicketsByDate } from '../utils/domain/filterUtils'; 
 
 // Define the navigation tab
 // Note: The screen name here must match the one in TabNavigator.tsx
