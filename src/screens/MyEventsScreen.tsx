@@ -16,15 +16,14 @@ import {
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMyEvents } from '../stores/my-event-store';
 import { Loader } from '../components/LazyLoaders/loader';
-import { EmptyState } from '../components/Errors/EmptyState';
-import MyEventCard from '../components/Cards/MyEventCard';
+import { EmptyState } from '../components/ui/Errors/EmptyState';
+import MyEventCard from '../components/ui/Cards/MyEventCard';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { TabParamList } from '../navigation/TabNavigator';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import FeatherIcon from 'react-native-vector-icons/Feather';
-
-import ScreenHeader from '../components/ScreenHeader';
-import TabSelector from '../components/TabSelector';
+import ScreenHeader from '../components/ui/ScreenHeader';
+import TabSelector from '../components/navigation/TabSelector';
 import {
   TabKey,
   TabItem,
