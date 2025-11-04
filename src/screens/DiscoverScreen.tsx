@@ -14,11 +14,11 @@ import {
 } from "@react-navigation/native";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import EventCard from "../components/Cards/EventCard";
-import SearchBar from "../components/SearchBar";
-import CategoryFilter from "../components/CategoryFilter";
+import EventCard from "../components/ui/Cards/EventCard";
+import SearchBar from "../components/ui/SearchBar";
+import CategoryFilter from "../components/ui/CategoryFilter";
 import { Event } from "../types/event";
-import { OfflineState } from "../components/Errors/offlineState";
+import { OfflineState } from "../components/ui/Errors/offlineState";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LoaderSearch } from "../components/LazyLoaders/loaderSearch";
 import { useNetworkStatus } from "../stores/network-store";
@@ -28,7 +28,7 @@ import { useEvents } from "../stores/event-store";
 import { TabParamList } from "../navigation/TabNavigator";
 import { Loader } from "../components/LazyLoaders/loader";
 import { searchCache } from "../utils/cache/searchCache";
-import { EmptyState } from "../components/Errors/EmptyState";
+import { EmptyState } from "../components/ui/Errors/EmptyState";
 import { useDebounce } from "../hooks/useDebounce";
 
 // Define the types for route and navigation

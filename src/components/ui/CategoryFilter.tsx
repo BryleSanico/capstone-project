@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useEvents } from '../stores/event-store'; 
+import { useEvents } from '../../stores/event-store'; 
 
 interface CategoryFilterProps {
   selectedCategory: string;
