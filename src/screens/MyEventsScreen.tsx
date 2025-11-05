@@ -7,6 +7,7 @@ import {
   RefreshControl,
   TouchableOpacity,
   Platform,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -144,7 +145,7 @@ export default function MyEventsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <View style={styles.container} >
       <ScreenHeader
         title="My Events"
         subtitle={`${myEvents.length} events created`}
@@ -189,7 +190,7 @@ export default function MyEventsScreen() {
           ListEmptyComponent={renderEmptyList}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 

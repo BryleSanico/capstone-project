@@ -58,7 +58,8 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   headerContent: {
-    marginVertical: 25,
+    marginTop: Platform.OS === "ios" ? 60 : 25,
+    marginBottom: 25,
     marginHorizontal: 15,
     flexDirection: 'row',
     justifyContent: 'space-between',
