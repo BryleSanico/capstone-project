@@ -221,6 +221,7 @@ export const useEvents = create<EventsState>()((set, get) => {
           ...event,
           attendees: event.attendees + quantity,
           availableSlot: event.availableSlot - quantity,
+          // isClosed: event.availableSlot - quantity <= 0 ? true : event.isClosed,
         }))
       );
     },

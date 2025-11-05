@@ -65,7 +65,9 @@ export const useTickets = create<TicketsState>()((set, get) => ({
       if (err.message?.includes('EVENT_NOT_FOUND')) {
         return { success: false, message: "Sorry, this event is deleted by the organizer." };
       }
-      
+      if (err.message?.includes('EVENT_CLOSED')) {
+        return { success: false, message: "Sorry, ticket sales for this event have been closed." };
+      }
       // Trigger a sync on the events store just in case
       // (e.g., if slots were off)
       useEvents.getState().syncEvents({ query: '', category: 'All' });
