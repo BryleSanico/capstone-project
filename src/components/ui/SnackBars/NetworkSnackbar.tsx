@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Snackbar } from "react-native-paper";
-import { useNetworkStatus } from "../../stores/network-store";
+import { useNetworkStatus } from "../../../stores/network-store";
 
 /**
  * Determines the snackbar color based on the message.
