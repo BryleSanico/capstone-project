@@ -7,8 +7,8 @@ import {
   Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { Event } from '../../types/event';
-import { formatFullDate, formatTime } from '../../utils/formatters/dateFormatter';
+import { Event } from '../../../types/event';
+import { formatFullDate, formatTime } from '../../../utils/formatters/dateFormatter';
 
 type MyEventCardProps = {
   event: Event;
