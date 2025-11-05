@@ -28,6 +28,7 @@ import {
 import Icon from "react-native-vector-icons/Ionicons";
 import { useDateTimePicker } from "../hooks/useDateTimePicker";
 import { useImagePicker } from "../hooks/useImagePicker";
+import LinearGradient from "react-native-linear-gradient";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -49,7 +50,7 @@ const initialFormData: Omit<EventFormData, "date" | "time" | "imageUrl"> & {
   category: "",
   capacity: "",
   tags: "",
-  userMaxTicketPurchase: "10",
+  userMaxTicketPurchase: "1",
 };
 
 export default function EventFormScreen() {
@@ -90,13 +91,9 @@ export default function EventFormScreen() {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: isEditMode ? "Edit Event" : "Create Event",
-      headerStyle: { backgroundColor: "#FFFFFF" },
-      headerTitleStyle: { fontWeight: "bold", fontSize: 18, color: "#111827" },
-      headerShadowVisible: false,
-      headerTintColor: "#6366f1",
+      headerShown: false,
     });
-  }, [navigation, isEditMode]);
+  }, [navigation]);
 
   // Fetch Data for Edit Mode
   useEffect(() => {
@@ -231,7 +228,34 @@ export default function EventFormScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
+      <View style={styles.header}>
+        <LinearGradient
+          colors={["#8B5CF6", "#6366F1", "#fff"]}
+          start={{ x: 1, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.headerGradient}
+        >
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
+            <Text style={styles.backButtonText}>✕</Text>
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Icon
+              name="sparkles-outline"
+              size={32}
+              color="#fff"
+              style={styles.sparkleIcon}
+            />
+            <Text style={styles.headerTitle}>{isEditMode ? "Edit Event" : "Create Event"}</Text>
+            <Text style={styles.headerSubtitle}>
+              Share your experience with the world
+            </Text>
+          </View>
+        </LinearGradient>
+      </View>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -243,44 +267,46 @@ export default function EventFormScreen() {
         >
           <View style={styles.formContainer}>
             {/*  Image Picker  */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.groupTitle}>Event Image</Text>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Cover Image *</Text>
-                <TouchableOpacity
-                  style={[
-                    styles.imagePicker,
-                    errors.imageUrl && styles.inputError,
-                  ]}
-                  onPress={handleChoosePhoto}
-                  disabled={isSyncing} // Disable while submitting
-                >
-                  {displayImageUri ? (
-                    <Image
-                      source={{ uri: displayImageUri }}
-                      style={styles.imagePreview}
-                    />
-                  ) : (
-                    <View style={styles.imagePlaceholder}>
-                      <Icon name="image-outline" size={40} color="#9CA3AF" />
-                      <Text style={styles.imagePlaceholderText}>
-                        Tap to select image
-                      </Text>
-                      <Text style={styles.imageSizeText}>
-                        (Max 2MB, JPG/PNG)
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-                {errors.imageUrl && (
-                  <Text style={styles.errorText}>{errors.imageUrl}</Text>
+
+            <View style={styles.inputGroup}>
+              <TouchableOpacity
+                style={[
+                  styles.imagePicker,
+                  errors.imageUrl && styles.inputError,
+                ]}
+                onPress={handleChoosePhoto}
+                disabled={isSyncing} // Disable while submitting
+              >
+                {displayImageUri ? (
+                  <Image
+                    source={{ uri: displayImageUri }}
+                    style={styles.imagePreview}
+                  />
+                ) : (
+                  <View style={styles.imagePlaceholder}>
+                    <Icon name="image-outline" size={40} color="#8B5CF6" />
+                    <Text style={styles.imagePlaceholderText}>
+                      Add Event Image
+                    </Text>
+                    <Text style={styles.imageSizeText}>
+                      Tap to upload a cover photo (JPG/PNG)
+                    </Text>
+                  </View>
                 )}
-              </View>
+              </TouchableOpacity>
+              {errors.imageUrl && (
+                <Text style={styles.errorText}>{errors.imageUrl}</Text>
+              )}
             </View>
 
             {/*  Event Info Group  */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.groupTitle}>Event Information</Text>
+              <View style={styles.cardHeader}>
+                <View style={styles.iconBadge}>
+                  <Icon name="pricetag-outline" size={20} color="#8B5CF6" />
+                </View>
+                <Text style={styles.groupTitle}>Event Information</Text>
+              </View>
               {/* Title */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Event Title *</Text>
@@ -346,7 +372,16 @@ export default function EventFormScreen() {
 
             {/*  Date/Time Group  */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.groupTitle}>Date & Time</Text>
+              <View style={styles.cardHeader}>
+                <View style={styles.iconBadge}>
+                  <Icon
+                    name="calendar-clear-outline"
+                    size={20}
+                    color="#8B5CF6"
+                  />
+                </View>
+                <Text style={styles.groupTitle}>Date & Time</Text>
+              </View>
               <View style={styles.row}>
                 {/* Date */}
                 <View style={[styles.inputGroup, styles.halfWidth]}>
@@ -358,12 +393,6 @@ export default function EventFormScreen() {
                     ]}
                     onPress={() => showPicker("date")}
                   >
-                    <Icon
-                      name="calendar-outline"
-                      size={20}
-                      color="#6B7280"
-                      style={styles.pickerIcon}
-                    />
                     <Text style={styles.pickerText}>{formattedDate}</Text>
                   </TouchableOpacity>
                   {errors.date && (
@@ -380,12 +409,6 @@ export default function EventFormScreen() {
                     ]}
                     onPress={() => showPicker("time")}
                   >
-                    <Icon
-                      name="time-outline"
-                      size={20}
-                      color="#6B7280"
-                      style={styles.pickerIcon}
-                    />
                     <Text style={styles.pickerText}>{formattedTime}</Text>
                   </TouchableOpacity>
                   {errors.time && (
@@ -397,7 +420,12 @@ export default function EventFormScreen() {
 
             {/*  Location Group  */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.groupTitle}>Location</Text>
+              <View style={styles.cardHeader}>
+                <View style={styles.iconBadge}>
+                  <Icon name="location-outline" size={20} color="#8B5CF6" />
+                </View>
+                <Text style={styles.groupTitle}>Location</Text>
+              </View>
               {/* Venue */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Venue Name *</Text>
@@ -430,7 +458,12 @@ export default function EventFormScreen() {
 
             {/*  Tickets Group  */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.groupTitle}>Tickets</Text>
+              <View style={styles.cardHeader}>
+                <View style={styles.iconBadge}>
+                  <Icon name="logo-usd" size={20} color="#8B5CF6" />
+                </View>
+                <Text style={styles.groupTitle}>Pricing & Capacity</Text>
+              </View>
               <View style={styles.row}>
                 {/* Price */}
                 <View style={[styles.inputGroup, styles.halfWidth]}>
@@ -491,12 +524,12 @@ export default function EventFormScreen() {
             <TouchableOpacity
               style={[
                 styles.submitButton,
-                 (isSyncing || isSubmitting) && styles.submitButtonDisabled, // Use isSyncing
+                (isSyncing || isSubmitting) && styles.submitButtonDisabled, // Use isSyncing
               ]}
               onPress={handleSubmit}
               disabled={isSyncing || isSubmitting}
             >
-              {(isSyncing || isSubmitting) ? (
+              {isSyncing || isSubmitting ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text style={styles.submitButtonText}>
@@ -514,11 +547,11 @@ export default function EventFormScreen() {
       </KeyboardAvoidingView>
 
       {renderDateTimePicker()}
-    </SafeAreaView>
+    </View>
   );
 }
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#F9FAFB" },
+  safeArea: { flex: 1, backgroundColor: "#F5F5F7" },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -540,16 +573,20 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   groupTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#111827",
-    marginBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-    paddingBottom: 8,
+    marginBottom: 12,
+    fontSize: 20,
+    fontWeight: "600" as const,
+    color: "#1a1a1a",
   },
   inputGroup: { marginBottom: 16 },
-  label: { fontSize: 14, fontWeight: "500", color: "#374151", marginBottom: 6 },
+  label: {
+    fontSize: 13,
+    fontWeight: "600" as const,
+    color: "#3C3C43",
+    marginBottom: 10,
+    textTransform: "uppercase" as const,
+    letterSpacing: 0.5,
+  },
   input: {
     backgroundColor: "#F9FAFB",
     borderRadius: 8,
@@ -607,12 +644,89 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginBottom: 20,
   },
+  iconBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "#F3F0FF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+    marginBottom: 10,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+    color: "#111827",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+  },
+  header: {
+    marginHorizontal: 0,
+    borderRadius: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#6366f1",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
+        marginTop: 0,
+      },
+      android: {
+        elevation: 8,
+        marginVertical: 0,
+      },
+    }),
+  },
+  headerGradient: {
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+  },
+  headerContent: {
+    marginTop: Platform.OS === "ios" ? 100 : 80,
+    marginBottom: 50,
+    marginHorizontal: 15,
+    flexDirection: "column",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: '800' as const,
+    color: '#fff',
+    marginBottom: 8,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '500' as const,
+  },
+  backButton: {
+    position: "absolute",
+    top: Platform.OS === "ios" ? 50 : 20,
+    left: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+    backButtonText: {
+    fontSize: 24,
+    color: "#fff",
+    fontWeight: "400" as const,
+  },
+  sparkleIcon: {
+    marginBottom: 8,
+  },
   // Image Picker Styles
   imagePicker: {
     width: "100%",
     height: 200,
     borderRadius: 12,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#D1D5DB",
     borderStyle: "dashed",
@@ -625,8 +739,8 @@ const styles = StyleSheet.create({
   imagePlaceholderText: {
     marginTop: 12,
     fontSize: 14,
-    color: "#6B7280",
-    fontWeight: "500",
+    fontWeight: "600" as const,
+    color: "#1a1a1a",
   },
   imageSizeText: { marginTop: 4, fontSize: 12, color: "#9CA3AF" },
 });

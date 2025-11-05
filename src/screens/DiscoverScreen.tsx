@@ -64,7 +64,7 @@ export default function DiscoverScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       title: "Discover Events",
-      headerStyle: { backgroundColor: "#fff" },
+      headerStyle: { backgroundColor: "#ffffffff" },
       headerTitleStyle: { fontWeight: "700", fontSize: 20 },
       headerShadowVisible: false,
     });
@@ -209,7 +209,7 @@ export default function DiscoverScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#F5F5F7",
   },
   listContent: {
     paddingTop: 8,

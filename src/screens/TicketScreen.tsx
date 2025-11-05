@@ -107,7 +107,7 @@ export default function TicketsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <View style={styles.container} >
       <ScreenHeader
         title="My Tickets"
         subtitle={`${tickets.length} purchased ticket${
@@ -154,7 +154,7 @@ export default function TicketsScreen() {
           />
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
