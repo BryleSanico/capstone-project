@@ -1919,10 +1919,10 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNFBApp (23.4.1):
+  - RNFBApp (23.5.0):
     - Firebase/CoreOnly (= 12.4.0)
     - React-Core
-  - RNFBMessaging (23.4.1):
+  - RNFBMessaging (23.5.0):
     - Firebase/Messaging (= 12.4.0)
     - FirebaseCoreExtension
     - React-Core
@@ -1957,7 +1957,7 @@ PODS:
     - RNNotifee/NotifeeCore (= 9.1.8)
   - RNNotifee/NotifeeCore (9.1.8):
     - React-Core
-  - RNPermissions (5.4.3):
+  - RNPermissions (5.4.4):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2512,11 +2512,11 @@ SPEC CHECKSUMS:
   ReactCommon: 7aecadba671f30ab03ce021f3c6445ef8acafa9a
   RNCAsyncStorage: 646c1bf2ebfc78d6632a3b0399f471fba8101e73
   RNDateTimePicker: 4768515d996c88fd5264bf8aaa85a113dc39ff6f
-  RNFBApp: d1f587866b6e188d95c5f541abedd8e4ce167bbe
-  RNFBMessaging: 81842deb236bfd87d8e49f22ce7acf05d1eea04b
+  RNFBApp: 255fa19a91d6c1309e021ee75d5d209754e5961b
+  RNFBMessaging: c304c1d8949f996d3eed1cf4eeba33148d13b4ea
   RNGestureHandler: 8ff2b1434b0ff8bab28c8242a656fb842990bbc8
   RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
-  RNPermissions: 49120ef6f87dcf69fdee385ea1d694b1ff69c3a6
+  RNPermissions: bac7092aba34091445d38bf068077d18c863bda8
   RNReactNativeHapticFeedback: 1597ab4e15cabb38f0f0c62faa17a5e295430170
   RNScreens: 90b905d545a5ebbe976985702b8a39e3475727b2
   RNSVG: 4470464e129f6bc58b78b961850b054dbbea8ef7

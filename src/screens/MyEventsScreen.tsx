@@ -197,7 +197,7 @@ export default function MyEventsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: Platform.OS === 'ios' ? '#f8f9fa' : '#e1e1e8ff',
   },
   createButton: {
     width: 56,

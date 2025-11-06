@@ -421,16 +421,16 @@ async function syncEventCache(
     return null;
   }
 
-  // "SMART SYNC" LOGIC
+  // SYNC LOGIC
 
-  // 1. Check for updates to events *already in our cache*.
+  // Check for updates to events *already in the cache*.
   const cachedIds = currentFullCache.map((e) => e.id);
   const updatedEvents = await fetchUpdatedCachedEvents(
     cachedIds,
     localTimestamp || "2025-01-01T00:00:00Z"
   );
 
-  // 2. Check for *new* events (Page 1 only).
+  // Check for *new* events (Page 1 only).
   const { events: newEvents, totalCount } = await fetchEvents({
     lastSyncTimestamp: localTimestamp || "2025-01-01T00:00:00Z",
     query: filters.query,
@@ -439,13 +439,13 @@ async function syncEventCache(
     limit: EVENTS_PER_PAGE,
   });
 
-  // 3. Update total count in storage
+  // Update total count in storage
   await storageService.setItem(
     storageKeys.getEventsTotalCountKey(),
     totalCount
   );
 
-  // 4. Merge results if we found anything
+  // Merge results if we found anything
   if (updatedEvents.length > 0 || newEvents.length > 0) {
     console.log(
       `[Sync] Found ${updatedEvents.length} updated events and ${newEvents.length} new events.`
@@ -481,7 +481,6 @@ async function syncEventCache(
     }
     return null;
   }
-  // END SYNC LOGIC
 }
 
 /**
