@@ -260,8 +260,8 @@ export const useEvents = create<EventsState>()((set, get) => {
     updateEventInCache: (updatedEvent: Event) => {
       set((state) =>
         _updateEventInState(state, updatedEvent.id, (event) => {
-           // We are only updating the fields from the server response.
-           // We should PRESERVE the existing organizer data if the incoming 
+           // Only updating the fields from the server response.
+           // PRESERVE the existing organizer data if the incoming 
            // updatedEvent does not contain a populated profile object.
            const updatedData = {
               ...event,

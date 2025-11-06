@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Event } from '../../../types/event';
@@ -128,7 +129,7 @@ const styles = StyleSheet.create({
   actionsContainer: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    borderTopColor: '#e9ecef', // Light gray divider
+    borderTopColor: Platform.OS === 'ios' ? '#e9ecef' : '#e1e2e3ff', // Light gray divider
   },
   actionButton: {
     flex: 1,
@@ -136,7 +137,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
-    backgroundColor: '#f8f9fa', // Very light gray background
+    backgroundColor: Platform.OS === 'ios' ? '#f8f9fa' : 'rgba(240, 242, 244, 1)', // Very light gray background
   },
   actionText: {
     fontSize: 16,
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
   },
   editButton: {
     borderRightWidth: 1,
-    borderRightColor: '#e9ecef', // Divider between buttons
+    borderRightColor: Platform.OS === 'ios'? '#e9ecef' : '#e1e2e3ff', // Divider between buttons
   },
   editText: {
     color: '#6366f1', // Primary app color
