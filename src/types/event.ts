@@ -33,4 +33,5 @@ export type EventFormData = {
   capacity: string;
   tags: string;
   userMaxTicketPurchase: string;
+  isClosed: boolean;
 };

@@ -296,7 +296,8 @@ async function updateEvent(
   eventId: number,
   formData: EventFormData,
   currentImageUrl: string, // URL currently in the database
-  imageAsset?: Asset | null
+  imageAsset?: Asset | null,
+  isClosed?: boolean
 ): Promise<Event> {
   console.log(`[updateEvent] Service called for event ${eventId}`);
 
@@ -368,6 +369,7 @@ async function updateEvent(
     p_tags: parseTags(formData.tags),
     p_user_max_ticket_purchase:
       parseInt(formData.userMaxTicketPurchase, 10) || 10,
+    p_is_closed: isClosed ?? false,
   }));
 
   if (error) {
@@ -391,6 +393,8 @@ async function updateEvent(
       updatedEvent.organizer = organizerData;
     }
 
+    // Ensure isClosed is set correctly
+    updatedEvent.isClosed = isClosed ?? false;
     return updatedEvent;
   } catch (mapError: any) {
     console.error(
