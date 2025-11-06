@@ -16,10 +16,12 @@ type EventsState = {
   totalEvents: number;
   isLoading: boolean;
   isSyncing: boolean;
+  isNetworkSearching: boolean;
   error: string | null;
   hasMore: boolean;
   categories: string[];
   currentEvent: Event | null;
+  networkSearchResults: Event[];
 
   loadInitialEvents: (filters: {
     query: string;
@@ -34,6 +36,11 @@ type EventsState = {
     query: string;
     category: string;
   }) => Promise<void>;
+  searchNetworkEvents: (filters: {
+    query: string;
+    category: string;
+  }) => Promise<void>;
+  clearNetworkSearch: () => void;
   fetchEventById: (id: number) => Promise<void>;
   decrementEventSlots: (eventId: number, quantity: number) => void;
   updateEventInCache: (updatedEvent: Event) => void;
@@ -89,6 +96,8 @@ export const useEvents = create<EventsState>()((set, get) => {
     error: null,
     hasMore: true,
     categories: ["All"],
+    isNetworkSearching: false,
+    networkSearchResults: [],
     currentEvent: null,
 
     loadInitialEvents: async (filters) => {
@@ -205,6 +214,28 @@ export const useEvents = create<EventsState>()((set, get) => {
       });
     },
 
+    searchNetworkEvents: async (filters) => {
+      // Use handleAsyncAction but map to the 'isNetworkSearching' flag
+      await handleAsyncAction(set, get, "isNetworkSearching", async () => {
+        console.log(
+          `[Store] Searching network for: "${filters.query}"`
+        );
+        const { events } = await eventService.fetchNetworkSearch({
+          page: 1,
+          limit: 50, // Fetch up to 50 results
+          query: filters.query,
+          category: filters.category,
+        });
+        
+        // Set the ephemeral results
+        return { networkSearchResults: events };
+      });
+    },
+
+    clearNetworkSearch: () => {
+      set({ networkSearchResults: [], isNetworkSearching: false });
+    },
+    
     fetchEventById: async (id: number) => {
       await handleAsyncAction(set, get, "isLoading", async () => {
         const event = await eventService.fetchEventById(id);

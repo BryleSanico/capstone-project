@@ -45,12 +45,16 @@ export default function DiscoverScreen() {
     displayedEvents,
     isLoading,
     isSyncing,
+    isNetworkSearching,
     hasMore,
     error,
+    networkSearchResults,
     loadInitialEvents,
     loadMoreEvents,
     syncEvents,
     refreshEvents,
+    searchNetworkEvents, 
+    clearNetworkSearch, 
   } = useEvents();
 
   const { favorites } = useFavorites();
@@ -72,6 +76,8 @@ export default function DiscoverScreen() {
 
   // Loads from cache AND triggers a background freshness check
   useEffect(() => {
+    // This will now re-load events when the category changes,
+    // populating both _fullEventCache and displayedEvents from the store.
     loadInitialEvents({ query: "", category: selectedCategory });
   }, [selectedCategory, loadInitialEvents]);
 
@@ -86,23 +92,63 @@ export default function DiscoverScreen() {
       console.log(
         "[Focus] Screen focused. Calling syncEvents to check freshness."
       );
+      // We sync "All" to ensure the main cache gets updates,
       syncEvents({ query: "", category: "All" });
     }
-  }, [isFocused, searchQuery, syncEvents]); 
+  }, [isFocused, searchQuery, syncEvents]);
 
-  const searchResults = useMemo(
+  // Perform local search on the store's "full" cache
+  const localSearchResults = useMemo(
     () => searchCache(_fullEventCache, debouncedQuery),
     [_fullEventCache, debouncedQuery]
   );
 
-  const dataForList = debouncedQuery ? searchResults : displayedEvents;
-
-   // Trigger a network search if local search yields no results and we're online.
-  useEffect(() => {
-    if (debouncedQuery && searchResults.length === 0 && isConnected) {
-      syncEvents({ query: debouncedQuery, category: selectedCategory });
+  // Determine which list to display based on the search state
+  const dataForList = useMemo(() => {
+    if (debouncedQuery) {
+      // If we are searching
+      if (networkSearchResults.length > 0) {
+        return networkSearchResults; // 1. Show network results
+      }
+      return localSearchResults; // 2. Show local cache search results
     }
-  }, [searchResults.length, debouncedQuery, isConnected, syncEvents, selectedCategory]);
+    return displayedEvents; // 3. Show paginated, category-filtered events
+  }, [
+    debouncedQuery,
+    networkSearchResults,
+    localSearchResults,
+    displayedEvents,
+  ]);
+
+  // Network search fallback logic
+  useEffect(() => {
+    // If search is cleared, clear network results in store
+    if (!debouncedQuery) {
+      clearNetworkSearch();
+      return;
+    }
+
+    // If we found results locally, use them and clear network results
+    if (localSearchResults.length > 0) {
+      clearNetworkSearch();
+      return;
+    }
+
+    // If we have a query, no local results, and are online, search network
+    if (debouncedQuery && localSearchResults.length === 0 && isConnected) {
+      searchNetworkEvents({
+        query: debouncedQuery,
+        category: selectedCategory,
+      });
+    }
+  }, [
+    localSearchResults.length,
+    debouncedQuery,
+    isConnected,
+    selectedCategory,
+    searchNetworkEvents, 
+    clearNetworkSearch, 
+  ]);
 
   const handleEventPress = (event: Event) => {
     const isFavorite = favorites.includes(event.id);
@@ -122,9 +168,27 @@ export default function DiscoverScreen() {
   // Handler for pull-to-refresh
   const handleRefresh = useCallback(async () => {
     if (isConnected) {
-      await refreshEvents({ query: debouncedQuery, category: selectedCategory });
+      if (debouncedQuery) {
+        // If searching, re-run the network search
+        await searchNetworkEvents({
+          query: debouncedQuery,
+          category: selectedCategory,
+        });
+      } else {
+        // If not searching
+        await refreshEvents({
+          query: debouncedQuery,
+          category: selectedCategory,
+        });
+      }
     }
-  }, [refreshEvents, debouncedQuery, selectedCategory, isConnected]);
+  }, [
+    refreshEvents,
+    searchNetworkEvents,
+    debouncedQuery,
+    selectedCategory,
+    isConnected,
+  ]);
 
   const renderFooter = () => {
     // Only show footer loader if we are syncing (fetching)
@@ -138,7 +202,8 @@ export default function DiscoverScreen() {
   };
 
   const renderContent = () => {
-   if ((isLoading || isSyncing) && dataForList.length === 0) {
+    // Show loader if (initial cache is loading) OR (a network search is active)
+    if ((isLoading || isNetworkSearching) && dataForList.length === 0) {
       return (
         <SafeAreaView style={[styles.container, styles.loadingContainer]}>
           <LoaderSearch size={120} />
@@ -155,7 +220,15 @@ export default function DiscoverScreen() {
         />
       );
     }
-    if (isConnected && !isLoading && !isSyncing && dataForList.length === 0) {
+
+    // Show empty state if all filters/searches yield nothing
+    if (
+      isConnected &&
+      !isLoading &&
+      !isSyncing &&
+      !isNetworkSearching &&
+      dataForList.length === 0
+    ) {
       return (
         <EmptyState
           icon="warning-outline"
@@ -178,10 +251,12 @@ export default function DiscoverScreen() {
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.7}
         ListFooterComponent={renderFooter} // Call renderFooter
-        extraData={hasMore || isSyncing} // Re-render footer when sync status changes
+        extraData={hasMore || isSyncing} // Re-render footer
         refreshControl={
           <RefreshControl
-            refreshing={isSyncing && !isLoading} // Show pull-to-refresh only on network sync
+            refreshing={
+              (isSyncing && !isLoading) || isNetworkSearching
+            } // Show refresh on cache sync OR network search
             onRefresh={handleRefresh}
             tintColor="#6366f1"
           />
@@ -225,4 +300,3 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 });
-
