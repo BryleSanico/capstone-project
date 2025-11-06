@@ -11,6 +11,23 @@ import * as eventCache from "./cache/eventCacheService";
 
 const EVENTS_PER_PAGE = 3;
 
+/**
+ * Formats a plain text query into a tsquery string.
+ * "Summer Festival" becomes "Summer:*" & "Festival:*"
+ * This allows for multi-word and prefix matching.
+ */
+function formatQueryForTsquery(query: string): string {
+  if (!query.trim()) {
+    return "";
+  }
+  return query
+    .trim()
+    .split(/\s+/) // Split on one or more whitespace characters
+    .filter((word) => word.length > 0)
+    .map((word) => word + ":*") // Add prefix match operator
+    .join(" & "); // Join with AND operator
+}
+
 // --- Public Methods ---
 
 async function getLastSyncTimestamp() {
@@ -33,11 +50,12 @@ async function fetchEvents(params: {
   category?: string;
   lastSyncTimestamp?: string | null;
 }): Promise<{ events: Event[]; totalCount: number }> {
+    const formattedQuery = formatQueryForTsquery(params.query ?? "");
   const { data, error } = await withRetry(() =>
     supabase.rpc("get_paginated_events", {
       p_page: params.page ?? null,
       p_limit: params.limit ?? null,
-      p_query: params.query ?? "",
+      p_query: formattedQuery,
       p_category: params.category ?? "All",
       p_last_updated: params.lastSyncTimestamp ?? null,
     })
@@ -159,6 +177,39 @@ async function getInitialEvents(filters: {
   await eventCache.cacheEventListIds(firstPageEvents.map((e) => e.id));
 
   return { events: firstPageEvents, total: totalCount };
+}
+
+/**
+ * Fetches events from the server for an ephemeral search.
+ * This function DOES NOT cache results or prefetch images.
+ */
+async function fetchNetworkSearch(params: {
+  page?: number | null;
+  limit?: number | null;
+  query?: string;
+  category?: string;
+}): Promise<{ events: Event[]; totalCount: number }> {
+  const formattedQuery = formatQueryForTsquery(params.query ?? ""); // APPLY FORMATTING
+  const { data, error } = await withRetry(() =>
+    supabase.rpc("get_paginated_events", {
+      p_page: params.page ?? null,
+      p_limit: params.limit ?? null,
+      p_query: formattedQuery, // FORMATTED QUERY
+      p_category: params.category ?? "All",
+      p_last_updated: null, // ignore sync time for a live search
+    })
+  );
+
+  if (error) throw error;
+
+  const result = data[0] || { events: [], total_count: 0 };
+  const events: Event[] = (result.events || []).map(eventMapper);
+
+  // Note: We deliberately DO NOT cache details or prefetch images here.
+  return {
+    events: events,
+    totalCount: result.total_count,
+  };
 }
 
 /**
@@ -461,4 +512,5 @@ export const eventService = {
   fetchEventsByIds,
   syncEventCache,
   refreshEventCache,
+  fetchNetworkSearch
 };
