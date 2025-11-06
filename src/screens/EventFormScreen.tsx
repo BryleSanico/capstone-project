@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   SafeAreaView,
   Image,
+  Switch
 } from "react-native";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -29,6 +30,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import { useDateTimePicker } from "../hooks/useDateTimePicker";
 import { useImagePicker } from "../hooks/useImagePicker";
 import LinearGradient from "react-native-linear-gradient";
+import { set } from "date-fns";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -51,6 +53,7 @@ const initialFormData: Omit<EventFormData, "date" | "time" | "imageUrl"> & {
   capacity: "",
   tags: "",
   userMaxTicketPurchase: "1",
+  isClosed: false,
 };
 
 export default function EventFormScreen() {
@@ -69,6 +72,7 @@ export default function EventFormScreen() {
   const [errors, setErrors] = useState<EventFormErrors>({});
   const [isLoading, setIsLoading] = useState<boolean>(isEditMode);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isClosed, setIsClosed] = useState<boolean>(false);
 
   const {
     imageAsset,
@@ -106,6 +110,7 @@ export default function EventFormScreen() {
             const eventDate = new Date(event.startTime);
             setSelectedDateTime(eventDate); // Set date in the hook
             setCurrentImageUrl(event.imageUrl || null); // Set image in the hook
+            setIsClosed(event.isClosed || false);
 
             // Populate form with existing data
             setFormData({
@@ -119,6 +124,7 @@ export default function EventFormScreen() {
               tags: event.tags?.join(", ") || "",
               userMaxTicketPurchase:
                 event.userMaxTicketPurchase?.toString() || "10",
+              isClosed: event.isClosed || false,
             });
           } else {
             Alert.alert("Error", "Could not find event details.");
@@ -198,7 +204,8 @@ export default function EventFormScreen() {
           eventId,
           dataToValidate,
           currentImageUrl || "", // Pass currentImageUrl from hook
-          imageAsset // Pass imageAsset from hook
+          imageAsset, // Pass imageAsset from hook
+          isClosed
         );
       } else {
         result = await createEvent(dataToValidate, imageAsset); // Pass imageAsset from hook
@@ -266,6 +273,36 @@ export default function EventFormScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.formContainer}>
+            {isEditMode && (
+              <View style={styles.fieldGroup}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.iconBadge}>
+                    <Icon name="cog-outline" size={20} color="#8B5CF6" />
+                  </View>
+                  <Text style={styles.groupTitle}>Event Status</Text>
+                </View>
+                <View style={styles.toggleRow}>
+                  <View style={styles.toggleTextContainer}>
+                    <Text style={styles.toggleLabel}>
+                      Close Event
+                    </Text>
+                    <Text style={styles.toggleDescription}>
+                      {isClosed
+                        ? "Event is closed. New tickets cannot be purchased."
+                        : "Event is open for new ticket purchases."}
+                    </Text>
+                  </View>
+                  <Switch
+                    trackColor={{ false: "#E5E7EB", true: "#8B5CF6" }}
+                    thumbColor={isClosed ? "#6366F1" : "#f4f3f4"}
+                    ios_backgroundColor="#E5E7EB"
+                    onValueChange={setIsClosed}
+                    value={isClosed}
+                    disabled={isSyncing || isSubmitting}
+                  />
+                </View>
+              </View>
+            )}
             {/*  Image Picker  */}
 
             <View style={styles.inputGroup}>
@@ -743,4 +780,25 @@ const styles = StyleSheet.create({
     color: "#1a1a1a",
   },
   imageSizeText: { marginTop: 4, fontSize: 12, color: "#9CA3AF" },
+  toggleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  toggleTextContainer: {
+    flex: 1,
+    marginRight: 16,
+  },
+  toggleLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1a1a1a",
+    marginBottom: 4,
+  },
+  toggleDescription: {
+    fontSize: 13,
+    color: "#6B7280",
+    lineHeight: 18,
+  },
 });
