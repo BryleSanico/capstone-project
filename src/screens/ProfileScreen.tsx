@@ -119,7 +119,7 @@ export default function ProfileScreen() {
               {user?.user_metadata.full_name || "Guest"}
             </Text>
             <Text style={styles.userEmail}>
-              {user?.email || "guest@example.com"}
+              {user?.email || "Not logged in"}
             </Text>
           </LinearGradient>
         </View>
