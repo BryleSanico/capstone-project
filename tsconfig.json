@@ -21,14 +21,25 @@
         "./*"
       ]
     },
-    "types": [],
+    "types": [
+      "jest"
+    ], 
     "ignoreDeprecations": "6.0"
   },
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "src/**/*.ts", 
+    "src/**/*.tsx", 
+    "index.js", 
+    "App.tsx"
   ],
-  "extends": "expo/tsconfig.base"
+  "exclude": [
+    "node_modules",
+    "babel.config.js",
+    "jest.config.js"
+  ], 
+ "engines": {
+    "node": ">=18"
+  },
+ "extends": "@react-native/typescript-config/tsconfig.json"
 }
+

@@ -1,10 +1,10 @@
 import { create } from "zustand";
 import { Alert } from "react-native";
 import { favoritesService } from "../services/favoritesService";
-import { getCurrentSession } from "../helpers/sessionHelper";
+import { getCurrentSession } from "../utils/system/sessionHelper";
 import { Event } from "../types/event";
 import { useNetworkStatus } from "./network-store";
-import { handleAsyncAction } from "../utils/storeUtils";
+import { handleAsyncAction } from "../utils/system/storeUtils";
 
 let syncDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 

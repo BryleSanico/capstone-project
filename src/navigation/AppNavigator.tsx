@@ -35,7 +35,10 @@ export default function AppNavigator() {
         options={{ headerShown: false }}
       />
       <Stack.Screen name="Favorites" component={FavoritesScreen} />
-      <Stack.Screen name="EventDetails" component={EventDetailsScreen} />
+      <Stack.Screen name="EventDetails" component={EventDetailsScreen} 
+      options={{
+          headerTintColor: 'black', // Changes back button and title color to red
+        }}/>
       <Stack.Screen name="TicketDetails" component={TicketDetailsScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />

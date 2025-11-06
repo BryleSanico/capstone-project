@@ -16,7 +16,7 @@ import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from '../stores/auth-store';
-import { Loader } from "../components/loaders/loader";
+import { Loader } from "../components/LazyLoaders/loader";
 import { isEmail, isRequired } from "../utils/validations/validation";
 
 // Define the types for route and navigation

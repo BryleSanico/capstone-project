@@ -1,9 +1,10 @@
 import { create } from "zustand";
 import { Event, EventFormData } from "../types/event";
 import { myEventsService } from "../services/myEventsService";
-import { handleAsyncAction } from "../utils/storeUtils";
+import { handleAsyncAction } from "../utils/system/storeUtils";
 import { Alert } from "react-native";
 import { Asset } from "react-native-image-picker";
+import { useEvents } from "../stores/event-store";
 
 type MyEventsState = {
   myEvents: Event[];
@@ -20,7 +21,8 @@ type MyEventsState = {
     eventId: number,
     fullFormData: EventFormData,
     currentImageUrl: string,
-    imageAsset?: Asset | null
+    imageAsset?: Asset | null,
+    isClosed?: boolean
   ) => Promise<Event | null>;
   clearUserEvents: () => void;
 };
@@ -50,6 +52,10 @@ export const useMyEvents = create<MyEventsState>()((set, get) => ({
     try {
       // Call the service to delete from DB and clear caches
       await myEventsService.deleteEvent(eventId);
+      // Refresh the Discover screen's list.
+      // This will safely re-fetch Page 1 and rebuild the ID list
+      // *without* destroying the detail cache
+      useEvents.getState().refreshEvents({ query: "", category: "All" });
     } catch (err: any) {
       console.error("Failed to delete event:", err);
       // Revert state on failure
@@ -73,9 +79,8 @@ export const useMyEvents = create<MyEventsState>()((set, get) => ({
       newEvent = await myEventsService.createEvent(fullFormData, imageAsset);
       console.log("[Store createEvent] Service returned:", newEvent);
 
-      set((state) => ({
-        myEvents: [newEvent!, ...state.myEvents],
-      }));
+      // Propagate the change to the global event cache
+      useEvents.getState().updateEventInCache(newEvent!); 
 
       // handleAsyncAction expects a promise returning partial state
       return { myEvents: [newEvent!, ...get().myEvents] };
@@ -97,7 +102,8 @@ export const useMyEvents = create<MyEventsState>()((set, get) => ({
     eventId: number,
     fullFormData: EventFormData,
     currentImageUrl: string,
-    imageAsset?: Asset | null
+    imageAsset?: Asset | null,
+    isClosed?: boolean
   ): Promise<Event | null> => {
     console.log(`[Store updateEvent ${eventId}] Calling service...`);
     let updatedEvent: Event | null = null;
@@ -107,7 +113,8 @@ export const useMyEvents = create<MyEventsState>()((set, get) => ({
         eventId,
         fullFormData,
         currentImageUrl,
-        imageAsset
+        imageAsset,
+        isClosed
       );
       console.log(
         `[Store updateEvent ${eventId}] Service returned:`,
@@ -117,6 +124,9 @@ export const useMyEvents = create<MyEventsState>()((set, get) => ({
       const newEvents = get().myEvents.map((e) =>
         e.id === updatedEvent!.id ? updatedEvent! : e
       );
+
+      // Propagate the change to the global event cache
+      useEvents.getState().updateEventInCache(updatedEvent!);
 
       return { myEvents: newEvents };
     });

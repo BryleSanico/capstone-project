@@ -14,8 +14,7 @@ import {
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
 import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
-import MaterialIcon from "react-native-vector-icons/MaterialCommunityIcons";
-import { getIconComponent } from "../utils/iconLoader";
+import { getIconComponent } from "../utils/ui/iconLoader";
 import { MenuItem } from "../types/menu";
 import { useTickets } from "../stores/tickets-store";
 import {
@@ -28,7 +27,6 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "../stores/auth-store";
 import { useFavorites } from "../stores/favorites-store";
-import { transparent } from "react-native-paper/lib/typescript/styles/themes/v2/colors";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -121,7 +119,7 @@ export default function ProfileScreen() {
               {user?.user_metadata.full_name || "Guest"}
             </Text>
             <Text style={styles.userEmail}>
-              {user?.email || "guest@example.com"}
+              {user?.email || "Not logged in"}
             </Text>
           </LinearGradient>
         </View>
@@ -175,7 +173,7 @@ export default function ProfileScreen() {
               <ActivityIndicator color="#ff4757" />
             ) : (
               <>
-                <MaterialIcon name="logout" size={20} color="#ff4757" />
+                <Icon name="exit-outline" size={20} color="#ff4757" />
                 <Text style={styles.logoutText}>Logout</Text>
               </>
             )}

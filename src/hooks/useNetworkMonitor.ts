@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import { useNetworkStatus } from "../stores/network-store";
-import { useEvents } from "../stores/event-store"; // Import the event store
+import { useEvents } from "../stores/event-store"; 
 
 export function useNetworkMonitor() {
   const { subscribe, registerReconnectCallback } = useNetworkStatus();
 
   useEffect(() => {
-    // 1. Define the reconnect logic that was in event-store.ts
+    // Define the reconnect logic that was in event-store.ts
     const reconnectCallback = async () => {
       const store = useEvents.getState(); // Get event store state
 
@@ -24,11 +24,11 @@ export function useNetworkMonitor() {
       }
     };
 
-    // 2. Register the callback
+    //. Register the callback
     registerReconnectCallback(reconnectCallback);
     
-    // 3. Start the global listener
+    // Start the global listener
     subscribe();
     
-  }, [subscribe, registerReconnectCallback]); // Add all dependencies
+  }, [subscribe, registerReconnectCallback]); 
 }

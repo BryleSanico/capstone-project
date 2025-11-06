@@ -2,77 +2,33 @@ import { supabase } from "../lib/supabase";
 import { Event } from "../types/event";
 import storageService from "./storageService";
 import { useNetworkStatus } from "../stores/network-store";
-import { storageKeys } from "../utils/storageKeys";
+import { storageKeys } from "../utils/cache/storageKeys";
 import { eventMapper } from "../utils/mappers/eventMapper";
-import { mergeAndDedupeEvents } from "../utils/cacheUtils";
+import { mergeAndDedupeEvents } from "../utils/cache/cacheUtils";
+import { prefetchImages } from "../utils/cache/imageCache";
+import { withRetry } from "../utils/network/networkUtils";
+import * as eventCache from "./cache/eventCacheService";
 
 const EVENTS_PER_PAGE = 3;
 
-// --- "Private" Helpers ---
 /**
- * Gets the detailed event cache (normalized).
- * @returns A record map of eventId -> Event.
+ * Formats a plain text query into a tsquery string.
+ * "Summer Festival" becomes "Summer:*" & "Festival:*"
+ * This allows for multi-word and prefix matching.
  */
-async function getDetailCache(): Promise<Record<number, Event>> {
-  return (
-    (await storageService.getItem<Record<number, Event>>(
-      storageKeys.getEventsDetailCacheKey()
-    )) || {}
-  );
+function formatQueryForTsquery(query: string): string {
+  if (!query.trim()) {
+    return "";
+  }
+  return query
+    .trim()
+    .split(/\s+/) // Split on one or more whitespace characters
+    .filter((word) => word.length > 0)
+    .map((word) => word + ":*") // Add prefix match operator
+    .join(" & "); // Join with AND operator
 }
 
-/**
- * Saves one or more events to the detailed event cache.
- * @param events An array of events to save.
- */
-async function cacheEventDetails(events: Event[]) {
-  if (events.length === 0) return;
-  const cache = await getDetailCache();
-  events.forEach((event) => {
-    cache[event.id] = event;
-  });
-  await storageService.setItem(storageKeys.getEventsDetailCacheKey(), cache);
-}
-
-/**
- * Gets the ordered list of event IDs for the Discover screen.
- * @returns An array of event IDs.
- */
-async function getCachedEventListIds(): Promise<number[]> {
-  return (
-    (await storageService.getItem<number[]>(storageKeys.getEventsCacheKey())) ||
-    []
-  );
-}
-
-/**
- * Saves the ordered list of event IDs for the Discover screen.
- * @param ids An array of event IDs.
- */
-async function cacheEventListIds(ids: number[]) {
-  return storageService.setItem(storageKeys.getEventsCacheKey(), ids);
-}
-
-/**
- * Hydrates full event objects from a list of IDs using the detail cache.
- * @param ids An array of event IDs.
- * @returns An array of full Event objects.
- */
-async function hydrateEventsFromCache(ids: number[]): Promise<Event[]> {
-  const detailCache = await getDetailCache();
-  // Filter out any IDs that might not be in the cache (though they should be)
-  return ids.map((id) => detailCache[id]).filter(Boolean) as Event[];
-}
-
-// --- "Public" Methods ---
-
-async function clearCachedEvents() {
-  return storageService.removeItem(storageKeys.getEventsCacheKey());
-}
-
-async function clearCachedEventDetails() {
-  return storageService.removeItem(storageKeys.getEventsDetailCacheKey());
-}
+// --- Public Methods ---
 
 async function getLastSyncTimestamp() {
   return storageService.getItem<string>(storageKeys.getEventsSyncKey());
@@ -94,18 +50,21 @@ async function fetchEvents(params: {
   category?: string;
   lastSyncTimestamp?: string | null;
 }): Promise<{ events: Event[]; totalCount: number }> {
-  const { data, error } = await supabase.rpc("get_paginated_events", {
-    p_page: params.page ?? null,
-    p_limit: params.limit ?? null,
-    p_query: params.query ?? "",
-    p_category: params.category ?? "All",
-    p_last_updated: params.lastSyncTimestamp ?? null,
-  });
+    const formattedQuery = formatQueryForTsquery(params.query ?? "");
+  const { data, error } = await withRetry(() =>
+    supabase.rpc("get_paginated_events", {
+      p_page: params.page ?? null,
+      p_limit: params.limit ?? null,
+      p_query: formattedQuery,
+      p_category: params.category ?? "All",
+      p_last_updated: params.lastSyncTimestamp ?? null,
+    })
+  );
 
   if (error) throw error;
 
   const result = data[0] || { events: [], total_count: 0 };
-  const events = (result.events || []).map(eventMapper);
+  const events: Event[] = (result.events || []).map(eventMapper);
 
   if (params.page === 1) {
     await storageService.setItem(
@@ -114,8 +73,8 @@ async function fetchEvents(params: {
     );
   }
 
-  await cacheEventDetails(events); // Automatically cache the detailed data for any event that fetched
-
+  // Automatically cache the detailed data for any event that fetched
+  await eventCache.cacheEventDetails(events);
   return {
     events: events,
     totalCount: result.total_count,
@@ -124,6 +83,7 @@ async function fetchEvents(params: {
 
 /**
  * Fetches only updated events (based on cached IDs and updated_at timestamp).
+ * This function is also responsible for caching its own results.
  */
 async function fetchUpdatedCachedEvents(
   cachedIds: number[],
@@ -131,23 +91,30 @@ async function fetchUpdatedCachedEvents(
 ): Promise<Event[]> {
   if (cachedIds.length === 0) return [];
 
-  const { data, error } = await supabase.rpc("get_updated_cached_events", {
-    p_event_ids: cachedIds,
-    p_last_updated: lastSyncTimestamp,
-  });
+  const { data, error } = await withRetry(() =>
+    supabase.rpc("get_updated_cached_events", {
+      p_event_ids: cachedIds,
+      p_last_updated: lastSyncTimestamp,
+    })
+  );
 
   if (error) throw error;
   if (!data || data.length === 0) return [];
 
   const events = data.map(eventMapper);
-  await cacheEventDetails(events); // Cache the updated details
+  await eventCache.cacheEventDetails(events); // Cache the updated details
+
+  // Asynchronously prefetch images for the fetched events.
+  prefetchImages(events.map((e: Event) => e.imageUrl)).catch((err: any) => {
+    console.warn("[ImageCache] Background prefetch failed for sync:", err);
+  });
   return events;
 }
 
 async function getLatestEventTimestamp(): Promise<string | null> {
-  const { data, error } = await supabase
-    .rpc("get_latest_event_timestamp")
-    .single();
+  const { data, error } = await withRetry(() =>
+    supabase.rpc("get_latest_event_timestamp").single()
+  );
   if (error && error.code !== "PGRST116") throw error;
   return data as string | null;
 }
@@ -160,13 +127,15 @@ async function getInitialEvents(filters: {
   query: string;
   category: string;
 }): Promise<{ events: Event[]; total: number }> {
-  const cachedEventIds = await getCachedEventListIds();
+  const cachedEventIds = await eventCache.getCachedEventListIds();
 
-  if (cachedEventIds.length > 0) {
+  if (cachedEventIds.length > 0 && useNetworkStatus.getState().isConnected) {
     console.log(
       `[Initial Load] Found ${cachedEventIds.length} event IDs in list cache. Hydrating...`
     );
-    const cachedEvents = await hydrateEventsFromCache(cachedEventIds);
+    const cachedEvents = await eventCache.hydrateEventsFromCache(
+      cachedEventIds
+    );
     // Load the *real* total saved from our last network fetch.
     const storedTotal = await storageService.getItem<number>(
       storageKeys.getEventsTotalCountKey()
@@ -182,7 +151,7 @@ async function getInitialEvents(filters: {
   }
 
   console.log("[Initial Load] No cache. Fetching from server...");
-  // FIX: Call the standalone fetchEvents() function
+  // Call the standalone fetchEvents() function
   const { events: firstPageEvents, totalCount } = await fetchEvents({
     page: 1,
     limit: EVENTS_PER_PAGE,
@@ -190,9 +159,57 @@ async function getInitialEvents(filters: {
     category: filters.category,
   });
 
-  await cacheEventListIds(firstPageEvents.map((e) => e.id));
+  if (firstPageEvents.length > 0) {
+    console.log(
+      `[Initial Load] Prefetching ${firstPageEvents.length} new images...`
+    );
+    try {
+      await prefetchImages(firstPageEvents.map((e: Event) => e.imageUrl));
+      console.log("[Initial Load] Image prefetch complete.");
+    } catch (err: any) {
+      console.warn(
+        "[Initial Load] Image prefetch failed, but proceeding:",
+        err
+      );
+    }
+  }
+  // Cache the new list of IDs
+  await eventCache.cacheEventListIds(firstPageEvents.map((e) => e.id));
 
   return { events: firstPageEvents, total: totalCount };
+}
+
+/**
+ * Fetches events from the server for an ephemeral search.
+ * This function DOES NOT cache results or prefetch images.
+ */
+async function fetchNetworkSearch(params: {
+  page?: number | null;
+  limit?: number | null;
+  query?: string;
+  category?: string;
+}): Promise<{ events: Event[]; totalCount: number }> {
+  const formattedQuery = formatQueryForTsquery(params.query ?? ""); // APPLY FORMATTING
+  const { data, error } = await withRetry(() =>
+    supabase.rpc("get_paginated_events", {
+      p_page: params.page ?? null,
+      p_limit: params.limit ?? null,
+      p_query: formattedQuery, // FORMATTED QUERY
+      p_category: params.category ?? "All",
+      p_last_updated: null, // ignore sync time for a live search
+    })
+  );
+
+  if (error) throw error;
+
+  const result = data[0] || { events: [], total_count: 0 };
+  const events: Event[] = (result.events || []).map(eventMapper);
+
+  // Note: We deliberately DO NOT cache details or prefetch images here.
+  return {
+    events: events,
+    totalCount: result.total_count,
+  };
 }
 
 /**
@@ -210,7 +227,7 @@ async function getMoreEvents(
   console.log("[Load More] Fetching new events from server...");
 
   const nextPage = currentPage + 1;
-  // FIX: Call the standalone fetchEvents() function
+  // Call the standalone fetchEvents() function
   const { events: newEvents, totalCount } = await fetchEvents({
     page: nextPage,
     limit: EVENTS_PER_PAGE,
@@ -219,11 +236,66 @@ async function getMoreEvents(
   });
 
   if (newEvents.length > 0) {
+    // Await the prefetching of new images *before* updating the cache and state
+    console.log(`[Load More] Prefetching ${newEvents.length} new images...`);
+    try {
+      await prefetchImages(newEvents.map((e: Event) => e.imageUrl));
+      console.log("[Load More] Image prefetch complete.");
+    } catch (err: any) {
+      console.warn("[Load More] Image prefetch failed, but proceeding:", err);
+    }
     const updatedFullCache = mergeAndDedupeEvents(currentFullCache, newEvents);
-    await cacheEventListIds(updatedFullCache.map((e) => e.id));
+    await eventCache.cacheEventListIds(updatedFullCache.map((e) => e.id));
     return { events: updatedFullCache, total: totalCount };
   } else {
-    return { events: currentFullCache, total: totalCount };
+    // When reached the end of pagination.
+    // Instead of a full sync, just check for *new* items (Page 1)
+    // and *append* them to the bottom for a smooth UX.
+    console.log(
+      "[Load More] Reached end of pagination. Checking for new events..."
+    );
+
+    const localTimestamp = await getLastSyncTimestamp();
+    const { events: brandNewEvents, totalCount: newTotalCount } =
+      await fetchEvents({
+        lastSyncTimestamp: localTimestamp || "2025-01-01T00:00:00Z",
+        query: filters.query,
+        category: filters.category,
+        page: 1,
+        limit: EVENTS_PER_PAGE,
+      });
+
+    if (brandNewEvents.length > 0) {
+      console.log(
+        `[Load More] Found ${brandNewEvents.length} new events at the top.`
+      );
+
+      // Prefetch their images
+      try {
+        await prefetchImages(brandNewEvents.map((e: Event) => e.imageUrl));
+      } catch (err: any) {
+        console.warn("[Load More] Image prefetch failed for new events:", err);
+      }
+
+      // Merge them (appends them to the end)
+      const updatedFullCache = mergeAndDedupeEvents(
+        currentFullCache,
+        brandNewEvents
+      );
+      // Save this temporarily "unsorted" list. It will be
+      // fixed by the sync on the next app open.
+      await eventCache.cacheEventListIds(updatedFullCache.map((e) => e.id));
+      await storageService.setItem(
+        storageKeys.getEventsTotalCountKey(),
+        newTotalCount
+      );
+
+      return { events: updatedFullCache, total: newTotalCount };
+    } else {
+      // No new events found anywhere
+      console.log("[Load More] No new events found. List is exhausted.");
+      return { events: currentFullCache, total: totalCount };
+    }
   }
 }
 
@@ -232,7 +304,7 @@ async function getMoreEvents(
  * Tries detail cache first, then falls back to network.
  */
 async function fetchEventById(id: number): Promise<Event | null> {
-  const detailCache = await getDetailCache();
+  const detailCache = await eventCache.getDetailCache();
   if (detailCache[id]) {
     console.log(`[Fetch By ID] Found event ${id} in detail cache.`);
     return detailCache[id];
@@ -245,14 +317,23 @@ async function fetchEventById(id: number): Promise<Event | null> {
   console.log(
     `[Fetch By ID] Event ${id} not in cache. Fetching from network...`
   );
-  const { data, error } = await supabase.rpc("get_events_by_ids", {
-    event_ids: [id],
-  });
+  const { data, error } = await withRetry(() =>
+    supabase.rpc("get_events_by_ids", {
+      event_ids: [id],
+    })
+  );
   if (error) throw error;
   if (!data || data.length === 0) return null;
 
   const event = eventMapper(data[0]);
-  await cacheEventDetails([event]);
+  await eventCache.cacheEventDetails([event]); // Caches the new event
+  // Asynchronously prefetch images for the fetched events.
+  prefetchImages([event.imageUrl]).catch((err: any) => {
+    console.warn(
+      "[ImageCache] Background prefetch failed for fetchEventById:",
+      err
+    );
+  });
   return event;
 }
 
@@ -263,7 +344,7 @@ async function fetchEventById(id: number): Promise<Event | null> {
 async function fetchEventsByIds(ids: number[]): Promise<Event[]> {
   if (ids.length === 0) return [];
 
-  const detailCache = await getDetailCache();
+  const detailCache = await eventCache.getDetailCache();
 
   const cachedEvents: Event[] = [];
   const idsToFetch: number[] = [];
@@ -285,14 +366,24 @@ async function fetchEventsByIds(ids: number[]): Promise<Event[]> {
       console.log(
         `[Fetch By IDs] Fetching ${idsToFetch.length} events from network.`
       );
-      const { data, error } = await supabase.rpc("get_events_by_ids", {
-        event_ids: idsToFetch,
-      });
+      const { data, error } = await withRetry(() =>
+        supabase.rpc("get_events_by_ids", {
+          event_ids: idsToFetch,
+        })
+      );
       if (error) throw error;
 
       const fetchedEvents = data.map(eventMapper);
-      await cacheEventDetails(fetchedEvents);
-
+      await eventCache.cacheEventDetails(fetchedEvents); // Caches new events
+      // Asynchronously prefetch images for the fetched events.
+      prefetchImages(fetchedEvents.map((e: Event) => e.imageUrl)).catch(
+        (err: any) => {
+          console.warn(
+            "[ImageCache] Background prefetch failed for fetchEventsByIds:",
+            err
+          );
+        }
+      );
       return [...cachedEvents, ...fetchedEvents];
     } catch (error) {
       console.error(
@@ -310,19 +401,14 @@ async function fetchEventsByIds(ids: number[]): Promise<Event[]> {
  * Synchronizes the local cache with the server.
  */
 async function syncEventCache(
-  currentFullCache: Event[]
+  currentFullCache: Event[],
+  filters: { query: string; category: string }
 ): Promise<Event[] | null> {
   if (!useNetworkStatus.getState().isConnected) {
     throw new Error("Offline. Cannot sync.");
   }
 
-  const cachedIds = currentFullCache.map((e) => e.id);
-  if (cachedIds.length === 0) {
-    console.log("[Sync] No cached events available for comparison.");
-    return null;
-  }
-
-  // FIX: Call standalone helper functions
+  // Get timestamp of last sync
   const localTimestamp = await getLastSyncTimestamp();
   const serverTimestamp = await getLatestEventTimestamp();
 
@@ -335,27 +421,61 @@ async function syncEventCache(
     return null;
   }
 
-  // FIX: Call standalone helper function
+  // SYNC LOGIC
+
+  // Check for updates to events *already in the cache*.
+  const cachedIds = currentFullCache.map((e) => e.id);
   const updatedEvents = await fetchUpdatedCachedEvents(
     cachedIds,
     localTimestamp || "2025-01-01T00:00:00Z"
   );
 
-  if (updatedEvents.length > 0) {
+  // Check for *new* events (Page 1 only).
+  const { events: newEvents, totalCount } = await fetchEvents({
+    lastSyncTimestamp: localTimestamp || "2025-01-01T00:00:00Z",
+    query: filters.query,
+    category: filters.category,
+    page: 1,
+    limit: EVENTS_PER_PAGE,
+  });
+
+  // Update total count in storage
+  await storageService.setItem(
+    storageKeys.getEventsTotalCountKey(),
+    totalCount
+  );
+
+  // Merge results if we found anything
+  if (updatedEvents.length > 0 || newEvents.length > 0) {
     console.log(
-      `[Sync] Found ${updatedEvents.length} updated events from server.`
+      `[Sync] Found ${updatedEvents.length} updated events and ${newEvents.length} new events.`
     );
 
-    const mergedEvents = mergeAndDedupeEvents(currentFullCache, updatedEvents);
+    // Prefetch images for *new* events (updated ones were prefetched already)
+    try {
+      await prefetchImages(newEvents.map((e: Event) => e.imageUrl));
+    } catch (err: any) {
+      console.warn("[Sync] Image prefetch failed for new events:", err);
+    }
 
-    await cacheEventListIds(mergedEvents.map((e) => e.id));
+    // Merge new data into our full cache
+    const combinedChanges = [...updatedEvents, ...newEvents];
+    let mergedEvents = mergeAndDedupeEvents(currentFullCache, combinedChanges);
+
+    // Re-sort the entire cache to ensure new events are at the top
+    mergedEvents.sort(
+      (a, b) =>
+        new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+    );
+
+    await eventCache.cacheEventListIds(mergedEvents.map((e) => e.id));
 
     if (serverTimestamp) {
       await setLastSyncTimestamp(serverTimestamp);
     }
     return mergedEvents;
   } else {
-    console.log("[Sync] No cached events required updates.");
+    console.log("[Sync] No new or updated events found.");
     if (serverTimestamp) {
       await setLastSyncTimestamp(serverTimestamp);
     }
@@ -375,18 +495,13 @@ async function refreshEventCache(filters: {
   }
 
   console.log("[Refresh] Clearing event caches.");
-  await clearCachedEvents();
-  await clearCachedEventDetails();
+  await eventCache.clearCachedEvents();
   return getInitialEvents(filters);
 }
 
 export const eventService = {
-  eventMapper,
-  clearCachedEvents,
-  clearCachedEventDetails,
   getLastSyncTimestamp,
   setLastSyncTimestamp,
-  cacheEventDetails,
   fetchEvents,
   fetchUpdatedCachedEvents,
   getLatestEventTimestamp,
@@ -396,4 +511,5 @@ export const eventService = {
   fetchEventsByIds,
   syncEventCache,
   refreshEventCache,
+  fetchNetworkSearch
 };

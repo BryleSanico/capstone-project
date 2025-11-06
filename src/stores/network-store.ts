@@ -40,24 +40,25 @@ export const useNetworkStatus = create<NetworkState>((set, get) => ({
     NetInfo.addEventListener(async (state) => {
       const prevConnected = get().isConnected;
       const nowConnected = state.isConnected ?? false;
-
-      if (prevConnected !== nowConnected) {
-        if (nowConnected) {
-          console.log("🟢 Reconnected to the internet");
-          set({ message: "Back online!" });
-
-          // invoke the registered callback dynamically
-          if (reconnectCallback) {
-            await reconnectCallback();
-          }
-        } else {
-          console.log("🔴 Disconnected from the internet");
-          set({ message: "You're offline."});
-        }
-      }
-
+      // Immediately update the connection state.
       set({ isConnected: nowConnected, lastKnownState: state });
+
+      // 2. Now that the state is updated, check if we *just* reconnected.
+      if (!prevConnected && nowConnected) {
+        console.log("🟢 Reconnected to the internet");
+        set({ message: "Back online!" });
+        if (reconnectCallback) {
+          try {
+            await reconnectCallback();
+            console.log("[Network] Reconnect callback successful.");
+          } catch (err) {
+            console.error("[Network] Reconnect callback failed:", err);
+          }
+        }
+      } else if (prevConnected && !nowConnected) {
+        console.log("🔴 Disconnected from the internet");
+        set({ message: "You're offline."});
+      }
     });
   },
 }));
-

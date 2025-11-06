@@ -8,6 +8,7 @@ project.ext.vectoricons = [
         'MaterialIcons.ttf',
         'FontAwesome.ttf',
         'Ionicons.ttf',
+        'Feather.ttf',
     ]
 ]
 

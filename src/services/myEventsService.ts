@@ -1,14 +1,14 @@
 import { supabase } from "../lib/supabase";
 import { Event, EventFormData } from "../types/event";
-import { getCurrentSession } from "../helpers/sessionHelper";
+import { getCurrentSession } from "../utils/system/sessionHelper";
 import storageService from "./storageService";
-import { storageKeys } from "../utils/storageKeys";
+import { storageKeys } from "../utils/cache/storageKeys";
 import { useNetworkStatus } from "../stores/network-store";
 import { eventMapper } from "../utils/mappers/eventMapper";
-import { eventService } from "./eventService";
 import { Asset } from "react-native-image-picker";
 import { toByteArray } from "react-native-quick-base64";
-import { combineDateTime, parseTags } from "../utils/eventDataHelper";
+import { combineDateTime, parseTags } from "../utils/domain/eventDataHelper";
+import { withRetry } from "../utils/network/networkUtils";
 
 const CACHE_EXPIRATION_DURATION = 1 * 60 * 60 * 1000; // 1 hour
 const BUCKET_NAME = "event-images";
@@ -35,18 +35,12 @@ async function _getCurrentOrganizerData() {
 // Invalidate all relevant caches
 async function invalidateCaches(userId?: string) {
   try {
-    console.log("[invalidateCaches] Starting cache invalidation...");
+    console.log("[invalidateCaches] Starting 'My Events' cache invalidation...");
     if (userId) {
       await storageService.removeItem(storageKeys.getMyEventsCacheKey(userId));
       console.log("[invalidateCaches] Removed myEvents cache.");
     }
-    await eventService.clearCachedEvents();
-    console.log("[invalidateCaches] Cleared discover events cache.");
-    await eventService.clearCachedEventDetails();
-    console.log("[invalidateCaches] Cleared event details cache.");
-    await storageService.removeItem(storageKeys.getEventsTotalCountKey());
-    console.log("[invalidateCaches] Removed total count cache.");
-    console.log("[invalidateCaches] Finished.");
+    console.log("[invalidateCaches] Finished 'My Events' invalidation.");
   } catch (error) {
     console.error("[invalidateCaches] Error during cache invalidation:", error);
   }
@@ -225,9 +219,10 @@ async function deleteEvent(eventId: number): Promise<void> {
   const session = await getCurrentSession();
   const userId = session?.user?.id;
   if (!userId) throw new Error("User must be logged in.");
-  const { error } = await supabase.rpc("delete_user_event", {
+  const { error } = await withRetry(() =>
+  supabase.rpc("delete_user_event", {
     p_event_id: eventId,
-  });
+  }));
   if (error) {
     throw new Error(error.message);
   }
@@ -274,7 +269,8 @@ async function createEvent(
   let data: any;
   let error: any;
   try {
-    const response = await supabase.rpc("create_event", params);
+    const response = await withRetry(() =>
+    supabase.rpc("create_event", params));
     data = response.data;
     error = response.error;
   } catch (rpcError: any) {
@@ -300,7 +296,8 @@ async function updateEvent(
   eventId: number,
   formData: EventFormData,
   currentImageUrl: string, // URL currently in the database
-  imageAsset?: Asset | null
+  imageAsset?: Asset | null,
+  isClosed?: boolean
 ): Promise<Event> {
   console.log(`[updateEvent] Service called for event ${eventId}`);
 
@@ -357,7 +354,8 @@ async function updateEvent(
   const startTime = combineDateTime(formData.date, formData.time);
   if (!startTime) throw new Error("Invalid Date or Time format.");
 
-  const { data, error } = await supabase.rpc("update_user_event", {
+  const { data, error } = await withRetry(() =>
+  supabase.rpc("update_user_event", {
     p_event_id: eventId,
     p_title: formData.title,
     p_description: formData.description,
@@ -371,7 +369,8 @@ async function updateEvent(
     p_tags: parseTags(formData.tags),
     p_user_max_ticket_purchase:
       parseInt(formData.userMaxTicketPurchase, 10) || 10,
-  });
+    p_is_closed: isClosed ?? false,
+  }));
 
   if (error) {
     console.error(`[updateEvent] RPC Error:`, error);
@@ -394,6 +393,8 @@ async function updateEvent(
       updatedEvent.organizer = organizerData;
     }
 
+    // Ensure isClosed is set correctly
+    updatedEvent.isClosed = isClosed ?? false;
     return updatedEvent;
   } catch (mapError: any) {
     console.error(

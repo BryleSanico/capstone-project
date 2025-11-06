@@ -16,7 +16,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import QRCode from "react-native-qrcode-svg";
 import { useTickets } from "../stores/tickets-store";
 import { RootStackParamList } from "../navigation/AppNavigator"; 
-import { formatFullDate } from "../utils/dateFormatter";
+import { formatFullDate } from "../utils/formatters/dateFormatter";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx

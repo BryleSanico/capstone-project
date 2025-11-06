@@ -1,7 +1,11 @@
 import { create } from "zustand";
 import { Event } from "../types/event";
 import { eventService } from "../services/eventService";
-import { handleAsyncAction } from "../utils/storeUtils";
+import { handleAsyncAction } from "../utils/system/storeUtils";
+import { prefetchImages } from "../utils/cache/imageCache";
+import storageService from "../services/storageService"; 
+import { storageKeys } from "../utils/cache/storageKeys";
+import { cacheEventDetails } from '../services/cache/eventCacheService';
 
 const EVENTS_PER_PAGE = 3;
 
@@ -12,10 +16,12 @@ type EventsState = {
   totalEvents: number;
   isLoading: boolean;
   isSyncing: boolean;
+  isNetworkSearching: boolean;
   error: string | null;
   hasMore: boolean;
   categories: string[];
   currentEvent: Event | null;
+  networkSearchResults: Event[];
 
   loadInitialEvents: (filters: {
     query: string;
@@ -30,6 +36,11 @@ type EventsState = {
     query: string;
     category: string;
   }) => Promise<void>;
+  searchNetworkEvents: (filters: {
+    query: string;
+    category: string;
+  }) => Promise<void>;
+  clearNetworkSearch: () => void;
   fetchEventById: (id: number) => Promise<void>;
   decrementEventSlots: (eventId: number, quantity: number) => void;
   updateEventInCache: (updatedEvent: Event) => void;
@@ -61,7 +72,7 @@ const _updateEventInState = (
       : state.currentEvent;
 
   if (updatedEvent) {
-    eventService.cacheEventDetails([updatedEvent]); 
+    cacheEventDetails([updatedEvent]);
   }
 
   return {
@@ -85,6 +96,8 @@ export const useEvents = create<EventsState>()((set, get) => {
     error: null,
     hasMore: true,
     categories: ["All"],
+    isNetworkSearching: false,
+    networkSearchResults: [],
     currentEvent: null,
 
     loadInitialEvents: async (filters) => {
@@ -93,6 +106,12 @@ export const useEvents = create<EventsState>()((set, get) => {
         
         const { events, total } = await eventService.getInitialEvents(filters);
         const firstPage = events.slice(0, EVENTS_PER_PAGE);
+
+        // Prefetch images for first page and next page
+        const imagesToPrefetch = events
+          .slice(0, EVENTS_PER_PAGE * 2)
+          .map(event => event.imageUrl);
+        await prefetchImages(imagesToPrefetch);
 
         return {
           _fullEventCache: events,
@@ -107,7 +126,7 @@ export const useEvents = create<EventsState>()((set, get) => {
     loadMoreEvents: async (filters) => {
       const { currentPage, _fullEventCache, displayedEvents, hasMore } = get();
       if (get().isSyncing || !hasMore) return;
-
+      
       // Try loading from local cache first
       const nextOffset = currentPage * EVENTS_PER_PAGE;
       if (nextOffset < _fullEventCache.length) {
@@ -123,7 +142,7 @@ export const useEvents = create<EventsState>()((set, get) => {
         set({
           displayedEvents: [...displayedEvents, ...nextBatch],
           currentPage: currentPage + 1,
-          hasMore: nextOffset + nextBatch.length < _fullEventCache.length || true,
+          hasMore: nextOffset + nextBatch.length < get().totalEvents,
         });
         return;
       }
@@ -153,23 +172,25 @@ export const useEvents = create<EventsState>()((set, get) => {
       await handleAsyncAction(set, get, "isSyncing", async () => {
         const { 
           _fullEventCache: oldCache, 
-          displayedEvents: oldDisplayed 
+          displayedEvents: oldDisplayed,
+          totalEvents: oldTotal 
         } = get();
         
-        const newFullCache = await eventService.syncEventCache(oldCache);
+        const newFullCache = await eventService.syncEventCache(oldCache, filters); 
 
         if (newFullCache) {
-          // Data has changed. Update the *displayed* events with the new data, without resetting the scroll.
-          const newEventsMap = new Map(newFullCache.map(e => [e.id, e]));
+          const newTotal = await storageService.getItem<number>(
+            storageKeys.getEventsTotalCountKey()
+          ) ?? oldTotal; 
 
-          // Create new displayedEvents array by replacing old data with new
-          const newDisplayedMapped = oldDisplayed
-            .map(oldEvent => newEventsMap.get(oldEvent.id)) // Get the new version
-            .filter(Boolean) as Event[]; // Filter out any that were deleted
+          const newDisplayedMapped = newFullCache
+            .slice(0, oldDisplayed.length);
 
           return {
             _fullEventCache: newFullCache,
             displayedEvents: newDisplayedMapped,
+            totalEvents: newTotal, 
+            hasMore: newDisplayedMapped.length < newTotal, 
           };
         }
         return {};
@@ -193,6 +214,28 @@ export const useEvents = create<EventsState>()((set, get) => {
       });
     },
 
+    searchNetworkEvents: async (filters) => {
+      // Use handleAsyncAction but map to the 'isNetworkSearching' flag
+      await handleAsyncAction(set, get, "isNetworkSearching", async () => {
+        console.log(
+          `[Store] Searching network for: "${filters.query}"`
+        );
+        const { events } = await eventService.fetchNetworkSearch({
+          page: 1,
+          limit: 50, // Fetch up to 50 results
+          query: filters.query,
+          category: filters.category,
+        });
+        
+        // Set the ephemeral results
+        return { networkSearchResults: events };
+      });
+    },
+
+    clearNetworkSearch: () => {
+      set({ networkSearchResults: [], isNetworkSearching: false });
+    },
+    
     fetchEventById: async (id: number) => {
       await handleAsyncAction(set, get, "isLoading", async () => {
         const event = await eventService.fetchEventById(id);
@@ -209,6 +252,7 @@ export const useEvents = create<EventsState>()((set, get) => {
           ...event,
           attendees: event.attendees + quantity,
           availableSlot: event.availableSlot - quantity,
+          // isClosed: event.availableSlot - quantity <= 0 ? true : event.isClosed,
         }))
       );
     },
@@ -216,8 +260,8 @@ export const useEvents = create<EventsState>()((set, get) => {
     updateEventInCache: (updatedEvent: Event) => {
       set((state) =>
         _updateEventInState(state, updatedEvent.id, (event) => {
-           // We are only updating the fields from the server response.
-           // We should PRESERVE the existing organizer data if the incoming 
+           // Only updating the fields from the server response.
+           // PRESERVE the existing organizer data if the incoming 
            // updatedEvent does not contain a populated profile object.
            const updatedData = {
               ...event,

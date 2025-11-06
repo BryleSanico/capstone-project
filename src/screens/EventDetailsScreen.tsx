@@ -25,7 +25,7 @@ import { useEvents } from "../stores/event-store";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { useTickets } from "../stores/tickets-store";
 import  useEventSubscription  from "../hooks/useEventSubscription";
-import { formatFullDate, formatTime } from "../utils/dateFormatter";
+import { formatFullDate, formatTime } from "../utils/formatters/dateFormatter";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -51,6 +51,7 @@ export default function EventDetailsScreen() {
   const { toggleFavorite, favorites } = useFavorites();
   const isFavorite = favorites.includes(id);
   const scrollY = new Animated.Value(0);
+  
   
   // Calculate how many tickets the current user has already purchased for this event
   const userTicketsForEvent = userTickets.filter(
@@ -90,7 +91,8 @@ export default function EventDetailsScreen() {
     navigation.setOptions({
       title: "",
       headerTransparent: true,
-      headerTintColor: "#fff",
+      headerTintColor: "#000000ff",
+      headerTitleStyle: { fontWeight: "700", fontSize: 20 },
       headerRight: () => (
         <View style={styles.headerButtons}>
           <TouchableOpacity
@@ -210,6 +212,7 @@ export default function EventDetailsScreen() {
   }
 
   const isSoldOut = event.availableSlot <= 0;
+  const isEventClosed = event.isClosed === true;
   const remainingForUser = event.userMaxTicketPurchase - userTicketsForEvent;
   const maxQuantity = Math.min(event.availableSlot, remainingForUser);
 
@@ -221,6 +224,9 @@ export default function EventDetailsScreen() {
     isButtonDisabled = true;
   } else if (remainingForUser <= 0) {
     purchaseMessage = "Ticket Limit Reached";
+    isButtonDisabled = true;
+  } else if (isEventClosed) {
+    purchaseMessage = "Event Closed";
     isButtonDisabled = true;
   }
 
@@ -338,7 +344,7 @@ export default function EventDetailsScreen() {
       </ScrollView>
 
       <View style={styles.bottomSection}>
-        {!isSoldOut && remainingForUser > 0 && (
+        {!isEventClosed && !isSoldOut && remainingForUser > 0 && (
           <View style={styles.ticketSelector}>
             <Text style={styles.ticketLabel}>Tickets</Text>
             <View style={styles.quantitySelector}>
