@@ -24,7 +24,7 @@ type BaseAsyncState = {
 export async function handleAsyncAction<T extends BaseAsyncState>(
   set: StoreSet<T>,
   get: StoreGet<T>,
-  stateKey: 'isLoading' | 'isSyncing', // This is the key fix
+  stateKey: 'isLoading' | 'isSyncing' | 'isNetworkSearching',
   action: () => Promise<Partial<T>>
 ) {
   

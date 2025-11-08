@@ -8,7 +8,7 @@ import AppNavigator from "./src/navigation/AppNavigator";
 import SplashScreen from "react-native-splash-screen";
 import { useNetworkMonitor } from "./src/hooks/useNetworkMonitor";
 import { Provider as PaperProvider } from "react-native-paper";
-import { NetworkSnackbar } from "./src/components/SnackBars/NetworkSnackbar";
+import { NetworkSnackbar } from "./src/components/ui/SnackBars/NetworkSnackbar";
 
 const queryClient = new QueryClient();
 

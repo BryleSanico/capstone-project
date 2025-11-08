@@ -52,6 +52,7 @@ export default function EventDetailsScreen() {
   const isFavorite = favorites.includes(id);
   const scrollY = new Animated.Value(0);
   
+  
   // Calculate how many tickets the current user has already purchased for this event
   const userTicketsForEvent = userTickets.filter(
     (ticket) => ticket.eventId === id
@@ -211,6 +212,7 @@ export default function EventDetailsScreen() {
   }
 
   const isSoldOut = event.availableSlot <= 0;
+  const isEventClosed = event.isClosed === true;
   const remainingForUser = event.userMaxTicketPurchase - userTicketsForEvent;
   const maxQuantity = Math.min(event.availableSlot, remainingForUser);
 
@@ -222,6 +224,9 @@ export default function EventDetailsScreen() {
     isButtonDisabled = true;
   } else if (remainingForUser <= 0) {
     purchaseMessage = "Ticket Limit Reached";
+    isButtonDisabled = true;
+  } else if (isEventClosed) {
+    purchaseMessage = "Event Closed";
     isButtonDisabled = true;
   }
 
@@ -339,7 +344,7 @@ export default function EventDetailsScreen() {
       </ScrollView>
 
       <View style={styles.bottomSection}>
-        {!isSoldOut && remainingForUser > 0 && (
+        {!isEventClosed && !isSoldOut && remainingForUser > 0 && (
           <View style={styles.ticketSelector}>
             <Text style={styles.ticketLabel}>Tickets</Text>
             <View style={styles.quantitySelector}>

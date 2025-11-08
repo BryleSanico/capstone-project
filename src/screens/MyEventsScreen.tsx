@@ -7,6 +7,7 @@ import {
   RefreshControl,
   TouchableOpacity,
   Platform,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -16,21 +17,20 @@ import {
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMyEvents } from '../stores/my-event-store';
 import { Loader } from '../components/LazyLoaders/loader';
-import { EmptyState } from '../components/Errors/EmptyState';
-import MyEventCard from '../components/Cards/MyEventCard';
+import { EmptyState } from '../components/ui/Errors/EmptyState';
+import MyEventCard from '../components/ui/Cards/MyEventCard';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { TabParamList } from '../navigation/TabNavigator';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import FeatherIcon from 'react-native-vector-icons/Feather';
-
-import ScreenHeader from '../components/ScreenHeader';
-import TabSelector from '../components/TabSelector';
+import ScreenHeader from '../components/ui/ScreenHeader';
+import TabSelector from '../components/navigation/TabSelector';
 import {
   TabKey,
   TabItem,
   TAB_KEYS,
   TAB_CONFIG,
-} from '../types/navigation';
+} from '../types/TabSegment';
 import { filterEventsByDate } from '../utils/domain/filterUtils'; 
 
 // Define the navigation tab
@@ -145,7 +145,7 @@ export default function MyEventsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <View style={styles.container} >
       <ScreenHeader
         title="My Events"
         subtitle={`${myEvents.length} events created`}
@@ -190,14 +190,14 @@ export default function MyEventsScreen() {
           ListEmptyComponent={renderEmptyList}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: Platform.OS === 'ios' ? '#f8f9fa' : '#e1e1e8ff',
   },
   createButton: {
     width: 56,

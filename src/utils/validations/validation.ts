@@ -38,8 +38,6 @@ export function passwordsMatch(password: string, confirm: string): boolean {
   return password === confirm;
 }
 
-// --- NEWLY ADDED ---
-
 /**
  * Validates an image asset's file type.
  * @param fileType The asset's MIME type (e.g., 'image/jpeg').

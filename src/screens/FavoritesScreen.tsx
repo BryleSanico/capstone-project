@@ -19,12 +19,12 @@ import Icon from "react-native-vector-icons/Ionicons";
 import { Event } from "../types/event";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { TabParamList } from "../navigation/TabNavigator";
-import EventCard from "../components/Cards/EventCard";
+import EventCard from "../components/ui/Cards/EventCard";
 import { useFavorites } from "../stores/favorites-store";
 import { Loader } from "../components/LazyLoaders/loader";
 import { useNetworkStatus } from "../stores/network-store";
-import { OfflineState } from "../components/Errors/offlineState";
-import { EmptyState } from "../components/Errors/EmptyState";
+import { OfflineState } from "../components/ui/Errors/offlineState";
+import { EmptyState } from "../components/ui/Errors/EmptyState";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx

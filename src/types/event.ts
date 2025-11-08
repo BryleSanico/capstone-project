@@ -17,6 +17,7 @@ export interface Event {
   updatedAt?: string;
   availableSlot: number;
   userMaxTicketPurchase: number;
+  isClosed: boolean;
 }
 
 // Represents the data captured by the Event form screen
@@ -32,4 +33,5 @@ export type EventFormData = {
   capacity: string;
   tags: string;
   userMaxTicketPurchase: string;
+  isClosed: boolean;
 };

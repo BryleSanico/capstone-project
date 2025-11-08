@@ -2,7 +2,7 @@
 import React, { useCallback, useLayoutEffect, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import TicketCard from '../components/Cards/TicketCard';
+import TicketCard from '../components/ui/Cards/TicketCard';
 import { useTickets } from '../stores/tickets-store';
 import { Ticket } from '../types/ticket';
 import {
@@ -15,15 +15,15 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { TabParamList } from '../navigation/TabNavigator';
 import { Loader } from '../components/LazyLoaders/loader';
 import { RefreshControl } from 'react-native-gesture-handler';
-import { EmptyState } from '../components/Errors/EmptyState';
-import ScreenHeader from '../components/ScreenHeader';
-import TabSelector from '../components/TabSelector';
+import { EmptyState } from '../components/ui/Errors/EmptyState';
+import ScreenHeader from '../components/ui/ScreenHeader';
+import TabSelector from '../components/navigation/TabSelector';
 import {
   TabKey,
   TabItem,
   TAB_KEYS,
   TAB_CONFIG,
-} from '../types/navigation';
+} from '../types/TabSegment';
 import { filterTicketsByDate } from '../utils/domain/filterUtils'; 
 
 // Define the navigation tab
@@ -107,7 +107,7 @@ export default function TicketsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <View style={styles.container} >
       <ScreenHeader
         title="My Tickets"
         subtitle={`${tickets.length} purchased ticket${
@@ -154,7 +154,7 @@ export default function TicketsScreen() {
           />
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

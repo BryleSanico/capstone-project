@@ -21,7 +21,8 @@ type MyEventsState = {
     eventId: number,
     fullFormData: EventFormData,
     currentImageUrl: string,
-    imageAsset?: Asset | null
+    imageAsset?: Asset | null,
+    isClosed?: boolean
   ) => Promise<Event | null>;
   clearUserEvents: () => void;
 };
@@ -101,7 +102,8 @@ export const useMyEvents = create<MyEventsState>()((set, get) => ({
     eventId: number,
     fullFormData: EventFormData,
     currentImageUrl: string,
-    imageAsset?: Asset | null
+    imageAsset?: Asset | null,
+    isClosed?: boolean
   ): Promise<Event | null> => {
     console.log(`[Store updateEvent ${eventId}] Calling service...`);
     let updatedEvent: Event | null = null;
@@ -111,7 +113,8 @@ export const useMyEvents = create<MyEventsState>()((set, get) => ({
         eventId,
         fullFormData,
         currentImageUrl,
-        imageAsset
+        imageAsset,
+        isClosed
       );
       console.log(
         `[Store updateEvent ${eventId}] Service returned:`,

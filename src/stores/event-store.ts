@@ -5,6 +5,7 @@ import { handleAsyncAction } from "../utils/system/storeUtils";
 import { prefetchImages } from "../utils/cache/imageCache";
 import storageService from "../services/storageService"; 
 import { storageKeys } from "../utils/cache/storageKeys";
+import { cacheEventDetails } from '../services/cache/eventCacheService';
 
 const EVENTS_PER_PAGE = 3;
 
@@ -15,10 +16,12 @@ type EventsState = {
   totalEvents: number;
   isLoading: boolean;
   isSyncing: boolean;
+  isNetworkSearching: boolean;
   error: string | null;
   hasMore: boolean;
   categories: string[];
   currentEvent: Event | null;
+  networkSearchResults: Event[];
 
   loadInitialEvents: (filters: {
     query: string;
@@ -33,6 +36,11 @@ type EventsState = {
     query: string;
     category: string;
   }) => Promise<void>;
+  searchNetworkEvents: (filters: {
+    query: string;
+    category: string;
+  }) => Promise<void>;
+  clearNetworkSearch: () => void;
   fetchEventById: (id: number) => Promise<void>;
   decrementEventSlots: (eventId: number, quantity: number) => void;
   updateEventInCache: (updatedEvent: Event) => void;
@@ -64,7 +72,7 @@ const _updateEventInState = (
       : state.currentEvent;
 
   if (updatedEvent) {
-    eventService.cacheEventDetails([updatedEvent]); 
+    cacheEventDetails([updatedEvent]);
   }
 
   return {
@@ -88,6 +96,8 @@ export const useEvents = create<EventsState>()((set, get) => {
     error: null,
     hasMore: true,
     categories: ["All"],
+    isNetworkSearching: false,
+    networkSearchResults: [],
     currentEvent: null,
 
     loadInitialEvents: async (filters) => {
@@ -204,6 +214,28 @@ export const useEvents = create<EventsState>()((set, get) => {
       });
     },
 
+    searchNetworkEvents: async (filters) => {
+      // Use handleAsyncAction but map to the 'isNetworkSearching' flag
+      await handleAsyncAction(set, get, "isNetworkSearching", async () => {
+        console.log(
+          `[Store] Searching network for: "${filters.query}"`
+        );
+        const { events } = await eventService.fetchNetworkSearch({
+          page: 1,
+          limit: 50, // Fetch up to 50 results
+          query: filters.query,
+          category: filters.category,
+        });
+        
+        // Set the ephemeral results
+        return { networkSearchResults: events };
+      });
+    },
+
+    clearNetworkSearch: () => {
+      set({ networkSearchResults: [], isNetworkSearching: false });
+    },
+    
     fetchEventById: async (id: number) => {
       await handleAsyncAction(set, get, "isLoading", async () => {
         const event = await eventService.fetchEventById(id);
@@ -220,6 +252,7 @@ export const useEvents = create<EventsState>()((set, get) => {
           ...event,
           attendees: event.attendees + quantity,
           availableSlot: event.availableSlot - quantity,
+          // isClosed: event.availableSlot - quantity <= 0 ? true : event.isClosed,
         }))
       );
     },
@@ -227,8 +260,8 @@ export const useEvents = create<EventsState>()((set, get) => {
     updateEventInCache: (updatedEvent: Event) => {
       set((state) =>
         _updateEventInState(state, updatedEvent.id, (event) => {
-           // We are only updating the fields from the server response.
-           // We should PRESERVE the existing organizer data if the incoming 
+           // Only updating the fields from the server response.
+           // PRESERVE the existing organizer data if the incoming 
            // updatedEvent does not contain a populated profile object.
            const updatedData = {
               ...event,
