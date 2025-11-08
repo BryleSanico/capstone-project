@@ -30,7 +30,7 @@ import {
   TabItem,
   TAB_KEYS,
   TAB_CONFIG,
-} from '../types/navigation';
+} from '../types/TabSegment';
 import { filterEventsByDate } from '../utils/domain/filterUtils'; 
 
 // Define the navigation tab
