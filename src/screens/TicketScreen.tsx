@@ -23,7 +23,7 @@ import {
   TabItem,
   TAB_KEYS,
   TAB_CONFIG,
-} from '../types/navigation';
+} from '../types/TabSegment';
 import { filterTicketsByDate } from '../utils/domain/filterUtils'; 
 
 // Define the navigation tab

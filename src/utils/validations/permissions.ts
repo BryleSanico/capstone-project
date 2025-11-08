@@ -1,4 +1,3 @@
-// src/utils/validaitons/permissions.ts
 import { Platform, Alert } from 'react-native';
 import {
   check,
