@@ -3,7 +3,7 @@ import { supabase } from "../lib/supabase";
 import { AuthError, Session, User } from "@supabase/supabase-js";
 import { useFavorites } from "./favorites-store";
 import { useTickets } from "./tickets-store";
-import { cacheManager } from "../services/cacheManager";
+import { AppCacheService } from "../services/AppCacheService";
 import { notificationService } from "../services/notificationService";
 import { useMyEvents } from "./my-event-store";
 
@@ -11,6 +11,7 @@ type AuthState = {
   session: Session | null;
   user: User | null;
   isLoading: boolean;
+  isInitialized: boolean; 
   initialize: () => void;
   signInWithPassword: (
     email: string,
@@ -27,14 +28,31 @@ type AuthState = {
 export const useAuth = create<AuthState>((set, get) => ({
   session: null,
   user: null,
-  isLoading: true,
+  isLoading: true, // Start in loading state
+  isInitialized: false, // Start as false
 
   initialize: () => {
+    const state = get();
+    if (state.isInitialized) {
+      console.log('[Auth] Already initialized, skipping...');
+      return;
+    }
+    console.log('[Auth] Starting initialization...');
+    
+    // Set up the auth state listener. This is the single source of truth.
     supabase.auth.onAuthStateChange(async (_event, session) => {
-      set({ session, user: session?.user ?? null, isLoading: true });
+      console.log('[Auth] Auth state changed:', _event);
+
+      // Set session and user immediately
+      set({ session, user: session?.user ?? null });
 
       // If a user is logged in, initialize their services and load their data.
       if (session?.user) {
+        console.log('[Auth] User session found, loading data...');
+        // Only set loading to true if we are not already logged in
+        if (!get().session) {
+          set({ isLoading: true });
+        }
         await notificationService.initialize(session.user.id);
         // Load data for the newly logged-in user.
         await Promise.all([
@@ -42,38 +60,38 @@ export const useAuth = create<AuthState>((set, get) => ({
           useTickets.getState().loadTickets(),
           useMyEvents.getState().loadMyEvents(),
         ]);
+        console.log('[Auth] User data loaded.');
       } else {
         // If no user, ensure stores are cleared (handles initial guest state).
         useFavorites.getState().clearUserFavorites();
         useTickets.getState().clearUserTickets();
         useMyEvents.getState().clearUserEvents();
       }
-
-      // Done with initial loading/state changes.
-      if (get().isLoading) {
-        set({ isLoading: false });
-      }
-    });
-
-    // Manually check the session on app start, the listener will handle the rest.
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      // The onAuthStateChange listener will fire if the session state changes.
-      // If it doesn't fire, we know the initial state is 'logged out'.
-      if (!session && get().isLoading) {
-        set({ isLoading: false });
-      }
+      
+      // Mark as initialized and loading complete *after* the first check
+      set({ isLoading: false, isInitialized: true });
     });
   },
 
   signInWithPassword: async (email: string, pass: string) => {
+    console.log('[Auth] Signing in...');
+    // The onAuthStateChange listener will handle loading data
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password: pass,
     });
+    
+    if (error) {
+      console.error('[Auth] Sign in error:', error);
+    } else {
+      console.log('[Auth] Sign in successful');
+    }
+    
     return { error };
   },
 
   signUp: async (fullName: string, email: string, pass:string) => {
+    console.log('[Auth] Signing up...');
     const { error } = await supabase.auth.signUp({
       email,
       password: pass,
@@ -83,34 +101,55 @@ export const useAuth = create<AuthState>((set, get) => ({
         },
       },
     });
+    
+    if (error) {
+      console.error('[Auth] Sign up error:', error);
+    } else {
+      console.log('[Auth] Sign up successful');
+    }
+    
     return { error };
   },
 
-  // Centralized and atomic sign-out logic.
   signOut: async () => {
     const currentUser = get().user;
-    if (!currentUser) return;
-
-    // synchronously clear the state of other stores.
-    useTickets.getState().clearUserTickets();
-    useFavorites.getState().clearUserFavorites();
-    useMyEvents.getState().clearUserEvents();
-    console.log("Zustand state cleared for tickets and favorites.");
-
-    // Perform asynchronous cleanup operations.
-    await notificationService.unregisterPushNotifications(currentUser.id);
-    await cacheManager.clearUserSpecificCache(currentUser.id);
-    
-    // Sign out from Supabase, which will trigger onAuthStateChange.
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-        console.error("Error signing out:", error.message);
+    if (!currentUser) {
+      console.log('[Auth] No user to sign out');
+      return;
     }
+
+    console.log('[Auth] Signing out...');
+    
+    try {
+      // Remove the manual calls to clearUserTickets, clearUserFavorites, 
+      // and clearUserEvents. The onAuthStateChange listener will
+      // handle this automatically when supabase.auth.signOut() completes.
+      console.log("[Auth] Zustand state will be cleared by onAuthStateChange listener.");
+
+      // Perform asynchronous cleanup operations
+      try {
+        await notificationService.unregisterPushNotifications(currentUser.id);
+      } catch (error) {
+        console.warn('[Auth] Failed to unregister push notifications:', error);
+      }
+      
+      // Call the single, unified logout handler.
+      // This will trigger the onAuthStateChange listener.
+      try {
+        await AppCacheService.handleLogout(currentUser.id);
+      } catch (error) {
+        console.error('[Auth] Unexpected error during AppCacheService.handleLogout:', error);
+      }
 
     // Manually set local auth state to null to ensure immediate UI update,
     // even before the onAuthStateChange listener fires.
-    set({ session: null, user: null });
-    console.log("Sign-out process complete.");
+      set({ session: null, user: null });
+      console.log("[Auth] Sign-out process complete.");
+    } catch (error) {
+      console.error('[Auth] Unexpected error during sign out:', error);
+      set({ session: null, user: null });
+      throw error;
+    }
   },
 }));
 
