@@ -1444,6 +1444,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - react-native-encrypted-storage (4.0.3):
+    - React-Core
   - react-native-image-picker (8.2.1):
     - DoubleConversion
     - glog
@@ -2176,6 +2178,7 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
+  - react-native-encrypted-storage (from `../node_modules/react-native-encrypted-storage`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-quick-base64 (from `../node_modules/react-native-quick-base64`)
@@ -2324,6 +2327,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   react-native-blur:
     :path: "../node_modules/@react-native-community/blur"
+  react-native-encrypted-storage:
+    :path: "../node_modules/react-native-encrypted-storage"
   react-native-image-picker:
     :path: "../node_modules/react-native-image-picker"
   react-native-netinfo:
@@ -2474,6 +2479,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: c7fdcd8e297435045947a4e6c0824fcb831fb5c7
   React-microtasksnativemodule: aa6b872c40429aa7b4bce78ec34fe8e89c45481a
   react-native-blur: 77d93dcc4aabc9ea137278b49dbb2dc005ad236b
+  react-native-encrypted-storage: 569d114e329b1c2c2d9f8c84bcdbe4478dda2258
   react-native-image-picker: f6ece66f251f4a17aab08f5add7be6eb9e7f5356
   react-native-netinfo: cec9c4e86083cb5b6aba0e0711f563e2fbbff187
   react-native-quick-base64: 6568199bb2ac8e72ecdfdc73a230fbc5c1d3aac4

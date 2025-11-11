@@ -1,4 +1,3 @@
-// src/screens/ProfileScreen.tsx
 import React, { useLayoutEffect, useState } from "react";
 import {
   View,
@@ -8,7 +7,6 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
-  SafeAreaView,
   Platform,
 } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
@@ -27,6 +25,8 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "../stores/auth-store";
 import { useFavorites } from "../stores/favorites-store";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppCacheService } from '../services/AppCacheService'; 
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -48,7 +48,7 @@ export default function ProfileScreen() {
       headerStyle: { backgroundColor: "#fff" },
       headerTitleStyle: { fontWeight: "700", fontSize: 20 },
     });
-  }, [navigation]);
+  }, [navigation, user]);
 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to log out?", [
@@ -73,6 +73,31 @@ export default function ProfileScreen() {
 
   const handleLogin = () => {
     navigation.navigate("Login");
+  };
+
+  const handleClearStorage = async () => {
+    Alert.alert(
+      "Clear Storage",
+      "This will clear all secure storage. Use for development only. Continue?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Clear",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Use the new AppCacheService
+              await AppCacheService.clearAllSecureStorage();
+              await AsyncStorage.clear();
+              Alert.alert("Success", "All storage cleared. Please restart the app.");
+            } catch (error) {
+              console.error("Failed to clear storage:", error);
+              Alert.alert("Error", "Failed to clear storage");
+            }
+          },
+        },
+      ]
+    );
   };
 
   const menuItems: MenuItem[] = [
@@ -101,6 +126,17 @@ export default function ProfileScreen() {
       onPress: () => console.log("Help"),
     },
   ];
+
+  // Only show in development:
+  if (__DEV__) {
+    const devMenuItem: MenuItem = {
+      icon: { name: "trash-outline", library: "Ionicons" },
+      title: "Clear All Storage (Dev)",
+      subtitle: "Remove all secure data",
+      onPress: handleClearStorage,
+    };
+    menuItems.push(devMenuItem);
+  }
 
   return (
     <View style={styles.container}>
