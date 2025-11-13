@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
-import { Ticket } from '@/src/types/ticket';
+import { Ticket } from '../../../types/ticket';
 import { formatDateMMDDYY } from '../../../utils/formatters/dateFormatter';
 
 interface TicketCardProps {

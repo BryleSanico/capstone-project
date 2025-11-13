@@ -1,4 +1,5 @@
-import React, { useLayoutEffect } from "react";
+// src/screens/TicketDetailsScreen.tsx
+import React, { useLayoutEffect } from 'react';
 import {
   View,
   Text,
@@ -7,26 +8,28 @@ import {
   TouchableOpacity,
   Alert,
   Share,
-} from "react-native";
-import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { SafeAreaView } from "react-native-safe-area-context";
-import LinearGradient from "react-native-linear-gradient";
-import Icon from "react-native-vector-icons/Ionicons";
-import QRCode from "react-native-qrcode-svg";
-import { useTickets } from "../stores/tickets-store";
-import { RootStackParamList } from "../navigation/AppNavigator"; 
-import { formatFullDate } from "../utils/formatters/dateFormatter";
+} from 'react-native';
+import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/Ionicons';
+import QRCode from 'react-native-qrcode-svg';
+import { RootStackParamList } from '../navigation/AppNavigator';
+import { formatFullDate } from '../utils/formatters/dateFormatter';
+import { Loader } from '../components/LazyLoaders/loader'; // Import Loader
 
-// Define the types for route and navigation
-// Note: The screen name here must match the one in AppNavigator.tsx
+// --- NEW IMPORT ---
+import { useTicketsQuery } from '../hooks/useTickets';
+// --- END NEW IMPORT ---
+
 type TicketDetailsScreenRouteProp = RouteProp<
   RootStackParamList,
-  "TicketDetails" 
+  'TicketDetails'
 >;
 type TicketDetailsScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  "TicketDetails"
+  'TicketDetails'
 >;
 
 export default function TicketDetailsScreen() {
@@ -34,14 +37,19 @@ export default function TicketDetailsScreen() {
   const navigation = useNavigation<TicketDetailsScreenNavigationProp>();
 
   const { id } = route.params;
-  const { tickets } = useTickets();
 
+  // --- USE REACT QUERY ---
+  // Get the full list of tickets and the loading state
+  const { data: tickets = [], isLoading } = useTicketsQuery();
+  // --- END REACT QUERY ---
+
+  // Find the specific ticket from the cached list
   const ticket = tickets.find((t) => t.id === id);
 
   useLayoutEffect(() => {
     if (ticket) {
       navigation.setOptions({
-        title: "My Ticket",
+        title: 'My Ticket',
         headerRight: () => (
           <View style={styles.headerButtons}>
             <TouchableOpacity
@@ -60,36 +68,44 @@ export default function TicketDetailsScreen() {
         ),
       });
     } else {
-      // If the ticket is NOT found, just set the title
       navigation.setOptions({
-        title: "Ticket Not Found",
+        title: isLoading ? 'Loading...' : 'Ticket Not Found',
       });
     }
-  }, [navigation, ticket]); // Re-run this effect if navigation or ticket changes
+  }, [navigation, ticket, isLoading]); // Add isLoading dependency
 
-  // These handlers need to be defined within the component scope so they can be
-  // passed to navigation.setOptions
   const handleShareTicket = async () => {
     if (!ticket) return;
     try {
       await Share.share({
         message: `My ticket for ${ticket.eventTitle} on ${formatFullDate(
-          ticket.eventDate
+          ticket.eventDate,
         )}`,
       });
     } catch (error) {
-      console.error("Error sharing ticket:", error);
+      console.error('Error sharing ticket:', error);
     }
   };
 
   const handleDownloadTicket = () => {
     Alert.alert(
-      "Download Ticket",
-      "Ticket download functionality would be implemented here.",
-      [{ text: "OK" }]
+      'Download Ticket',
+      'Ticket download functionality would be implemented here.',
+      [{ text: 'OK' }],
     );
   };
 
+  // --- ADD LOADING STATE ---
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.container, styles.centerScreen]}>
+        <Loader size={100} />
+      </SafeAreaView>
+    );
+  }
+  // --- END LOADING STATE ---
+
+  // This check now runs *after* loading is complete
   if (!ticket) {
     return (
       <SafeAreaView style={styles.container}>
@@ -109,15 +125,12 @@ export default function TicketDetailsScreen() {
       >
         <View style={styles.content}>
           <LinearGradient
-            colors={["#6366f1", "#8b5cf6"]}
+            colors={['#6366f1', '#8b5cf6']}
             style={styles.ticketCard}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
             <Text style={styles.eventTitle}>{ticket.eventTitle}</Text>
-            {/* <Text style={styles.quantity}>
-              {ticket.quantity} ticket{ticket.quantity > 1 ? "s" : ""}
-            </Text> */}
             <View style={styles.eventDetails}>
               <View style={styles.detailRow}>
                 <Icon
@@ -169,9 +182,9 @@ export default function TicketDetailsScreen() {
           <View style={styles.infoSection}>
             <Text style={styles.infoTitle}>Important Information</Text>
             <Text style={styles.infoText}>
-              • Please arrive 30 minutes before the event starts{"\n"}• This QR
-              code is your entry ticket - keep it safe{"\n"}• Screenshots of
-              this ticket are valid{"\n"}• Contact support if you have any
+              • Please arrive 30 minutes before the event starts{'\n'}• This QR
+              code is your entry ticket - keep it safe{'\n'}• Screenshots of
+              this ticket are valid{'\n'}• Contact support if you have any
               issues
             </Text>
           </View>
@@ -184,7 +197,12 @@ export default function TicketDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: '#f8f9fa',
+  },
+  // --- NEW STYLE ---
+  centerScreen: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scrollView: {
     flex: 1,
@@ -194,7 +212,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   headerButtons: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 12,
   },
   headerButton: {
@@ -203,7 +221,7 @@ const styles = StyleSheet.create({
   ticketCard: {
     borderRadius: 20,
     marginBottom: 20,
-    shadowColor: "#6366f1",
+    shadowColor: '#6366f1',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
@@ -211,28 +229,21 @@ const styles = StyleSheet.create({
   },
   eventTitle: {
     fontSize: 24,
-    fontWeight: "700",
-    color: "#fff",
+    fontWeight: '700',
+    color: '#fff',
     marginBottom: 8,
     lineHeight: 32,
     margin: 15,
     marginLeft: 25,
     marginTop: 25,
   },
-  quantity: {
-    fontSize: 16,
-    color: "rgba(255,255,255,0.8)",
-    fontWeight: "500",
-    marginBottom: 20,
-    marginLeft: 25,
-  },
   eventDetails: {
     marginBottom: 0,
     marginLeft: 30,
   },
   detailRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     marginBottom: 16,
   },
   detailContent: {
@@ -241,39 +252,39 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 14,
-    color: "rgba(255,255,255,0.7)",
-    fontWeight: "500",
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '500',
     marginBottom: 4,
   },
   detailText: {
     fontSize: 16,
-    color: "#fff",
-    fontWeight: "600",
+    color: '#fff',
+    fontWeight: '600',
     marginBottom: 2,
   },
   detailSubtext: {
     fontSize: 14,
-    color: "rgba(255,255,255,0.8)",
+    color: 'rgba(255,255,255,0.8)',
   },
   priceSection: {
     borderTopWidth: 1,
-    borderTopColor: "rgba(255, 255, 255, 0.2)",
+    borderTopColor: 'rgba(255, 255, 255, 0.2)',
     paddingTop: 16,
     margin: 25,
   },
   totalPaid: {
     fontSize: 18,
-    fontWeight: "700",
-    color: "#fff",
-    textAlign: "center",
+    fontWeight: '700',
+    color: '#fff',
+    textAlign: 'center',
   },
   qrSection: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 20,
     padding: 24,
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: 24,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -281,21 +292,21 @@ const styles = StyleSheet.create({
   },
   qrTitle: {
     fontSize: 20,
-    fontWeight: "700",
-    color: "#1a1a1a",
+    fontWeight: '700',
+    color: '#1a1a1a',
     marginBottom: 8,
   },
   qrSubtitle: {
     fontSize: 14,
-    color: "#666",
-    textAlign: "center",
+    color: '#666',
+    textAlign: 'center',
     marginBottom: 24,
   },
   qrContainer: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     padding: 20,
     borderRadius: 16,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -304,15 +315,15 @@ const styles = StyleSheet.create({
   },
   qrCode: {
     fontSize: 12,
-    color: "#999",
-    fontFamily: "monospace",
-    textAlign: "center",
+    color: '#999',
+    fontFamily: 'monospace',
+    textAlign: 'center',
   },
   infoSection: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 20,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -320,22 +331,22 @@ const styles = StyleSheet.create({
   },
   infoTitle: {
     fontSize: 18,
-    fontWeight: "700",
-    color: "#1a1a1a",
+    fontWeight: '700',
+    color: '#1a1a1a',
     marginBottom: 12,
   },
   infoText: {
     fontSize: 14,
-    color: "#666",
+    color: '#666',
     lineHeight: 20,
   },
   errorContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   errorText: {
     fontSize: 18,
-    color: "#666",
+    color: '#666',
   },
 });
