@@ -1,16 +1,26 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useEvents } from '../../stores/event-store'; 
 
 interface CategoryFilterProps {
   selectedCategory: string;
   onSelectCategory: (category: string) => void;
 }
 
-export default function CategoryFilter({ selectedCategory, onSelectCategory }: CategoryFilterProps) {
-  // Get categories directly from the events store
-  const { categories } = useEvents();
+// Define static categories - these should match your database categories
+const CATEGORIES = [
+  'All',
+  'Music',
+  'Sports',
+  'Arts',
+  'Food',
+  'Technology',
+  'Business',
+  'Health',
+  'Education',
+  'Other',
+];
 
+export default function CategoryFilter({ selectedCategory, onSelectCategory }: CategoryFilterProps) {
   return (
     <View style={styles.container}>
       <ScrollView 
@@ -18,7 +28,7 @@ export default function CategoryFilter({ selectedCategory, onSelectCategory }: C
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {categories.map((category) => (
+        {CATEGORIES.map((category) => (
           <TouchableOpacity
             key={category}
             style={[
