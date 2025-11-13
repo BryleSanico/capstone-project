@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState, useEffect } from "react";
+import React, { useLayoutEffect, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,67 +12,70 @@ import {
   ActivityIndicator,
   SafeAreaView,
   Image,
-  Switch
-} from "react-native";
-import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../navigation/AppNavigator";
-import { useAuth } from "../stores/auth-store";
-import { useMyEvents } from "../stores/my-event-store";
-import { EventFormData } from "../types/event";
-import { eventService } from "../services/eventService";
+  Switch,
+} from 'react-native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
+import { EventFormData } from '../types/event';
 import {
   validateEventForm,
   hasValidationErrors,
   EventFormErrors,
-} from "../utils/validations/eventValidation";
-import Icon from "react-native-vector-icons/Ionicons";
-import { useDateTimePicker } from "../hooks/useDateTimePicker";
-import { useImagePicker } from "../hooks/useImagePicker";
-import LinearGradient from "react-native-linear-gradient";
-import { set } from "date-fns";
+} from '../utils/validations/eventValidation';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { useDateTimePicker } from '../hooks/useDateTimePicker';
+import { useImagePicker } from '../hooks/useImagePicker';
+import LinearGradient from 'react-native-linear-gradient';
+import {
+  useMyEventsQuery,
+  useCreateEvent,
+  useUpdateEvent,
+} from '../hooks/useMyEvents';
+import { Loader } from '../components/LazyLoaders/loader';
 
-// Define the types for route and navigation
-// Note: The screen name here must match the one in AppNavigator.tsx
-type EventFormScreenRouteProp = RouteProp<RootStackParamList, "EventForm">;
+type EventFormScreenRouteProp = RouteProp<RootStackParamList, 'EventForm'>;
 type EventFormScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  "EventForm"
+  'EventForm'
 >;
 
-const initialFormData: Omit<EventFormData, "date" | "time" | "imageUrl"> & {
+const initialFormData: Omit<EventFormData, 'date' | 'time' | 'imageUrl'> & {
   date?: string;
   time?: string;
 } = {
-  title: "",
-  description: "",
-  location: "",
-  address: "",
-  price: "",
-  category: "",
-  capacity: "",
-  tags: "",
-  userMaxTicketPurchase: "1",
+  title: '',
+  description: '',
+  location: '',
+  address: '',
+  price: '',
+  category: '',
+  capacity: '',
+  tags: '',
+  userMaxTicketPurchase: '1',
   isClosed: false,
 };
 
 export default function EventFormScreen() {
   const navigation = useNavigation<EventFormScreenNavigationProp>();
   const route = useRoute<EventFormScreenRouteProp>();
-  const { session } = useAuth();
-  const { createEvent, updateEvent, isSyncing } = useMyEvents();
-
+  
   const eventId = route.params?.eventId;
   const isEditMode = !!eventId;
 
+  const { data: myEvents, isLoading: isLoadingMyEvents } = useMyEventsQuery();
+  const { mutate: createEvent, isPending: isCreating } = useCreateEvent();
+  const { mutate: updateEvent, isPending: isUpdating } = useUpdateEvent();
+  
+  const isSyncing = isCreating || isUpdating; // Combined loading state
+
   const [formData, setFormData] =
-    useState<Omit<EventFormData, "date" | "time" | "imageUrl">>(
-      initialFormData
+    useState<Omit<EventFormData, 'date' | 'time' | 'imageUrl'>>(
+      initialFormData,
     );
   const [errors, setErrors] = useState<EventFormErrors>({});
-  const [isLoading, setIsLoading] = useState<boolean>(isEditMode);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isClosed, setIsClosed] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(isEditMode); // Local page loading state
+  const [isClosed, setIsClosed] = useState(false);
 
   const {
     imageAsset,
@@ -99,79 +102,72 @@ export default function EventFormScreen() {
     });
   }, [navigation]);
 
-  // Fetch Data for Edit Mode
+  // Effect to populate form in Edit Mode
   useEffect(() => {
-    if (isEditMode && eventId) {
-      const fetchEventData = async () => {
-        setIsLoading(true);
-        try {
-          const event = await eventService.fetchEventById(eventId);
-          if (event) {
-            const eventDate = new Date(event.startTime);
-            setSelectedDateTime(eventDate); // Set date in the hook
-            setCurrentImageUrl(event.imageUrl || null); // Set image in the hook
-            setIsClosed(event.isClosed || false);
+    if (isEditMode && eventId && !isLoadingMyEvents && myEvents) {
+      const event = myEvents.find(e => e.id === eventId);
+      
+      if (event) {
+        const eventDate = new Date(event.startTime);
+        setSelectedDateTime(eventDate);
+        setCurrentImageUrl(event.imageUrl || null);
+        setIsClosed(event.isClosed || false);
 
-            // Populate form with existing data
-            setFormData({
-              title: event.title,
-              description: event.description,
-              location: event.location,
-              address: event.address || "",
-              price: event.price.toString(),
-              category: event.category,
-              capacity: event.capacity?.toString() || "",
-              tags: event.tags?.join(", ") || "",
-              userMaxTicketPurchase:
-                event.userMaxTicketPurchase?.toString() || "10",
-              isClosed: event.isClosed || false,
-            });
-          } else {
-            Alert.alert("Error", "Could not find event details.");
-            navigation.goBack();
-          }
-        } catch (error: any) {
-          Alert.alert("Error", error.message || "Failed to load event data.");
-          navigation.goBack();
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchEventData();
-    } else {
-      // For create mode, set initial time slightly in future
+        setFormData({
+          title: event.title,
+          description: event.description,
+          location: event.location,
+          address: event.address || '',
+          price: event.price.toString(),
+          category: event.category,
+          capacity: event.capacity?.toString() || '',
+          tags: event.tags?.join(', ') || '',
+          userMaxTicketPurchase:
+            event.userMaxTicketPurchase?.toString() || '10',
+          isClosed: event.isClosed || false,
+        });
+        setIsLoading(false);
+      } else if (!isLoadingMyEvents) { // Only error if done loading and no event found
+        Alert.alert('Error', 'Could not find event details.');
+        navigation.goBack();
+      }
+    } else if (!isEditMode) {
+      // Create mode
       const now = new Date();
-      now.setHours(now.getHours() + 1); // e.g., default to 1 hour from now
-      now.setMinutes(0); // Round down minutes
-      setSelectedDateTime(now); // Set default date in the hook
+      now.setHours(now.getHours() + 1);
+      now.setMinutes(0);
+      setSelectedDateTime(now);
       setIsLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eventId, isEditMode, navigation]);
-
-  // Alert for image errors from the hook
+  }, [
+    eventId, 
+    isEditMode, 
+    navigation, 
+    isLoadingMyEvents, 
+    myEvents, 
+    setCurrentImageUrl, 
+    setSelectedDateTime
+  ]);
+  
   useEffect(() => {
     if (imageError) {
-      Alert.alert("Upload Failed", imageError);
-      clearImageError(); // Clear the error after showing it
+      Alert.alert('Upload Failed', imageError);
+      clearImageError();
     }
   }, [imageError, clearImageError]);
 
   const handleInputChange = (
-    name: keyof Omit<EventFormData, "date" | "time" | "imageUrl">,
-    value: string
+    name: keyof Omit<EventFormData, 'date' | 'time' | 'imageUrl'>,
+    value: string,
   ) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof EventFormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
+
   const handleSubmit = async () => {
-    if (isSubmitting || isSyncing) return; // Prevent multiple submissions
-    if (!session) {
-      Alert.alert("Login Required", "Please login to manage events.");
-      return;
-    }
+    if (isSyncing) return;
 
     const dataToValidate: EventFormData = {
       ...formData,
@@ -181,55 +177,56 @@ export default function EventFormScreen() {
 
     const validationErrors = validateEventForm(dataToValidate);
 
-    // Image presence validation (checks displayImageUri from hook)
-    if (!isEditMode && !displayImageUri) {
-      validationErrors.imageUrl = "Event image is required.";
+    if (!isEditMode && !imageAsset) {
+      validationErrors.imageUrl = 'Event image is required.';
+    } else if (!displayImageUri) {
+      validationErrors.imageUrl = 'Event image is required.';
     }
 
     setErrors(validationErrors);
     if (hasValidationErrors(validationErrors)) {
-      Alert.alert("Validation Error", "Please check the required fields.");
+      Alert.alert('Validation Error', 'Please check the required fields.');
       return;
     }
 
-    // Disable the button immediately
-    setIsSubmitting(true);
-
-    // NOTE: No local isSubmitting state. State rely on the store's isSyncing.
-    let result = null;
-
-    try {
-      if (isEditMode && eventId) {
-        result = await updateEvent(
+    if (isEditMode && eventId) {
+      updateEvent(
+        {
           eventId,
-          dataToValidate,
-          currentImageUrl || "", // Pass currentImageUrl from hook
-          imageAsset, // Pass imageAsset from hook
-          isClosed
-        );
-      } else {
-        result = await createEvent(dataToValidate, imageAsset); // Pass imageAsset from hook
-      }
-
-      if (result) {
-        Alert.alert(
-          "Success",
-          `Event ${isEditMode ? "updated" : "created"} successfully!`,
-          [{ text: "OK", onPress: () => navigation.goBack() }]
-        );
-      }
-    } catch (err) {
-      // This catch block is a fallback, but the store should handle most errors.
-      console.error("Unexpected submit error:", err);
-      Alert.alert("Error", "An unexpected error occurred. Please try again.");
+          formData: dataToValidate,
+          currentImageUrl: currentImageUrl || '',
+          imageAsset: imageAsset || null,
+          isClosed: isClosed,
+        },
+        {
+          onSuccess: () => {
+            Alert.alert('Success', 'Event updated successfully!', [
+              { text: 'OK', onPress: () => navigation.goBack() },
+            ]);
+          },
+        },
+      );
+    } else {
+      createEvent(
+        {
+          formData: dataToValidate,
+          imageAsset: imageAsset || null,
+        },
+        {
+          onSuccess: () => {
+            Alert.alert('Success', 'Event created successfully!', [
+              { text: 'OK', onPress: () => navigation.goBack() },
+            ]);
+          },
+        },
+      );
     }
   };
 
-  // Loading State
-  if (isLoading) {
+  if (isLoading || (isEditMode && isLoadingMyEvents)) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6366f1" />
+        <Loader size={100} />
       </SafeAreaView>
     );
   }
@@ -298,12 +295,11 @@ export default function EventFormScreen() {
                     ios_backgroundColor="#E5E7EB"
                     onValueChange={setIsClosed}
                     value={isClosed}
-                    disabled={isSyncing || isSubmitting}
+                    disabled={isSyncing}
                   />
                 </View>
               </View>
             )}
-            {/*  Image Picker  */}
 
             <View style={styles.inputGroup}>
               <TouchableOpacity
@@ -312,7 +308,7 @@ export default function EventFormScreen() {
                   errors.imageUrl && styles.inputError,
                 ]}
                 onPress={handleChoosePhoto}
-                disabled={isSyncing} // Disable while submitting
+                disabled={isSyncing}
               >
                 {displayImageUri ? (
                   <Image
@@ -336,7 +332,6 @@ export default function EventFormScreen() {
               )}
             </View>
 
-            {/*  Event Info Group  */}
             <View style={styles.fieldGroup}>
               <View style={styles.cardHeader}>
                 <View style={styles.iconBadge}>
@@ -344,7 +339,6 @@ export default function EventFormScreen() {
                 </View>
                 <Text style={styles.groupTitle}>Event Information</Text>
               </View>
-              {/* Title */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Event Title *</Text>
                 <TextInput
@@ -358,7 +352,6 @@ export default function EventFormScreen() {
                   <Text style={styles.errorText}>{errors.title}</Text>
                 )}
               </View>
-              {/* Description */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Description *</Text>
                 <TextInput
@@ -377,7 +370,6 @@ export default function EventFormScreen() {
                   <Text style={styles.errorText}>{errors.description}</Text>
                 )}
               </View>
-              {/* Category */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Category *</Text>
                 <TextInput
@@ -391,7 +383,6 @@ export default function EventFormScreen() {
                   <Text style={styles.errorText}>{errors.category}</Text>
                 )}
               </View>
-              {/* Tags */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Tags</Text>
                 <TextInput
@@ -407,7 +398,6 @@ export default function EventFormScreen() {
               </View>
             </View>
 
-            {/*  Date/Time Group  */}
             <View style={styles.fieldGroup}>
               <View style={styles.cardHeader}>
                 <View style={styles.iconBadge}>
@@ -420,7 +410,6 @@ export default function EventFormScreen() {
                 <Text style={styles.groupTitle}>Date & Time</Text>
               </View>
               <View style={styles.row}>
-                {/* Date */}
                 <View style={[styles.inputGroup, styles.halfWidth]}>
                   <Text style={styles.label}>Date *</Text>
                   <TouchableOpacity
@@ -436,7 +425,6 @@ export default function EventFormScreen() {
                     <Text style={styles.errorText}>{errors.date}</Text>
                   )}
                 </View>
-                {/* Time */}
                 <View style={[styles.inputGroup, styles.halfWidth]}>
                   <Text style={styles.label}>Time *</Text>
                   <TouchableOpacity
@@ -455,7 +443,6 @@ export default function EventFormScreen() {
               </View>
             </View>
 
-            {/*  Location Group  */}
             <View style={styles.fieldGroup}>
               <View style={styles.cardHeader}>
                 <View style={styles.iconBadge}>
@@ -463,7 +450,6 @@ export default function EventFormScreen() {
                 </View>
                 <Text style={styles.groupTitle}>Location</Text>
               </View>
-              {/* Venue */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Venue Name *</Text>
                 <TextInput
@@ -477,7 +463,6 @@ export default function EventFormScreen() {
                   <Text style={styles.errorText}>{errors.location}</Text>
                 )}
               </View>
-              {/* Address */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Address</Text>
                 <TextInput
@@ -493,7 +478,6 @@ export default function EventFormScreen() {
               </View>
             </View>
 
-            {/*  Tickets Group  */}
             <View style={styles.fieldGroup}>
               <View style={styles.cardHeader}>
                 <View style={styles.iconBadge}>
@@ -502,7 +486,6 @@ export default function EventFormScreen() {
                 <Text style={styles.groupTitle}>Pricing & Capacity</Text>
               </View>
               <View style={styles.row}>
-                {/* Price */}
                 <View style={[styles.inputGroup, styles.halfWidth]}>
                   <Text style={styles.label}>Price *</Text>
                   <TextInput
@@ -517,7 +500,6 @@ export default function EventFormScreen() {
                     <Text style={styles.errorText}>{errors.price}</Text>
                   )}
                 </View>
-                {/* Capacity */}
                 <View style={[styles.inputGroup, styles.halfWidth]}>
                   <Text style={styles.label}>Capacity</Text>
                   <TextInput
@@ -533,7 +515,6 @@ export default function EventFormScreen() {
                   )}
                 </View>
               </View>
-              {/* Ticket Limit */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Ticket Limit Per User *</Text>
                 <TextInput
@@ -557,16 +538,15 @@ export default function EventFormScreen() {
               </View>
             </View>
 
-            {/*  Submit Button  */}
             <TouchableOpacity
               style={[
                 styles.submitButton,
-                (isSyncing || isSubmitting) && styles.submitButtonDisabled, // Use isSyncing
+                isSyncing && styles.submitButtonDisabled,
               ]}
               onPress={handleSubmit}
-              disabled={isSyncing || isSubmitting}
+              disabled={isSyncing}
             >
-              {isSyncing || isSubmitting ? (
+              {isSyncing ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text style={styles.submitButtonText}>
@@ -587,23 +567,24 @@ export default function EventFormScreen() {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#F5F5F7" },
+  safeArea: { flex: 1, backgroundColor: '#F5F5F7' },
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F9FAFB",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
   },
   keyboardView: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: 40 },
   formContainer: { paddingHorizontal: 20, paddingTop: 16 },
   fieldGroup: {
     marginBottom: 24,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
-    shadowColor: "#4B5563",
+    shadowColor: '#4B5563',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -612,72 +593,72 @@ const styles = StyleSheet.create({
   groupTitle: {
     marginBottom: 12,
     fontSize: 20,
-    fontWeight: "600" as const,
-    color: "#1a1a1a",
+    fontWeight: '600' as const,
+    color: '#1a1a1a',
   },
   inputGroup: { marginBottom: 16 },
   label: {
     fontSize: 13,
-    fontWeight: "600" as const,
-    color: "#3C3C43",
+    fontWeight: '600' as const,
+    color: '#3C3C43',
     marginBottom: 10,
-    textTransform: "uppercase" as const,
+    textTransform: 'uppercase' as const,
     letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: "#F9FAFB",
+    backgroundColor: '#F9FAFB',
     borderRadius: 8,
     paddingVertical: 14,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: "#111827",
+    color: '#111827',
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: '#D1D5DB',
     minHeight: 50,
   },
-  inputError: { borderColor: "#EF4444" },
-  errorText: { color: "#EF4444", fontSize: 13, marginTop: 5 },
-  textArea: { minHeight: 100, paddingTop: 14, textAlignVertical: "top" },
-  row: { flexDirection: "row", gap: 16 },
+  inputError: { borderColor: '#EF4444' },
+  errorText: { color: '#EF4444', fontSize: 13, marginTop: 5 },
+  textArea: { minHeight: 100, paddingTop: 14, textAlignVertical: 'top' },
+  row: { flexDirection: 'row', gap: 16 },
   halfWidth: { flex: 1 },
   pickerInput: {
-    backgroundColor: "#F9FAFB",
+    backgroundColor: '#F9FAFB',
     borderRadius: 8,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: '#D1D5DB',
     minHeight: 50,
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  pickerIcon: { marginRight: 10, color: "#6B7280" },
-  pickerText: { fontSize: 16, color: "#111827", flex: 1 },
+  pickerIcon: { marginRight: 10, color: '#6B7280' },
+  pickerText: { fontSize: 16, color: '#111827', flex: 1 },
   submitButton: {
-    backgroundColor: "#6366f1",
+    backgroundColor: '#6366f1',
     borderRadius: 12,
     paddingVertical: 16,
-    alignItems: "center",
+    alignItems: 'center',
     marginTop: 16,
     marginBottom: 16,
-    shadowColor: "#4f46e5",
+    shadowColor: '#4f46e5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 4,
     minHeight: 52,
-    justifyContent: "center",
+    justifyContent: 'center',
   },
   submitButtonDisabled: {
-    backgroundColor: "#A5B4FC",
+    backgroundColor: '#A5B4FC',
     elevation: 0,
     shadowOpacity: 0,
   },
-  submitButtonText: { fontSize: 16, fontWeight: "600", color: "#FFFFFF" },
+  submitButtonText: { fontSize: 16, fontWeight: '600', color: '#FFFFFF' },
   disclaimer: {
     fontSize: 13,
-    color: "#6B7280",
-    textAlign: "center",
+    color: '#6B7280',
+    textAlign: 'center',
     lineHeight: 18,
     marginBottom: 20,
   },
@@ -685,26 +666,26 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#F3F0FF",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#F3F0FF',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
     marginBottom: 10,
   },
   cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 20,
-    color: "#111827",
+    color: '#111827',
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
+    borderBottomColor: '#E5E7EB',
   },
   header: {
     marginHorizontal: 0,
     borderRadius: 20,
     ...Platform.select({
       ios: {
-        shadowColor: "#6366f1",
+        shadowColor: '#6366f1',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 12,
@@ -721,12 +702,12 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   headerContent: {
-    marginTop: Platform.OS === "ios" ? 100 : 80,
+    marginTop: Platform.OS === 'ios' ? 100 : 80,
     marginBottom: 50,
     marginHorizontal: 15,
-    flexDirection: "column",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 32,
@@ -740,50 +721,49 @@ const styles = StyleSheet.create({
     fontWeight: '500' as const,
   },
   backButton: {
-    position: "absolute",
-    top: Platform.OS === "ios" ? 50 : 20,
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 20,
     left: 20,
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.3)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
     backButtonText: {
     fontSize: 24,
-    color: "#fff",
-    fontWeight: "400" as const,
+    color: '#fff',
+    fontWeight: '400' as const,
   },
   sparkleIcon: {
     marginBottom: 8,
   },
-  // Image Picker Styles
   imagePicker: {
-    width: "100%",
+    width: '100%',
     height: 200,
     borderRadius: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderStyle: "dashed",
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
+    borderColor: '#D1D5DB',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
   },
-  imagePreview: { width: "100%", height: "100%", resizeMode: "cover" },
-  imagePlaceholder: { justifyContent: "center", alignItems: "center" },
+  imagePreview: { width: '100%', height: '100%', resizeMode: 'cover' },
+  imagePlaceholder: { justifyContent: 'center', alignItems: 'center' },
   imagePlaceholderText: {
     marginTop: 12,
     fontSize: 14,
-    fontWeight: "600" as const,
-    color: "#1a1a1a",
+    fontWeight: '600' as const,
+    color: '#1a1a1a',
   },
-  imageSizeText: { marginTop: 4, fontSize: 12, color: "#9CA3AF" },
+  imageSizeText: { marginTop: 4, fontSize: 12, color: '#9CA3AF' },
   toggleRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 8,
   },
   toggleTextContainer: {
@@ -792,13 +772,13 @@ const styles = StyleSheet.create({
   },
   toggleLabel: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#1a1a1a",
+    fontWeight: '600',
+    color: '#1a1a1a',
     marginBottom: 4,
   },
   toggleDescription: {
     fontSize: 13,
-    color: "#6B7280",
+    color: '#6B7280',
     lineHeight: 18,
   },
 });

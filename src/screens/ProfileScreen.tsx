@@ -1,4 +1,5 @@
-import React, { useLayoutEffect, useState } from "react";
+// src/screens/ProfileScreen.tsx
+import React, { useLayoutEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,61 +9,68 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
-} from "react-native";
-import LinearGradient from "react-native-linear-gradient";
-import Icon from "react-native-vector-icons/Ionicons";
-import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
-import { getIconComponent } from "../utils/ui/iconLoader";
-import { MenuItem } from "../types/menu";
-import { useTickets } from "../stores/tickets-store";
+} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/Ionicons';
+import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
+import { getIconComponent } from '../utils/ui/iconLoader';
+import { MenuItem } from '../types/menu';
 import {
   CompositeNavigationProp,
   useNavigation,
-} from "@react-navigation/native";
-import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
-import { TabParamList } from "../navigation/TabNavigator";
-import { RootStackParamList } from "../navigation/AppNavigator";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useAuth } from "../stores/auth-store";
-import { useFavorites } from "../stores/favorites-store";
+} from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { TabParamList } from '../navigation/TabNavigator';
+import { RootStackParamList } from '../navigation/AppNavigator';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useAuth } from '../stores/auth-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppCacheService } from '../services/AppCacheService'; 
+import { AppCacheService } from '../services/AppCacheService';
+
+// --- NEW IMPORTS ---
+import { useTicketsQuery } from '../hooks/useTickets';
+import { useFavoritesQuery } from '../hooks/useFavorites';
+// --- END NEW IMPORTS ---
 
 // Define the types for route and navigation
-// Note: The screen name here must match the one in AppNavigator.tsx
 type ProfileScreenNavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<TabParamList, "Profile">,
+  BottomTabNavigationProp<TabParamList, 'Profile'>,
   NativeStackNavigationProp<RootStackParamList>
 >;
 
 export default function ProfileScreen() {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { tickets } = useTickets();
-  const { favorites } = useFavorites();
   const { user, signOut } = useAuth();
+
+  // --- USE REACT QUERY ---
+  // We get the data and default to an empty array
+  const { data: tickets = [] } = useTicketsQuery();
+  const { data: favoriteEventIds = [] } = useFavoritesQuery();
+  // --- END REACT QUERY ---
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: "Profile",
-      headerStyle: { backgroundColor: "#fff" },
-      headerTitleStyle: { fontWeight: "700", fontSize: 20 },
+      title: 'Profile',
+      headerStyle: { backgroundColor: '#fff' },
+      headerTitleStyle: { fontWeight: '700', fontSize: 20 },
     });
   }, [navigation, user]);
 
   const handleLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to log out?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert('Logout', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
       {
-        text: "Logout",
-        style: "destructive",
+        text: 'Logout',
+        style: 'destructive',
         onPress: async () => {
           setIsLoggingOut(true);
           try {
             await signOut();
+            // The auth-store listener will handle clearing React Query cache
           } catch (error) {
-            console.error("Logout failed:", error);
-            Alert.alert("Error", "Could not log out. Please try again.");
+            console.error('Logout failed:', error);
+            Alert.alert('Error', 'Could not log out. Please try again.');
           } finally {
             setIsLoggingOut(false);
           }
@@ -72,67 +80,72 @@ export default function ProfileScreen() {
   };
 
   const handleLogin = () => {
-    navigation.navigate("Login");
+    navigation.navigate('Login');
   };
 
   const handleClearStorage = async () => {
     Alert.alert(
-      "Clear Storage",
-      "This will clear all secure storage. Use for development only. Continue?",
+      'Clear Storage',
+      'This will clear all secure storage and app cache. Use for development only. Continue?',
       [
-        { text: "Cancel", style: "cancel" },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: "Clear",
-          style: "destructive",
+          text: 'Clear',
+          style: 'destructive',
           onPress: async () => {
             try {
-              // Use the new AppCacheService
+              // Use the AppCacheService for secure storage (dev only)
               await AppCacheService.clearAllSecureStorage();
+              // Clear standard async storage (which holds RQ cache if persisted)
               await AsyncStorage.clear();
-              Alert.alert("Success", "All storage cleared. Please restart the app.");
+              Alert.alert(
+                'Success',
+                'All storage cleared. Please restart the app.',
+              );
             } catch (error) {
-              console.error("Failed to clear storage:", error);
-              Alert.alert("Error", "Failed to clear storage");
+              console.error('Failed to clear storage:', error);
+              Alert.alert('Error', 'Failed to clear storage');
             }
           },
         },
-      ]
+      ],
     );
   };
 
   const menuItems: MenuItem[] = [
     {
-      icon: { name: "bell-o", library: "FontAwesome" },
-      title: "Notifications",
-      subtitle: "Manage your event reminders",
-      onPress: () => console.log("Notifications"),
+      icon: { name: 'bell-o', library: 'FontAwesome' },
+      title: 'Notifications',
+      subtitle: 'Manage your event reminders',
+      onPress: () => console.log('Notifications'),
     },
     {
-      icon: { name: "heart-o", library: "FontAwesome" },
-      title: "Favorite Events",
-      subtitle: `${favorites.length} events saved`,
-      onPress: () => navigation.navigate("Favorites"),
+      icon: { name: 'heart-o', library: 'FontAwesome' },
+      title: 'Favorite Events',
+      // --- UPDATED ---
+      subtitle: `${favoriteEventIds.length} events saved`,
+      onPress: () => navigation.navigate('Favorites'),
     },
     {
-      icon: { name: "settings-outline", library: "Ionicons" },
-      title: "Settings",
-      subtitle: "App preferences and privacy",
-      onPress: () => console.log("Settings"),
+      icon: { name: 'settings-outline', library: 'Ionicons' },
+      title: 'Settings',
+      subtitle: 'App preferences and privacy',
+      onPress: () => console.log('Settings'),
     },
     {
-      icon: { name: "help-circle-outline", library: "Ionicons" },
-      title: "Help & Support",
-      subtitle: "Get help with your account",
-      onPress: () => console.log("Help"),
+      icon: { name: 'help-circle-outline', library: 'Ionicons' },
+      title: 'Help & Support',
+      subtitle: 'Get help with your account',
+      onPress: () => console.log('Help'),
     },
   ];
 
   // Only show in development:
   if (__DEV__) {
     const devMenuItem: MenuItem = {
-      icon: { name: "trash-outline", library: "Ionicons" },
-      title: "Clear All Storage (Dev)",
-      subtitle: "Remove all secure data",
+      icon: { name: 'trash-outline', library: 'Ionicons' },
+      title: 'Clear All Storage (Dev)',
+      subtitle: 'Remove all secure data',
       onPress: handleClearStorage,
     };
     menuItems.push(devMenuItem);
@@ -143,7 +156,7 @@ export default function ProfileScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.profileHeaderWrapper}>
           <LinearGradient
-            colors={["#6366f1", "#8b5cf6"]}
+            colors={['#6366f1', '#8b5cf6']}
             style={styles.profileHeader}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -152,23 +165,25 @@ export default function ProfileScreen() {
               <FontAwesomeIcon name="user" size={40} color="#fff" />
             </View>
             <Text style={styles.userName}>
-              {user?.user_metadata.full_name || "Guest"}
+              {user?.user_metadata.full_name || 'Guest'}
             </Text>
             <Text style={styles.userEmail}>
-              {user?.email || "Not logged in"}
+              {user?.email || 'Not logged in'}
             </Text>
           </LinearGradient>
         </View>
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Icon name="ticket-outline" size={24} color="#6366f1" />
+            {/* --- UPDATED --- */}
             <Text style={styles.statNumber}>{tickets.length}</Text>
             <Text style={styles.statLabel}>Tickets</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <FontAwesomeIcon name="heart-o" size={24} color="#ff4757" />
-            <Text style={styles.statNumber}>{favorites.length}</Text>
+            {/* --- UPDATED --- */}
+            <Text style={styles.statNumber}>{favoriteEventIds.length}</Text>
             <Text style={styles.statLabel}>Favorites</Text>
           </View>
         </View>
@@ -224,22 +239,22 @@ export default function ProfileScreen() {
   );
 }
 
+// --- (Styles remain identical) ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: '#f8f9fa',
   },
   content: {
     flex: 1,
   },
-
   profileHeaderWrapper: {
     marginHorizontal: 16,
     marginVertical: 24,
     borderRadius: 20,
     ...Platform.select({
       ios: {
-        shadowColor: "#6366f1",
+        shadowColor: '#6366f1',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.25,
         shadowRadius: 12,
@@ -249,45 +264,43 @@ const styles = StyleSheet.create({
       },
     }),
   },
-
   profileHeader: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 0,
     paddingHorizontal: 0,
     borderRadius: 20,
-    backgroundColor: "transparent",
+    backgroundColor: 'transparent',
   },
-
   avatarContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 16,
     marginTop: 25,
   },
   userName: {
     fontSize: 24,
-    fontWeight: "700",
-    color: "#fff",
+    fontWeight: '700',
+    color: '#fff',
     marginBottom: 4,
   },
   userEmail: {
     fontSize: 16,
-    color: "rgba(255,255,255,0.8)",
+    color: 'rgba(255,255,255,0.8)',
     marginBottom: 25,
   },
   statsContainer: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
+    flexDirection: 'row',
+    backgroundColor: '#fff',
     marginHorizontal: 16,
     marginBottom: 24,
     borderRadius: 16,
     padding: 24,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -295,50 +308,50 @@ const styles = StyleSheet.create({
   },
   statItem: {
     flex: 1,
-    alignItems: "center",
+    alignItems: 'center',
   },
   statDivider: {
     width: 1,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: '#f0f0f0',
     marginHorizontal: 24,
   },
   statNumber: {
     fontSize: 24,
-    fontWeight: "700",
-    color: "#1a1a1a",
+    fontWeight: '700',
+    color: '#1a1a1a',
     marginTop: 8,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 14,
-    color: "#666",
-    fontWeight: "500",
+    color: '#666',
+    fontWeight: '500',
   },
   menuSection: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     marginHorizontal: 16,
     borderRadius: 16,
     marginBottom: 24,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 4,
   },
   menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#f8f9fa",
+    borderBottomColor: '#f8f9fa',
   },
   menuIcon: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#f8f9fa",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#f8f9fa',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 16,
   },
   menuContent: {
@@ -346,44 +359,44 @@ const styles = StyleSheet.create({
   },
   menuTitle: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#1a1a1a",
+    fontWeight: '600',
+    color: '#1a1a1a',
     marginBottom: 4,
   },
   menuSubtitle: {
     fontSize: 14,
-    color: "#666",
+    color: '#666',
   },
   logoutButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#fff",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
     marginHorizontal: 16,
     marginBottom: 32,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#ff4757",
+    borderColor: '#ff4757',
     gap: 8,
-    minHeight: 50, // for loader
+    minHeight: 50,
   },
   logoutText: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#ff4757",
+    fontWeight: '600',
+    color: '#ff4757',
   },
   loginButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#6366f1",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#6366f1',
     marginHorizontal: 16,
     marginBottom: 32,
     padding: 16,
     borderRadius: 12,
     gap: 8,
-    shadowColor: "#6366f1",
+    shadowColor: '#6366f1',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -391,7 +404,7 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#fff",
+    fontWeight: '600',
+    color: '#fff',
   },
 });
