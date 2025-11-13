@@ -1,58 +1,82 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from "react-native-vector-icons/Ionicons";
 import { Event } from '../../../types/event';
-import { useFavorites } from '../../../stores/favorites-store';
 import { useAuth } from '../../../stores/auth-store';
 import { useNavigation } from '@react-navigation/native';
 import { formatDateMMDD, formatTime } from '../../../utils/formatters/dateFormatter';
+import {
+  useFavoritesQuery,
+  useAddFavorite,
+  useRemoveFavorite,
+} from '../../../hooks/useFavorites';
 interface EventCardProps {
   event: Event;
   onPress: () => void;
 }
 
+
 export default function EventCard({ event, onPress }: EventCardProps) {
-  const { toggleFavorite, favorites } = useFavorites();
-  const isEventFavorite = favorites.includes(event.id);
+  // REACT QUERY DATA
+  const { data: favoriteEventIds = [] } = useFavoritesQuery();
   const { session } = useAuth();
   const navigation = useNavigation();
+
+  // REACT QUERY MUTATIONS
+  const { mutate: addFavorite, isPending: isAdding } = useAddFavorite();
+  const { mutate: removeFavorite, isPending: isRemoving } = useRemoveFavorite();
+
+  const isEventFavorite = favoriteEventIds.includes(event.id);
+  const isMutating = isAdding || isRemoving;
 
   const handleFavoritePress = (e: any) => {
     e.stopPropagation(); // Prevents the main onPress from firing
     if (!session) {
-        Alert.alert(
-          "Login Required",
-          "Please log in to save events to your favorites.",
-          [
-            { text: "Cancel", style: "cancel" },
-            { text: "Login", onPress: () => navigation.navigate("Login" as never) },
-          ]
-        );
-        return;
+      Alert.alert(
+        'Login Required',
+        'Please log in to save events to your favorites.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Login',
+            onPress: () => navigation.navigate('Login' as never),
+          },
+        ],
+      );
+      return;
     }
-    toggleFavorite(event);
+    if (isEventFavorite) {
+      removeFavorite(event.id);
+    } else {
+      addFavorite(event.id);
+    }
   };
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.9}>
-      <View style={styles.card}>
+     <View style={styles.card}>
         <View style={styles.imageContainer}>
           <Image source={{ uri: event.imageUrl }} style={styles.image} />
           <LinearGradient
             colors={['transparent', 'rgba(0,0,0,0.7)']}
             style={styles.imageOverlay}
           />
-          <TouchableOpacity 
-            style={styles.favoriteButton} 
+          <TouchableOpacity
+            style={styles.favoriteButton}
             onPress={handleFavoritePress}
+            disabled={isMutating} // Disable button while mutating
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Icon
-              name={isEventFavorite ? "heart" : "heart-outline"}
-              size={20}
-              color={isEventFavorite ? "#ff4757" : "#fff"}
-            />
+            {isMutating ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Icon
+                name={isEventFavorite ? 'heart' : 'heart-outline'}
+                size={20}
+                color={isEventFavorite ? '#ff4757' : '#fff'}
+              />
+            )}
           </TouchableOpacity>
           <View style={styles.categoryBadge}>
             <Text style={styles.categoryText}>{event.category}</Text>
