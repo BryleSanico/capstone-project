@@ -1,6 +1,7 @@
 import { supabase } from '../../lib/supabase';
 import { Ticket } from '../../types/ticket';
 import { ticketMapper } from '../../utils/mappers/ticketMapper';
+import * as sqliteService from '../sqliteService';
 
 /**
  * Fetches the user's tickets.
@@ -10,7 +11,12 @@ export async function getTickets(): Promise<Ticket[]> {
     last_sync_time: null,
   });
   if (error) throw error;
-  return data.map(ticketMapper);
+  
+  const serverTickets = data.map(ticketMapper);
+
+  // Insert to SQLite database
+  await sqliteService.saveTickets(serverTickets);
+  return serverTickets;
 }
 
 // Define the shape of the purchase request
