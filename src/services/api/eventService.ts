@@ -3,12 +3,15 @@ import { Event } from '../../types/event';
 import { eventMapper } from '../../utils/mappers/eventMapper';
 import storageService from '../../services/storageService';
 import { storageKeys } from '../../utils/cache/storageKeys';
+import * as sqliteService from '../sqliteService';
+import { useNetworkStatus } from '../../stores/network-store';
 
 const EVENTS_PER_PAGE = 5;
 
 /**
- * Fetches a single page of events.
- * This will be called by useInfiniteQuery.
+ * Fetches events for the infinite query.
+ * Implements "Stale-While-Revalidate" (via queryFn).
+ * The cache is seeded by useCacheHydration.
  */
 export async function fetchEvents({
   pageParam = 1,
@@ -19,11 +22,20 @@ export async function fetchEvents({
   query: string;
   category: string;
 }) {
-  console.log(`[eventService] Fetching page ${pageParam}...`);
+  const isConnected = useNetworkStatus.getState().isConnected;
+  
+  if (!isConnected) {
+    // If offline, dont fetch. React Query will use the
+    // (already hydrated) cache data and not even call this.
+    throw new Error('Offline. Cannot fetch new events.');
+  }
+
+  // If Online, Fetch from Server
+  console.log(`[eventService] Fetching page ${pageParam} from network...`);
   const { data, error } = await supabase.rpc('get_paginated_events', {
     p_page: pageParam,
     p_limit: EVENTS_PER_PAGE,
-    p_query: query, 
+    p_query: query,
     p_category: category,
     p_last_updated: null,
   });
@@ -32,11 +44,20 @@ export async function fetchEvents({
 
   const result = data[0] || { events: [], total_count: 0 };
   const events: Event[] = (result.events || []).map(eventMapper);
-  const totalCount = result.total_count;
-
+  
+  // Insert to SQLite database
+  if (pageParam === 1) {
+    // If it's the first page, we replace the old events
+    await sqliteService.saveEvents(events);
+  } else {
+    // If it's a new page, we add to the existing events
+    const oldEvents = await sqliteService.getEvents();
+    await sqliteService.saveEvents([...oldEvents, ...events]);
+  }
+  
   return {
     events,
-    totalCount,
+    totalCount: result.total_count,
     nextPage: events.length < EVENTS_PER_PAGE ? undefined : pageParam + 1,
   };
 }
@@ -60,6 +81,8 @@ export async function fetchEventsByIds(eventIds: number[]): Promise<Event[]> {
  * This is for the EventDetailsScreen.
  */
 export async function fetchEventById(eventId: number): Promise<Event> {
+  // We assume cache hydration has already happened.
+  // This queryFn is now just for fetching fresh data.
   const { data, error } = await supabase.rpc('get_events_by_ids', {
     event_ids: [eventId],
   });
@@ -67,7 +90,11 @@ export async function fetchEventById(eventId: number): Promise<Event> {
   if (!data || data.length === 0) {
     throw new Error('Event not found');
   }
-  return eventMapper(data[0]);
+  const event = eventMapper(data[0]);
+  
+  // Insert to SQLite database
+  await sqliteService.saveEvents([event]); // Upsert this event
+  return event;
 }
 
 /**
