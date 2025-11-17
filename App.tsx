@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import React, { useEffect, useRef } from 'react';
-import { AppState, View, ActivityIndicator } from 'react-native';
+import { AppState, View, ActivityIndicator, SafeAreaView } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import {
   QueryClient,
@@ -17,7 +17,7 @@ import { NetworkSnackbar } from './src/components/ui/SnackBars/NetworkSnackbar';
 import { useAuth } from './src/stores/auth-store';
 import { useCacheHydration } from './src/hooks/useCacheHydration';
 import * as sqliteService from './src/services/sqliteService';
-import { Loader } from './src/components/LazyLoaders/loader';
+import { LoaderSearch } from './src/components/LazyLoaders/loaderSearch';
 
 const queryClient = new QueryClient();
 
@@ -80,15 +80,6 @@ function AppContent() {
       SplashScreen.hide();
     }
   }, [isHydrated]);
-
-  // Show a full-screen loader while we read from SQLite
-  if (!isHydrated) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
-        <Loader size={100} />
-      </View>
-    );
-  }
 
   return (
     <>
