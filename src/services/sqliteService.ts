@@ -1,145 +1,337 @@
-import { openDatabase, SQLiteDatabase, enablePromise } from 'react-native-sqlite-storage';
+import {
+  openDatabase,
+  SQLiteDatabase,
+  enablePromise,
+  ResultSet,
+} from 'react-native-sqlite-storage';
 import { Event } from '../types/event';
 import { Ticket } from '../types/ticket';
 
-// Enable promises for SQLite operations
 enablePromise(true);
 
 const DB_NAME = 'EventAppCache.db';
 let db: SQLiteDatabase;
 
-//  Database Initialization 
+// promise-safe connection handlers
+let dbOpenPromise: Promise<SQLiteDatabase> | null = null;
+let dbInitializationPromise: Promise<void> | null = null;
 
 /**
- * Opens the database connection.
+ * Gets the database instance, ensuring openDatabase is only called once.
  */
-const getDB = async (): Promise<SQLiteDatabase> => {
+const getDB = (): Promise<SQLiteDatabase> => {
   if (db) {
-    return db;
+    return Promise.resolve(db);
   }
-  db = await openDatabase({ name: DB_NAME, location: 'default' });
-  return db;
+  if (dbOpenPromise) {
+    return dbOpenPromise;
+  }
+  // Create the promise and store it
+  dbOpenPromise = new Promise(async (resolve, reject) => {
+    try {
+      console.log('[SQLite] Opening database connection...');
+      const database = await openDatabase({ name: DB_NAME, location: 'default' });
+      db = database; // Set global instance
+      console.log('[SQLite] Database connection opened.');
+      resolve(db);
+    } catch (e) {
+      console.error('[SQLite] FAILED to open database connection:', e);
+      dbOpenPromise = null; // Reset promise on failure
+      reject(e);
+    }
+  });
+  return dbOpenPromise;
 };
 
 /**
  * Creates all necessary tables if they don't exist.
- * This should be run once when the app starts.
+ * This function now runs each CREATE TABLE statement in its own.
  * We store the event object as JSON for simplicity.
  */
-export const initDB = async () => {
-  const db = await getDB();
-  await db.transaction(async (tx) => {
-    // Events Table (for Discover feed)
-    await tx.executeSql(`
-      CREATE TABLE IF NOT EXISTS Events (
-        id INTEGER PRIMARY KEY NOT NULL,
-        eventData TEXT NOT NULL
-      );
-    `);
-    
-    // MyEvents Table
-    await tx.executeSql(`
-      CREATE TABLE IF NOT EXISTS MyEvents (
-        id INTEGER PRIMARY KEY NOT NULL,
-        eventData TEXT NOT NULL
-      );
-    `);
-    
-    // Tickets Table
-    await tx.executeSql(`
-      CREATE TABLE IF NOT EXISTS Tickets (
-        id INTEGER PRIMARY KEY NOT NULL,
-        ticketData TEXT NOT NULL
-      );
-    `);
-    
-    // Favorites Table (just store the IDs)
-    await tx.executeSql(`
-      CREATE TABLE IF NOT EXISTS FavoriteEventIds (
-        id INTEGER PRIMARY KEY NOT NULL
-      );
-    `);
+export const initDB = (): Promise<void> => {
+  if (dbInitializationPromise) {
+    return dbInitializationPromise;
+  }
+  // Create the promise and store it
+  dbInitializationPromise = new Promise(async (resolve, reject) => {
+    try {
+      const dbInstance = await getDB(); // Wait for the single connection
+      console.log('[SQLite] Initializing tables...');
+
+      // Run each CREATE statement in its own transaction for robustness
+      await dbInstance.transaction(async (tx) => {
+        await tx.executeSql(`
+          CREATE TABLE IF NOT EXISTS Events (
+            id INTEGER PRIMARY KEY NOT NULL,
+            eventData TEXT NOT NULL
+          );
+        `);
+      });
+      console.log('[SQLite] Table [Events] initialized.');
+
+      await dbInstance.transaction(async (tx) => {
+        await tx.executeSql(`
+          CREATE TABLE IF NOT EXISTS MyEvents (
+            id INTEGER PRIMARY KEY NOT NULL,
+            eventData TEXT NOT NULL
+          );
+        `);
+      });
+      console.log('[SQLite] Table [MyEvents] initialized.');
+
+      await dbInstance.transaction(async (tx) => {
+        await tx.executeSql(`
+          CREATE TABLE IF NOT EXISTS Tickets (
+            id INTEGER PRIMARY KEY NOT NULL,
+            ticketData TEXT NOT NULL
+          );
+        `);
+      });
+      console.log('[SQLite] Table [Tickets] initialized.');
+
+      await dbInstance.transaction(async (tx) => {
+        await tx.executeSql(`
+          CREATE TABLE IF NOT EXISTS FavoriteEventIds (
+            id INTEGER PRIMARY KEY NOT NULL
+          );
+        `);
+      });
+      console.log('[SQLite] Table [FavoriteEventIds] initialized.');
+
+      console.log('[SQLite] All database tables initialized.');
+      resolve();
+    } catch (e) {
+      console.error('[SQLite] FAILED to initialize tables:', e);
+      dbInitializationPromise = null; // Reset promise on failure
+      reject(e);
+    }
   });
-  console.log('[SQLite] Database initialized');
+  return dbInitializationPromise;
 };
 
 /**
- * Wipes all data from all tables.
+ * Wipes all user-specific data from user tables.
  * Used on logout.
  */
-export const clearDatabase = async () => {
-  const db = await getDB();
-  await db.transaction(async (tx) => {
-    await tx.executeSql('DELETE FROM Events');
-    await tx.executeSql('DELETE FROM MyEvents');
-    await tx.executeSql('DELETE FROM Tickets');
-    await tx.executeSql('DELETE FROM FavoriteEventIds');
-  });
-  console.log('[SQLite] Database cleared');
-};
-
-//  Helper: Generic Upsert (Insert or Replace) 
-const upsertItems = async (table: string, idColumn: string, dataColumn: string, items: any[]) => {
-  if (items.length === 0) return;
-  const db = await getDB();
-  await db.transaction(async (tx) => {
-    // Prepare a single, large query
-    const query = `INSERT OR REPLACE INTO ${table} (${idColumn}, ${dataColumn}) VALUES ${items.map(() => '(?, ?)').join(', ')}`;
-    const params: (string | number)[] = [];
-    items.forEach(item => {
-      params.push(item.id);
-      params.push(JSON.stringify(item));
+export const clearPrivateData = async () => {
+  try {
+    await initDB(); // Ensure tables exist before clearing
+    const dbInstance = await getDB();
+    await dbInstance.transaction(async (tx) => {
+      await tx.executeSql('DELETE FROM MyEvents');
+      await tx.executeSql('DELETE FROM Tickets');
+      await tx.executeSql('DELETE FROM FavoriteEventIds');
     });
-    
-    await tx.executeSql(query, params);
-  });
+    console.log('[SQLite] Private user data cleared');
+  } catch (e) {
+    console.error('[SQLite] FAILED to clear private data:', e);
+  }
 };
 
-//  Events 
-export const saveEvents = async (events: Event[]) => {
-  await upsertItems('Events', 'id', 'eventData', events);
-};
-export const getEvents = async (): Promise<Event[]> => {
-  const db = await getDB();
-  const [results] = await db.executeSql('SELECT eventData FROM Events');
-  return results.rows.raw().map(row => JSON.parse(row.eventData));
+/**
+ * A generic helper to INSERT OR REPLACE (upsert) a list of items.
+ */
+const upsertItems = async (
+  table: string,
+  idColumn: string,
+  dataColumn: string,
+  items: any[],
+) => {
+  // --- DEBUG LOG ---
+  console.log(
+    `[SQLite] Attempting to SAVE ${items.length} items to table [${table}]`,
+  );
+  // --- END DEBUG LOG ---
+
+  if (items.length === 0) return;
+
+  try {
+    await initDB(); // Ensure table exists before writing
+    const dbInstance = await getDB();
+
+    await dbInstance.transaction(async (tx) => {
+      const chunkSize = 100;
+      for (let i = 0; i < items.length; i += chunkSize) {
+        const chunk = items.slice(i, i + chunkSize);
+        const query = `INSERT OR REPLACE INTO ${table} (${idColumn}, ${dataColumn}) VALUES ${chunk
+          .map(() => '(?, ?)')
+          .join(', ')};`;
+
+        const params: (string | number)[] = [];
+        chunk.forEach((item) => {
+          params.push(item.id);
+          params.push(JSON.stringify(item));
+        });
+
+        await tx.executeSql(query, params);
+      }
+    });
+
+    // --- DEBUG LOG ---
+    console.log(
+      `[SQLite] SUCCESSFULLY SAVED ${items.length} items to table [${table}]`,
+    );
+    // --- END DEBUG LOG ---
+  } catch (e) {
+    console.error(`[SQLite] FAILED to SAVE items to table [${table}]:`, e);
+  }
 };
 
-//  MyEvents 
-export const saveMyEvents = async (events: Event[]) => {
-  await upsertItems('MyEvents', 'id', 'eventData', events);
-};
-export const getMyEvents = async (): Promise<Event[]> => {
-  const db = await getDB();
-  const [results] = await db.executeSql('SELECT eventData FROM MyEvents');
-  return results.rows.raw().map(row => JSON.parse(row.eventData));
-};
+/**
+ * A generic helper to read all items from a table.
+ */
+const getItems = async <T>(
+  table: string,
+  dataColumn: string,
+): Promise<T[]> => {
+  try {
+    await initDB(); // Ensure table exists before reading
+    const dbInstance = await getDB();
 
-//  Tickets 
-export const saveTickets = async (tickets: Ticket[]) => {
-  await upsertItems('Tickets', 'id', 'ticketData', tickets);
-};
-export const getTickets = async (): Promise<Ticket[]> => {
-  const db = await getDB();
-  const [results] = await db.executeSql('SELECT ticketData FROM Tickets');
-  return results.rows.raw().map(row => JSON.parse(row.ticketData));
-};
-
-//  Favorites 
-export const saveFavoriteIds = async (ids: number[]) => {
-  const db = await getDB();
-  await db.transaction(async (tx) => {
-    // Clear old favorites
-    await tx.executeSql('DELETE FROM FavoriteEventIds');
-    // Insert new ones
-    if (ids.length > 0) {
-      const query = `INSERT INTO FavoriteEventIds (id) VALUES ${ids.map(() => '(?)').join(', ')}`;
-      await tx.executeSql(query, ids);
+    const [results] = await dbInstance.executeSql(
+      `SELECT ${dataColumn} FROM ${table}`,
+    );
+    if (results.rows.length === 0) {
+      // --- DEBUG LOG ---
+      console.log(`[SQLite] GET query on table [${table}]: No data found.`);
+      // --- END DEBUG LOG ---
+      return [];
     }
-  });
+    const data = results.rows.raw().map((row) => JSON.parse(row[dataColumn]));
+
+    // --- DEBUG LOG ---
+    console.log(
+      `[SQLite] GET query on table [${table}]: Found ${
+        data.length
+      } items. Data: ${JSON.stringify(data, null, 2)}`,
+    );
+    // --- END DEBUG LOG ---
+
+    return data;
+  } catch (e: any) {
+    console.error(`[SQLite] FAILED to GET items from table [${table}]:`, e);
+    if (e.message.includes('no such table')) {
+      console.warn(`[SQLite] Table ${table} not found, re-initializing DB.`);
+      // Re-run init and try one more time
+      dbInitializationPromise = null; // Force re-init
+      await initDB();
+      return getItems(table, dataColumn); // Retry
+    }
+    throw e;
+  }
+};
+
+// Events
+export const saveEvents = (events: Event[]) =>
+  upsertItems('Events', 'id', 'eventData', events);
+export const getEvents = (): Promise<Event[]> =>
+  getItems<Event>('Events', 'eventData');
+
+// MyEvents
+export const saveMyEvents = (events: Event[]) =>
+  upsertItems('MyEvents', 'id', 'eventData', events);
+export const getMyEvents = (): Promise<Event[]> =>
+  getItems<Event>('MyEvents', 'eventData');
+
+// Tickets
+export const saveTickets = (tickets: Ticket[]) =>
+  upsertItems('Tickets', 'id', 'ticketData', tickets);
+export const getTickets = (): Promise<Ticket[]> =>
+  getItems<Ticket>('Tickets', 'ticketData');
+
+// Favorites (Special handling for IDs)
+export const saveFavoriteIds = async (ids: number[]) => {
+  // --- DEBUG LOG ---
+  console.log(
+    `[SQLite] Attempting to SAVE ${ids.length} favorite IDs: [${ids.join(
+      ', ',
+    )}]`,
+  );
+  // --- END DEBUG LOG ---
+
+  try {
+    await initDB(); // Ensure table exists
+    const dbInstance = await getDB();
+    await dbInstance.transaction(async (tx) => {
+      await tx.executeSql('DELETE FROM FavoriteEventIds');
+      if (ids.length > 0) {
+        const query = `INSERT OR REPLACE INTO FavoriteEventIds (id) VALUES ${ids
+          .map(() => '(?)')
+          .join(', ')};`;
+        await tx.executeSql(query, ids);
+      }
+    });
+
+    // --- DEBUG LOG ---
+    console.log(`[SQLite] SUCCESSFULLY SAVED ${ids.length} favorite IDs.`);
+    // --- END DEBUG LOG ---
+  } catch (e) {
+    console.error(`[SQLite] FAILED to SAVE favorite IDs:`, e);
+  }
 };
 export const getFavoriteIds = async (): Promise<number[]> => {
-  const db = await getDB();
-  const [results] = await db.executeSql('SELECT id FROM FavoriteEventIds');
-  return results.rows.raw().map(row => row.id);
+  try {
+    await initDB(); // Ensure table exists
+    const dbInstance = await getDB();
+    const [results] = await dbInstance.executeSql(
+      'SELECT id FROM FavoriteEventIds',
+    );
+    const ids = results.rows.raw().map((row) => row.id);
+
+    // --- DEBUG LOG ---
+    console.log(
+      `[SQLite] GET query on table [FavoriteEventIds]: Found ${
+        ids.length
+      } IDs. Data: [${ids.join(', ')}]`,
+    );
+    // --- END DEBUG LOG ---
+
+    return ids;
+  } catch (e) {
+    console.error(`[SQLite] FAILED to GET favorite IDs:`, e);
+    return []; // Return empty on failure
+  }
+};
+
+/**
+ * Gets a single event by its ID from the cache.
+ * It checks both Events (public) and MyEvents (private) tables.
+ */
+export const getEventById = async (
+  eventId: number,
+): Promise<Event | null> => {
+  if (!eventId) return null;
+  await initDB(); // Ensure tables exist
+  const dbInstance = await getDB();
+
+  try {
+    // Try to find in the main 'Events' table first
+    let [results] = await dbInstance.executeSql(
+      'SELECT eventData FROM Events WHERE id = ?',
+      [eventId],
+    );
+
+    if (results.rows.length > 0) {
+      console.log(`[SQLite] getEventById: Found event ${eventId} in 'Events' table.`);
+      return JSON.parse(results.rows.item(0).eventData);
+    }
+
+    // If not found, try the 'MyEvents' table
+    [results] = await dbInstance.executeSql(
+      'SELECT eventData FROM MyEvents WHERE id = ?',
+      [eventId],
+    );
+
+    if (results.rows.length > 0) {
+      console.log(`[SQLite] getEventById: Found event ${eventId} in 'MyEvents' table.`);
+      return JSON.parse(results.rows.item(0).eventData);
+    }
+
+    // If not found in either
+    console.log(`[SQLite] getEventById: Event ${eventId} not found in any cache.`);
+    return null;
+  } catch (e) {
+    console.error(`[SQLite] FAILED to GET event ${eventId}:`, e);
+    return null;
+  }
 };
