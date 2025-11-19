@@ -76,6 +76,7 @@ export default function EventFormScreen() {
   const [errors, setErrors] = useState<EventFormErrors>({});
   const [isLoading, setIsLoading] = useState(isEditMode); // Local page loading state
   const [isClosed, setIsClosed] = useState(false);
+  const [hasPopulated, setHasPopulated] = useState(false);
 
   const {
     imageAsset,
@@ -104,7 +105,7 @@ export default function EventFormScreen() {
 
   // Effect to populate form in Edit Mode
   useEffect(() => {
-    if (isEditMode && eventId && !isLoadingMyEvents && myEvents) {
+    if (isEditMode && eventId && !isLoadingMyEvents && myEvents && !hasPopulated) {
       const event = myEvents.find(e => e.id === eventId);
       
       if (event) {
@@ -127,6 +128,7 @@ export default function EventFormScreen() {
           isClosed: event.isClosed || false,
         });
         setIsLoading(false);
+        setHasPopulated(true);
       } else if (!isLoadingMyEvents) { // Only error if done loading and no event found
         Alert.alert('Error', 'Could not find event details.');
         navigation.goBack();
