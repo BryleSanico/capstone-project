@@ -7,7 +7,7 @@ import { useNetworkStatus } from "../../../stores/network-store";
  * Green for success ("Back online!"), Red for errors.
  */
 const getSnackbarColor = (message: string | null): string => {
-  if (!message) return "#16a34a"; // Default green
+  if (!message) return "#333333"; // Default gray
   
   const lowerCaseMessage = message.toLowerCase();
   
@@ -20,8 +20,13 @@ const getSnackbarColor = (message: string | null): string => {
   ) {
     return "#b91c1c"; // Red
   }
+
+  // Explicitly check for success
+  if (lowerCaseMessage.includes("online") || lowerCaseMessage.includes("connected")) {
+    return "#16a34a"; // Green
+  }
   
-  return "#16a34a"; // Green for "Back online!"
+  return "#333333"; // Default gray
 };
 
 export const NetworkSnackbar = () => {
