@@ -36,16 +36,8 @@ const handleForegroundMessage = async (remoteMessage: any) => {
   });
 };
 
-/**
- * Register listeners for foreground & background
- */
-export const setupNotificationListeners = () => {
-  const messaging = getMessaging();
-  // Foreground listener
-  onMessage(messaging, handleForegroundMessage);
 
-  // Background/quit state handler
-  setBackgroundMessageHandler(messaging, async (remoteMessage) => {
+  export const handleBackgroundMessage = async (remoteMessage: any) => {
     console.log(" Background message:", remoteMessage);
 
     const title = toSafeString(
@@ -66,5 +58,15 @@ export const setupNotificationListeners = () => {
         pressAction: { id: "default" },
       },
     });
-  });
+  };
+
+/**
+ * Register listeners for foreground & background
+ */
+export const setupNotificationListeners = () => {
+  const messaging = getMessaging();
+  // Foreground listener
+  const unsubscribe = onMessage(messaging, handleForegroundMessage);
+  return unsubscribe;
+
 };
