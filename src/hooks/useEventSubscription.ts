@@ -38,6 +38,9 @@ export default function useEventSubscription(eventId: number | null) {
           // Set the new data in the cache for this query.
           // Instantly update EventDetailsScreen if it's open.
           queryClient.setQueryData<Event>(queryKey, updatedEvent);
+          queryClient.invalidateQueries({
+             queryKey: ['events', 'list']
+          });
         },
       )
       .subscribe();
