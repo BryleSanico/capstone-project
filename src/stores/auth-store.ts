@@ -87,6 +87,7 @@ export const useAuth = create<AuthState>((set, get) => ({
     try {
       await notificationService.unregisterPushNotifications(currentUser.id);
       await AppCacheService.handleLogout(currentUser.id);
+      await supabase.auth.signOut();
       // Set local state immediately
       set({ session: null, user: null });
     } catch (error) {
