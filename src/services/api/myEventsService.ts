@@ -125,8 +125,7 @@ export async function createEvent(
 
   const newEvent = eventMapper(data[0]);
 
-  const oldEvents = await sqliteService.getMyEvents();
-  await sqliteService.saveMyEvents([...oldEvents, newEvent]);
+  await sqliteService.saveMyEvents([newEvent]);
 
   return newEvent;
 }
