@@ -1,12 +1,9 @@
 import 'react-native-gesture-handler';
-import React, { useEffect, useRef } from 'react';
-import { AppState, View, ActivityIndicator, SafeAreaView } from 'react-native';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import {
   QueryClient,
   QueryClientProvider,
-  focusManager,
-  useQueryClient,
 } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -15,71 +12,33 @@ import { useNetworkMonitor } from './src/hooks/useNetworkMonitor';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { NetworkSnackbar } from './src/components/ui/SnackBars/NetworkSnackbar';
 import { useAuth } from './src/stores/auth-store';
-import { useCacheHydration } from './src/hooks/useCacheHydration';
-import * as sqliteService from './src/services/sqliteService';
-import { LoaderSearch } from './src/components/LazyLoaders/loaderSearch';
+import { useEventCacheHydration } from './src/hooks/useEventCacheHydration';
+import { useUserDataSync } from './src/hooks/useUserDataSync';
 
 const queryClient = new QueryClient();
 
-AppState.addEventListener('change', (nextAppState) => {
-  if (nextAppState === 'active') {
-    console.log('[AppState] App is active...');
-    focusManager.setFocused(true);
-  } else {
-    console.log('[AppState] App is inactive...');
-    focusManager.setFocused(false);
-  }
-});
-
 function AppContent() {
   useNetworkMonitor();
-  const queryClientHook = useQueryClient();
-  const { user, isInitialized } = useAuth();
-  const hasAuthBeenInitialized = useRef(false);
-  // This hook seeds the cache from SQLite
-  const { isHydrated } = useCacheHydration();
+  
+  // Hydrate Event Cache
+  const { isHydrated: isEventHydrated } = useEventCacheHydration();
 
-  // Auth Initialization Effect
+  // Synchronize User Data (Side Effect)
+  // Pass isEventHydrated so it waits for the database to be ready
+  useUserDataSync(isEventHydrated);
+
+  // Auth Init
   useEffect(() => {
     const unsubscribe = useAuth.getState().initialize();
-    return () => {
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
-  // Auth State Change Effect
+  // Splash Screen Handling
   useEffect(() => {
-    if (!isInitialized) return;
-
-    if (!hasAuthBeenInitialized.current) {
-      hasAuthBeenInitialized.current = true;
-      // On first load, we let the hydrator handle the cache.
-      // If we are online, we can trigger a background refetch
-      // of the data we just hydrated.
-      queryClientHook.invalidateQueries();
-      return;
-    }
-
-    if (!user) {
-      console.log(
-        '[AppContent] User has logged out. Clearing React Query and SQLite cache...',
-      );
-      queryClientHook.clear();
-      sqliteService.clearDatabase(); 
-    } else {
-      console.log(
-        '[AppContent] User has logged in. Invalidating queries...',
-      );
-      queryClientHook.invalidateQueries();
-    }
-  }, [user, isInitialized, queryClientHook]); 
-
-  useEffect(() => {
-    // Hide splash screen only *after* cache is hydrated
-    if (isHydrated) {
+    if (isEventHydrated) {
       SplashScreen.hide();
     }
-  }, [isHydrated]);
+  }, [isEventHydrated]);
 
   return (
     <>
