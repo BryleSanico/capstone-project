@@ -1,4 +1,3 @@
-// src/stores/network-store.ts
 import { create } from "zustand";
 import NetInfo, { NetInfoState } from "@react-native-community/netinfo";
 
@@ -6,7 +5,7 @@ type NetworkState = {
   isConnected: boolean;
   lastKnownState: NetInfoState | null;
   message: string | null;
-  subscribe: () => void;
+  subscribe: () => () => void; 
   setMessage: (msg: string | null) => void;
   registerReconnectCallback: (callback: () => Promise<void>) => void;
 };
@@ -25,6 +24,7 @@ export const useNetworkStatus = create<NetworkState>((set, get) => ({
   },
 
   subscribe: () => {
+    // Initial fetch (Fire and forget)
     NetInfo.fetch().then((state) => {
       set({
         isConnected: state.isConnected ?? false,
@@ -37,13 +37,15 @@ export const useNetworkStatus = create<NetworkState>((set, get) => ({
       );
     });
 
-    NetInfo.addEventListener(async (state) => {
+    // Listener
+    const unsubscribe = NetInfo.addEventListener(async (state) => {
       const prevConnected = get().isConnected;
       const nowConnected = state.isConnected ?? false;
-      // Immediately update the connection state.
+      
+      // Immediately update state
       set({ isConnected: nowConnected, lastKnownState: state });
 
-      // 2. Now that the state is updated, check if we *just* reconnected.
+      // Check for transitions
       if (!prevConnected && nowConnected) {
         console.log("🟢 Reconnected to the internet");
         set({ message: "Back online!" });
@@ -60,5 +62,6 @@ export const useNetworkStatus = create<NetworkState>((set, get) => ({
         set({ message: "You're offline."});
       }
     });
+    return unsubscribe;
   },
 }));
