@@ -3,6 +3,7 @@ import * as ticketsService from '../services/api/ticketsService';
 import { Ticket } from '../types/ticket';
 import { Alert } from 'react-native';
 import { eventsQueryKey } from './useEvents';
+import { useAuth } from '../stores/auth-store'; 
 
 export const ticketsQueryKey = ['tickets'];
 
@@ -10,9 +11,12 @@ export const ticketsQueryKey = ['tickets'];
  * Fetches the user's list of purchased tickets.
  */
 export function useTicketsQuery() {
+  const { user } = useAuth();
+
   return useQuery<Ticket[], Error>({
     queryKey: ticketsQueryKey,
     queryFn: ticketsService.getTickets,
+    enabled: !!user,
   });
 }
 
@@ -26,15 +30,13 @@ export function usePurchaseTicket() {
     mutationFn: ticketsService.purchaseTickets,
     
     onSuccess: (newTickets) => {
-      // Invalidate the tickets list (to add the new ticket)
+      // Invalidate the tickets list
       queryClient.invalidateQueries({ queryKey: ticketsQueryKey });
-
+      
       // Invalidate ALL event queries (because `availableSlot` changed)
       // This will cause DiscoverScreen, EventDetails, etc., to refetch.
-      queryClient.invalidateQueries({ queryKey: ['events'] });
-      // NOTE: If you want to be more selective, you could invalidate only the affected event:
-      // queryClient.invalidateQueries({ queryKey: ['event', newTickets[0].eventId] });
-
+            queryClient.invalidateQueries({ queryKey: ['events'] });
+  
       Alert.alert(
         'Tickets Purchased!',
         `You've successfully purchased ${newTickets.length} ticket(s).`,
@@ -53,6 +55,8 @@ export function usePurchaseTicket() {
       } else {
         Alert.alert('Purchase Failed', err.message);
       }
+      
+      queryClient.invalidateQueries({ queryKey: eventsQueryKey });
     },
   });
 }
