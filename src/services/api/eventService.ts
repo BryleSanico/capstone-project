@@ -11,7 +11,7 @@ const EVENTS_PER_PAGE = 5;
 /**
  * Fetches events for the infinite query.
  * Implements "Stale-While-Revalidate" (via queryFn).
- * The cache is seeded by useCacheHydration.
+ * The cache is seeded by useEventCacheHydration.
  */
 export async function fetchEvents({
   pageParam = 1,
