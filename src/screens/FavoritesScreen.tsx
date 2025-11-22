@@ -1,4 +1,3 @@
-// src/screens/FavoritesScreen.tsx
 import React, { useCallback, useLayoutEffect } from 'react';
 import {
   View,
@@ -16,7 +15,7 @@ import { Loader } from '../components/LazyLoaders/loader';
 import { useNetworkStatus } from '../stores/network-store';
 import { OfflineState } from '../components/ui/Errors/offlineState';
 import { EmptyState } from '../components/ui/Errors/EmptyState';
-import { useFavoriteEventsQuery } from '../hooks/useFavorites'; // Import the new hook
+import { useFavoriteEventsQuery } from '../hooks/useFavorites';
 
 type FavoritesScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -27,7 +26,6 @@ export default function FavoritesScreen() {
   const navigation = useNavigation<FavoritesScreenNavigationProp>();
   const isConnected = useNetworkStatus((state) => state.isConnected);
 
-  // REACT QUERY
   const {
     favoriteEvents,
     isLoading,
@@ -54,24 +52,6 @@ export default function FavoritesScreen() {
     refetch();
   }, [refetch]);
 
-  const renderEmptyState = () => (
-    <EmptyState
-      hasAction={true}
-      actionText="Explore Events"
-      navigateTo="Discover"
-      icon="heart-outline"
-      title="No Favorites Yet"
-      message="Start exploring events and tap the heart icon to save your favorites"
-    />
-  );
-
-  const renderOfflineState = () => (
-    <OfflineState
-      message="You are offline. Please check your network connection."
-      onRefresh={handleRefresh}
-    />
-  );
-
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, styles.loadingContainer]}>
@@ -80,15 +60,9 @@ export default function FavoritesScreen() {
     );
   }
 
-  return (
-    <View style={styles.container}>
-      {favoriteEvents.length === 0 ? (
-        !isConnected ? (
-          renderOfflineState()
-        ) : (
-          renderEmptyState()
-        )
-      ) : (
+  if (favoriteEvents.length > 0) {
+    return (
+      <View style={styles.container}>
         <FlatList
           data={favoriteEvents}
           keyExtractor={(item) => item.id.toString()}
@@ -105,7 +79,31 @@ export default function FavoritesScreen() {
             />
           }
         />
-      )}
+      </View>
+    );
+  }
+
+  if (!isConnected) {
+     return (
+        <View style={styles.container}>
+           <OfflineState
+             message="You are offline and no favorites are cached."
+             onRefresh={handleRefresh}
+           />
+        </View>
+     );
+  }
+
+  return (
+    <View style={styles.container}>
+      <EmptyState
+        hasAction={true}
+        actionText="Explore Events"
+        navigateTo="Discover"
+        icon="heart-outline"
+        title="No Favorites Yet"
+        message="Start exploring events and tap the heart icon to save your favorites"
+      />
     </View>
   );
 }

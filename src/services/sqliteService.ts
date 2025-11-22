@@ -8,7 +8,8 @@ import { Event } from '../types/event';
 import { Ticket } from '../types/ticket';
 
 enablePromise(true);
-
+// Semaphore to prevent overlapping saves
+let isSavingFavorites = false;
 const DB_NAME = 'EventAppCache.db';
 let db: SQLiteDatabase;
 
@@ -58,7 +59,7 @@ export const initDB = (): Promise<void> => {
       const dbInstance = await getDB(); // Wait for the single connection
       console.log('[SQLite] Initializing tables...');
 
-      // Run each CREATE statement in its own transaction for robustness
+      // Run each CREATE statement in its own transaction
       await dbInstance.transaction(async (tx) => {
         await tx.executeSql(`
           CREATE TABLE IF NOT EXISTS Events (
@@ -137,11 +138,9 @@ const upsertItems = async (
   dataColumn: string,
   items: any[],
 ) => {
-  // --- DEBUG LOG ---
   console.log(
     `[SQLite] Attempting to SAVE ${items.length} items to table [${table}]`,
   );
-  // --- END DEBUG LOG ---
 
   if (items.length === 0) return;
 
@@ -167,11 +166,9 @@ const upsertItems = async (
       }
     });
 
-    // --- DEBUG LOG ---
     console.log(
       `[SQLite] SUCCESSFULLY SAVED ${items.length} items to table [${table}]`,
     );
-    // --- END DEBUG LOG ---
   } catch (e) {
     console.error(`[SQLite] FAILED to SAVE items to table [${table}]:`, e);
   }
@@ -192,20 +189,16 @@ const getItems = async <T>(
       `SELECT ${dataColumn} FROM ${table}`,
     );
     if (results.rows.length === 0) {
-      // --- DEBUG LOG ---
       console.log(`[SQLite] GET query on table [${table}]: No data found.`);
-      // --- END DEBUG LOG ---
       return [];
     }
     const data = results.rows.raw().map((row) => JSON.parse(row[dataColumn]));
 
-    // --- DEBUG LOG ---
     console.log(
       `[SQLite] GET query on table [${table}]: Found ${
         data.length
       } items. Data: ${JSON.stringify(data, null, 2)}`,
     );
-    // --- END DEBUG LOG ---
 
     return data;
   } catch (e: any) {
@@ -239,59 +232,73 @@ export const saveTickets = (tickets: Ticket[]) =>
 export const getTickets = (): Promise<Ticket[]> =>
   getItems<Ticket>('Tickets', 'ticketData');
 
-// Favorites (Special handling for IDs)
+
 export const saveFavoriteIds = async (ids: number[]) => {
-  // --- DEBUG LOG ---
-  console.log(
-    `[SQLite] Attempting to SAVE ${ids.length} favorite IDs: [${ids.join(
-      ', ',
-    )}]`,
-  );
-  // --- END DEBUG LOG ---
+  if (isSavingFavorites) {
+    console.warn('[SQLite] Save already in progress, skipping.');
+    return;
+  }
+  isSavingFavorites = true;
+  console.log(`[SQLite] Saving ${ids.length} favorite IDs:`, ids);
 
   try {
-    await initDB(); // Ensure table exists
+    await initDB();
     const dbInstance = await getDB();
+    const numericIds = ids.map(id => Number(id)).filter(id => !isNaN(id));
+
+    // Clear table (Atomic Transaction)
     await dbInstance.transaction(async (tx) => {
       await tx.executeSql('DELETE FROM FavoriteEventIds');
-      if (ids.length > 0) {
-        const query = `INSERT OR REPLACE INTO FavoriteEventIds (id) VALUES ${ids
-          .map(() => '(?)')
-          .join(', ')};`;
-        await tx.executeSql(query, ids);
-      }
     });
 
-    // --- DEBUG LOG ---
-    console.log(`[SQLite] SUCCESSFULLY SAVED ${ids.length} favorite IDs.`);
-    // --- END DEBUG LOG ---
+    // Batch Insert (Loop OUTSIDE transaction, chunked)
+    // Matches the logic of upsertItems
+    if (numericIds.length > 0) {
+      const chunkSize = 50;
+      for (let i = 0; i < numericIds.length; i += chunkSize) {
+        const chunk = numericIds.slice(i, i + chunkSize);
+        
+        await dbInstance.transaction(async (tx) => {
+          const placeholders = chunk.map(() => '(?)').join(', ');
+          const query = `INSERT INTO FavoriteEventIds (id) VALUES ${placeholders}`;
+          await tx.executeSql(query, chunk);
+        });
+      }
+    }
+
+    //Verification
+    const [result] = await dbInstance.executeSql('SELECT count(*) as count FROM FavoriteEventIds');
+    console.log(`[SQLite] Favorite IDs saved. Count: ${result.rows.item(0).count}`);
+
   } catch (e) {
     console.error(`[SQLite] FAILED to SAVE favorite IDs:`, e);
+    throw e;
+  } finally {
+    isSavingFavorites = false;
   }
 };
+
 export const getFavoriteIds = async (): Promise<number[]> => {
   try {
-    await initDB(); // Ensure table exists
+    await initDB();
     const dbInstance = await getDB();
-    const [results] = await dbInstance.executeSql(
-      'SELECT id FROM FavoriteEventIds',
-    );
-    const ids = results.rows.raw().map((row) => row.id);
 
-    // --- DEBUG LOG ---
-    console.log(
-      `[SQLite] GET query on table [FavoriteEventIds]: Found ${
-        ids.length
-      } IDs. Data: [${ids.join(', ')}]`,
-    );
-    // --- END DEBUG LOG ---
+    // Similar to getItems structure
+    const [results] = await dbInstance.executeSql('SELECT id FROM FavoriteEventIds');
+    
+    const ids: number[] = [];
+    for (let i = 0; i < results.rows.length; i++) {
+      ids.push(results.rows.item(i).id);
+    }
 
+    console.log(`[SQLite] Loaded ${ids.length} favorite IDs from DB.`);
     return ids;
   } catch (e) {
     console.error(`[SQLite] FAILED to GET favorite IDs:`, e);
-    return []; // Return empty on failure
+    return [];
   }
 };
+
 
 /**
  * Gets a single event by its ID from the cache.
@@ -333,5 +340,52 @@ export const getEventById = async (
   } catch (e) {
     console.error(`[SQLite] FAILED to GET event ${eventId}:`, e);
     return null;
+  }
+};
+
+export const getEventsByIds = async (eventIds: number[]): Promise<Event[]> => {
+  if (!eventIds || eventIds.length === 0) return [];
+  
+  try {
+    await initDB();
+    const dbInstance = await getDB();
+    const eventsMap = new Map<number, Event>();
+    const placeholders = eventIds.map(() => '?').join(',');
+
+    console.log(`[SQLite] getEventsByIds: Searching for IDs: [${eventIds.join(',')}]`);
+
+    // Search in 'Events' (Public Cache)
+    const [publicResults] = await dbInstance.executeSql(
+      `SELECT eventData FROM Events WHERE id IN (${placeholders})`,
+      eventIds
+    );
+
+    for (let i = 0; i < publicResults.rows.length; i++) {
+      const event = JSON.parse(publicResults.rows.item(i).eventData);
+      eventsMap.set(event.id, event);
+    }
+
+    // Search in 'MyEvents' (Private Cache)
+    const missingIds = eventIds.filter(id => !eventsMap.has(id));
+    if (missingIds.length > 0) {
+      const myPlaceholders = missingIds.map(() => '?').join(',');
+      const [myResults] = await dbInstance.executeSql(
+        `SELECT eventData FROM MyEvents WHERE id IN (${myPlaceholders})`,
+        missingIds
+      );
+
+      for (let i = 0; i < myResults.rows.length; i++) {
+        const event = JSON.parse(myResults.rows.item(i).eventData);
+        eventsMap.set(event.id, event);
+      }
+    }
+
+    const foundEvents = Array.from(eventsMap.values());
+    console.log(`[SQLite] getEventsByIds: Returned ${foundEvents.length} / ${eventIds.length} events.`);
+    return foundEvents;
+
+  } catch (e) {
+    console.error(`[SQLite] FAILED to GET events by IDs:`, e);
+    return [];
   }
 };
