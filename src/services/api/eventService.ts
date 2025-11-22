@@ -23,7 +23,7 @@ export async function fetchEvents({
   category: string;
 }) {
   const isConnected = useNetworkStatus.getState().isConnected;
-  
+
   if (!isConnected) {
     // If offline, dont fetch. React Query will use the
     // (already hydrated) cache data and not even call this.
@@ -44,7 +44,7 @@ export async function fetchEvents({
 
   const result = data[0] || { events: [], total_count: 0 };
   const events: Event[] = (result.events || []).map(eventMapper);
-  
+
   // Insert to SQLite database
   if (pageParam === 1) {
     // If it's the first page, we replace the old events
@@ -54,7 +54,7 @@ export async function fetchEvents({
     const oldEvents = await sqliteService.getEvents();
     await sqliteService.saveEvents([...oldEvents, ...events]);
   }
-  
+
   return {
     events,
     totalCount: result.total_count,
@@ -64,24 +64,57 @@ export async function fetchEvents({
 
 /**
  * Fetches a batch of events by their IDs.
+ * Handles Offline Fallback & Caching
  */
 export async function fetchEventsByIds(eventIds: number[]): Promise<Event[]> {
   if (eventIds.length === 0) return [];
+
+  const isConnected = useNetworkStatus.getState().isConnected;
+
+  // Online: Fetch, Map, SAVE to SQLite, Return
+  if (isConnected) {
+    try {
+      console.log(`[eventService] Online. Fetching ${eventIds.length} events...`);
+      const { data, error } = await supabase.rpc('get_events_by_ids', {
+        event_ids: eventIds,
+      });
+      if (error) throw error;
+      
+      if (!data) return [];
+      
+      const events = data.map(eventMapper);
+      
+      // Save the details to SQLite so they exist offline
+      if (events.length > 0) {
+        console.log(`[eventService] Caching ${events.length} fetched events to SQLite...`);
+        await sqliteService.saveEvents(events);
+      }
+      
+      return events;
+    } catch (error) {
+      console.warn('[eventService] Network request failed. Falling back to cache.', error);
+      // Fall through to cache logic below
+    }
+  } else {
+    console.log(`[eventService] Offline. Skipping network fetch.`);
+  }
+
+  // 2. Offline (or Network Error): Read from SQLite
+  console.log(`[eventService] Fetching ${eventIds.length} events from SQLite cache...`);
+  const cachedEvents = await sqliteService.getEventsByIds(eventIds);
+  console.log(`[eventService] Found ${cachedEvents.length} events in cache.`);
   
-  const { data, error } = await supabase.rpc('get_events_by_ids', {
-    event_ids: eventIds,
-  });
-  if (error) throw error;
-  if (!data) return [];
-  return data.map(eventMapper);
+  return cachedEvents;
 }
 
+
 /**
- * Fetches a single event by its ID.
+ * [NETWORK ONLY] Fetches a single event by its ID.
  * This is for the EventDetailsScreen.
  */
-export async function fetchEventById(eventId: number): Promise<Event> {
-  // We assume cache hydration has already happened.
+async function fetchEventByIdFromNetwork(
+  eventId: number,
+): Promise<Event> {
   // This queryFn is now just for fetching fresh data.
   const { data, error } = await supabase.rpc('get_events_by_ids', {
     event_ids: [eventId],
@@ -91,73 +124,33 @@ export async function fetchEventById(eventId: number): Promise<Event> {
     throw new Error('Event not found');
   }
   const event = eventMapper(data[0]);
-  
+
   // Insert to SQLite database
   await sqliteService.saveEvents([event]); // Upsert this event
   return event;
 }
 
 /**
- * Performs a full delta-sync of the event cache.
- * This is the new, efficient sync logic.
+ * [CACHE] Gets a single event by ID.
+ * Fetches from the network if online, otherwise falls back to SQLite cache.
  */
-export async function syncEvents(
-  cachedEventIds: number[],
-  filters: { query: string; category: string },
-) {
-  const lastSyncTimestamp = await storageService.getItem<string>(
-    storageKeys.getEventsSyncKey(),
-  );
+export async function fetchEventById(eventId: number): Promise<Event> {
+  const isConnected = useNetworkStatus.getState().isConnected;
 
-  // Get updates and deletions for cached items
-  const { data: syncData, error: syncError } = await supabase.rpc(
-    'get_sync_data_for_cached_events',
-    {
-      p_event_ids: cachedEventIds,
-      p_last_updated: lastSyncTimestamp || '2000-01-01T00:00:00Z',
-    },
-  );
-  if (syncError) throw syncError;
+  if (isConnected) {
+    console.log(`[eventService] Online. Fetching event ${eventId} from network...`);
+    // If online, get from network (which also saves to SQLite)
+    return await fetchEventByIdFromNetwork(eventId);
+  }
 
-  const { updated_events, existing_ids } = syncData[0];
-  const updatedEvents: Event[] = (updated_events || []).map(eventMapper);
-  const existingIdsSet = new Set<number>(existing_ids || []);
-  const deletedEventIds = cachedEventIds.filter((id) => !existingIdsSet.has(id));
+  // If offline, attempt to get from cache
+  console.log(`[eventService] Offline. Fetching event ${eventId} from cache...`);
+  const cachedEvent = await sqliteService.getEventById(eventId);
 
-  // Get new (Page 1) items
-  const { data: newData, error: newError } = await supabase.rpc(
-    'get_paginated_events',
-    {
-      p_page: 1,
-      p_limit: EVENTS_PER_PAGE,
-      p_query: filters.query,
-      p_category: filters.category,
-      p_last_updated: lastSyncTimestamp || '2000-01-01T00:00:00Z',
-    },
-  );
-  if (newError) throw newError;
-  const newEvents: Event[] = (newData[0]?.events || []).map(eventMapper);
+  if (cachedEvent) {
+    return cachedEvent;
+  }
 
-  // Get the *true* total count
-  const { data: totalCount, error: countError } = await supabase.rpc(
-    'get_total_event_count',
-    {
-      p_query: filters.query,
-      p_category: filters.category,
-    },
-  );
-  if (countError) throw countError;
-
-  // Set the new sync timestamp
-  await storageService.setItem(
-    storageKeys.getEventsSyncKey(),
-    new Date().toISOString(),
-  );
-
-  return {
-    updatedEvents,
-    deletedEventIds,
-    newEvents,
-    totalCount: (totalCount as number) ?? 0,
-  };
+  // If offline AND not in cache, we must throw an error
+  throw new Error('You are offline and this event has not been cached.');
 }
