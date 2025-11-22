@@ -2,6 +2,7 @@ import storageService from './storageService';
 import { storageKeys } from '../utils/cache/storageKeys';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import { supabase } from '../lib/supabase';
+import { clearPrivateData } from './sqliteService';
 
 /**
  * [PRIVATE] A list of all user-specific cache key generators.
@@ -97,6 +98,8 @@ async function handleLogout(userId: string): Promise<void> {
   console.log('[AppCacheService] Handling logout procedures...');
   // Clear all non-sensitive cache data (tickets, favorites, etc.)
   await clearUserCache(userId);
+
+  await clearPrivateData();
 
   // Clear all sensitive data (auth tokens) from EncryptedStorage.
   // We call Supabase's signOut(), which in turn calls
