@@ -38,7 +38,6 @@ export async function purchaseTickets(
 ): Promise<Ticket[]> {
   const { data, error } = await supabase.rpc('purchase_tickets', {
     p_event_id: request.eventId,
-    p_user_id: (await supabase.auth.getSession()).data.session?.user.id,
     p_quantity: request.quantity,
     p_event_title: request.eventTitle,
     p_event_date: request.eventDate,
