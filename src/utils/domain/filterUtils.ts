@@ -35,27 +35,49 @@ function getFilteredLists<T, U extends { timestamp: number }>(
 }
 
 /**
- * Filters a list of Events into upcoming and past.
+ * Filters a list of Events into upcoming, past, and pending.
+ * Pending events are those where isApproved is false.
  * @param events The raw array of events.
  * @param now A timestamp (e.g., new Date().getTime())
- * @returns An object with { upcoming, past } arrays.
+ * @returns An object with { upcoming, past, pending } arrays.
  */
 export function filterEventsByDate(
   events: Event[],
   now: number
-): { upcoming: Event[]; past: Event[] } {
-  // Map ONCE to create a list with pre-calculated timestamps
-  const eventsWithTimestamp: EventWithTimestamp[] = events.map((event) => {
+): { upcoming: Event[]; past: Event[]; pending: Event[] } {
+  const upcomingWithTs: EventWithTimestamp[] = [];
+  const pastWithTs: EventWithTimestamp[] = [];
+  const pendingWithTs: EventWithTimestamp[] = [];
+
+  events.forEach((event) => {
     let timestamp = 0;
     try {
       timestamp = new Date(event.startTime).getTime();
     } catch (e) {
       console.error(`Invalid date for event ${event.id}: ${event.startTime}`);
     }
-    return { event, timestamp };
+
+    const item = { event, timestamp };
+
+    if (event.isApproved === false) {
+      pendingWithTs.push(item);
+    } else if (timestamp >= now) {
+      upcomingWithTs.push(item);
+    } else {
+      pastWithTs.push(item);
+    }
   });
 
-  return getFilteredLists(eventsWithTimestamp, now, (item) => item.event);
+  // Sort lists
+  upcomingWithTs.sort((a, b) => a.timestamp - b.timestamp); // Ascending (soonest first)
+  pastWithTs.sort((a, b) => b.timestamp - a.timestamp);     // Descending (most recent first)
+  pendingWithTs.sort((a, b) => b.timestamp - a.timestamp);  // Descending (newest submission first)
+
+  return {
+    upcoming: upcomingWithTs.map((i) => i.event),
+    past: pastWithTs.map((i) => i.event),
+    pending: pendingWithTs.map((i) => i.event),
+  };
 }
 
 /**
@@ -91,4 +113,3 @@ export function filterTicketsByDate(
 
   return getFilteredLists(ticketsWithTimestamp, now, (item) => item.ticket);
 }
-

@@ -173,6 +173,7 @@ export async function updateEvent(
     p_user_max_ticket_purchase:
       parseInt(formData.userMaxTicketPurchase, 10) || 10,
     p_is_closed: isClosed,
+    p_is_approved: false, // Mark as not approved on update
   });
 
   if (error) throw new Error(error.message);
