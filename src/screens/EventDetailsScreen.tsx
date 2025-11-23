@@ -16,9 +16,9 @@ import {
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import LinearGradient from 'react-native-linear-gradient';
 import { BlurView } from '@react-native-community/blur';
 import Icon from 'react-native-vector-icons/Ionicons';
+import LinearGradient from 'react-native-linear-gradient';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { formatFullDate, formatTime } from '../utils/formatters/dateFormatter';
 import { useAuth } from '../stores/auth-store';
@@ -195,20 +195,22 @@ export default function EventDetailsScreen() {
     );
   }
 
-  // --- FIX: Use default values to drive UI logic ---
   const availableSlot = event.availableSlot ?? 0;
   const userMaxPurchase = event.userMaxTicketPurchase ?? 0;
 
   const isSoldOut = availableSlot <= 0;
   const isEventClosed = event.isClosed === true;
+  const isPending = event.isApproved === false; // Check for pending status
   const remainingForUser = userMaxPurchase - userTicketsForEvent;
   const maxQuantity = Math.min(availableSlot, remainingForUser);
-  // --- END FIX ---
 
   let purchaseMessage = 'Buy Tickets';
   let isButtonDisabled = isBuying;
 
-  if (isSoldOut) {
+  if (isPending) {
+    purchaseMessage = 'Under Review';
+    isButtonDisabled = true;
+  } else if (isSoldOut) {
     purchaseMessage = 'Sold Out';
     isButtonDisabled = true;
   } else if (remainingForUser <= 0) {
@@ -253,6 +255,8 @@ export default function EventDetailsScreen() {
             colors={['transparent', 'rgba(0,0,0,0.8)']}
             style={styles.imageOverlay}
           />
+          
+          {/* Category Badge */}
           <View style={styles.categoryBadge}>
             <Text style={styles.categoryText}>{event.category}</Text>
           </View>
@@ -263,6 +267,14 @@ export default function EventDetailsScreen() {
           <Text style={styles.organizer}>
             Organized by {event.organizer?.fullName || 'Unknown User'}
           </Text>
+
+          {/* MOVED: Pending Badge is now here, under the organizer */}
+          {isPending && (
+            <View style={styles.pendingBadge}>
+              <Icon name="time-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
+              <Text style={styles.pendingText}>Under Review</Text>
+            </View>
+          )}
 
           <View style={styles.infoSection}>
             <View style={styles.infoRow}>
@@ -330,7 +342,8 @@ export default function EventDetailsScreen() {
       </ScrollView>
       <View style={styles.bottomSection}>
         
-        {!isEventClosed && !isSoldOut && remainingForUser > 0 && (
+        {/* Disable purchasing logic if Pending, Closed, Sold Out, or Limit Reached */}
+        {!isPending && !isEventClosed && !isSoldOut && remainingForUser > 0 && (
           <View style={styles.ticketSelector}>
             <Text style={styles.ticketLabel}>Tickets</Text>
             <View style={styles.quantitySelector}>
@@ -359,7 +372,7 @@ export default function EventDetailsScreen() {
           <View style={styles.priceInfo}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalPrice}>
-              {isSoldOut || remainingForUser <= 0
+              {isPending || isSoldOut || remainingForUser <= 0
                 ? '$ --'
                 : `$${((event.price ?? 0) * ticketQuantity).toFixed(2)}`}
             </Text>
@@ -376,11 +389,15 @@ export default function EventDetailsScreen() {
               <ActivityIndicator color="#fff" />
             ) : (
               <>
-                <Icon
-                  name={isSoldOut ? 'close-circle-outline' : 'ticket-outline'}
-                  size={20}
-                  color="#fff"
-                />
+                {isPending ? (
+                   <Icon name="time-outline" size={20} color="#fff" />
+                ) : (
+                   <Icon
+                    name={isSoldOut ? 'close-circle-outline' : 'ticket-outline'}
+                    size={20}
+                    color="#fff"
+                  />
+                )}
                 <Text style={styles.buyButtonText}>{purchaseMessage}</Text>
               </>
             )}
@@ -443,6 +460,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  // MODIFIED: Styles updated for inline positioning
+  pendingBadge: {
+    backgroundColor: '#f59e0b', // Amber/Orange color for pending
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start', // Aligns to the left, taking only needed width
+    marginBottom: 24, // Adds spacing below the badge
+  },
+  pendingText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   headerButtons: {
     flexDirection: 'row',
     gap: 12,
@@ -465,7 +498,7 @@ const styles = StyleSheet.create({
   organizer: {
     fontSize: 16,
     color: '#666',
-    marginBottom: 24,
+    marginBottom: 8, // Reduced margin to bring the badge closer
   },
   infoSection: {
     marginBottom: 32,
