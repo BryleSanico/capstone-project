@@ -1,18 +1,23 @@
 // src/components/ScreenHeader.tsx
 import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 interface ScreenHeaderProps {
   title: string;
   subtitle: string;
   rightContent?: React.ReactNode;
+  showBackButton?: boolean;
+  onBack?: () => void;
 }
 
 export default function ScreenHeader({
   title,
   subtitle,
   rightContent,
+  showBackButton,
+  onBack,
 }: ScreenHeaderProps) {
   return (
     <View style={styles.header}>
@@ -23,9 +28,16 @@ export default function ScreenHeader({
         end={{ x: 1, y: 1 }}
       >
         <View style={styles.headerContent}>
-          <View>
-            <Text style={styles.headerTitle}>{title}</Text>
-            <Text style={styles.headerSubtitle}>{subtitle}</Text>
+          <View style={styles.leftContainer}>
+            {showBackButton && (
+              <TouchableOpacity onPress={onBack} style={styles.backButton} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+                <Icon name="arrow-back" size={24} color="#fff" />
+              </TouchableOpacity>
+            )}
+            <View>
+              <Text style={styles.headerTitle}>{title}</Text>
+              <Text style={styles.headerSubtitle}>{subtitle}</Text>
+            </View>
           </View>
           {/* If rightContent is provided, render it */}
           {rightContent ? rightContent : <View style={styles.placeholder} />}
@@ -64,6 +76,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  leftContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  backButton: {
+    marginRight: 12,
+    padding: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
   },
   headerTitle: {
     fontSize: 28,
