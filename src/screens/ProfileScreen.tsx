@@ -26,11 +26,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../stores/auth-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppCacheService } from '../services/AppCacheService';
-
-// --- NEW IMPORTS ---
 import { useTicketsQuery } from '../hooks/useTickets';
 import { useFavoritesQuery } from '../hooks/useFavorites';
-// --- END NEW IMPORTS ---
+import { useUnreadCountQuery } from '../hooks/useNotifications';
 
 // Define the types for route and navigation
 type ProfileScreenNavigationProp = CompositeNavigationProp<
@@ -43,11 +41,9 @@ export default function ProfileScreen() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { user, signOut } = useAuth();
 
-  // --- USE REACT QUERY ---
-  // We get the data and default to an empty array
   const { data: tickets = [] } = useTicketsQuery();
   const { data: favoriteEventIds = [] } = useFavoritesQuery();
-  // --- END REACT QUERY ---
+  const { data: unreadCount = 0 } = useUnreadCountQuery();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -113,16 +109,15 @@ export default function ProfileScreen() {
   };
 
   const menuItems: MenuItem[] = [
-    {
+        {
       icon: { name: 'bell-o', library: 'FontAwesome' },
       title: 'Notifications',
-      subtitle: 'Manage your event reminders',
-      onPress: () => console.log('Notifications'),
+      subtitle: unreadCount > 0 ? `${unreadCount} new updates` : 'Manage your event reminders',
+      onPress: () => navigation.navigate('Notifications'),
     },
     {
       icon: { name: 'heart-o', library: 'FontAwesome' },
       title: 'Favorite Events',
-      // --- UPDATED ---
       subtitle: `${favoriteEventIds.length} events saved`,
       onPress: () => navigation.navigate('Favorites'),
     },
