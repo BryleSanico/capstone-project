@@ -6,6 +6,7 @@ import * as sqliteService from '../services/sqliteService';
 import { ticketsQueryKey } from './useTickets';
 import { favoritesQueryKey } from './useFavorites';
 import { myEventsQueryKey } from './useMyEvents';
+import { eventsQueryKey } from './useEvents';
 
 /**
  * Manages the synchronization of user-specific data (Tickets, MyEvents, Favorites).
@@ -64,10 +65,30 @@ export function useUserDataSync(isPublicCacheHydrated: boolean) {
       }
     };
 
-    const handleLogout = () => {
-      console.log('[UserDataSync] User logged out. Clearing caches.');
-      queryClient.clear();
-      sqliteService.clearPrivateData();
+    const handleLogout = async () => {
+      console.log('[UserDataSync] User logged out. Clearing user-specific caches.');
+
+      // Cancel any outgoing refetches to prevent race conditions
+      await queryClient.cancelQueries();
+
+      // Surgically remove ONLY private user data
+      // We DO NOT clear 'events' (public data), so DiscoverScreen stays populated.
+      queryClient.removeQueries({ queryKey: ticketsQueryKey });
+      queryClient.removeQueries({ queryKey: favoritesQueryKey });
+      queryClient.removeQueries({ queryKey: myEventsQueryKey });
+      
+      // Remove Admin & Notification keys (using string literals to avoid circular deps)
+      queryClient.removeQueries({ queryKey: ['admin'] });
+      queryClient.removeQueries({ queryKey: ['notifications'] });
+      
+      // Clear Private Data from SQLite (Security)
+      await sqliteService.clearPrivateData();
+
+      // Invalidate public events not showing stale data
+      // This triggers a background refetch on DiscoverScreen without showing a hard loading state
+      queryClient.invalidateQueries({ queryKey: eventsQueryKey });
+      
+      console.log('[UserDataSync] Logout cleanup complete.');
     };
 
     if (!hasAuthBeenInitialized.current) {
