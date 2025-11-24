@@ -1,8 +1,6 @@
 import { supabase } from '../../lib/supabase';
 import { Event } from '../../types/event';
 import { eventMapper } from '../../utils/mappers/eventMapper';
-import storageService from '../../services/storageService';
-import { storageKeys } from '../../utils/cache/storageKeys';
 import * as sqliteService from '../sqliteService';
 import { useNetworkStatus } from '../../stores/network-store';
 

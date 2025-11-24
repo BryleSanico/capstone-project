@@ -1,4 +1,3 @@
-// src/types/navigation.ts
 import { Ticket } from './ticket';
 import { Event } from './event';
 
@@ -39,7 +38,7 @@ export type TabItem = {
   count: number;
 };
 
-// --- Helper types for memoized filtering ---
+// Helper types for memoized filtering
 
 /**
  * A helper type to hold a Ticket and its pre-calculated timestamp
