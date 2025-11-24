@@ -57,19 +57,34 @@ export default function MyEventsScreen() {
     });
   }, [navigation]);
 
-  const { upcoming: upcomingEvents, past: pastEvents } = useMemo(() => {
+  const { upcoming: upcomingEvents, past: pastEvents, pending: pendingEvents } = useMemo(() => {
     const now = new Date().getTime();
     return filterEventsByDate(myEvents, now);
   }, [myEvents]);
 
-  const dataForList =
-    selectedTab === TAB_KEYS.UPCOMING ? upcomingEvents : pastEvents;
+  const dataForList = useMemo(() => {
+    switch (selectedTab) {
+      case TAB_KEYS.UPCOMING:
+        return upcomingEvents;
+      case TAB_KEYS.PAST:
+        return pastEvents;
+      case TAB_KEYS.PENDING:
+        return pendingEvents;
+      default:
+        return upcomingEvents;
+    }
+  }, [selectedTab, upcomingEvents, pastEvents, pendingEvents]);
 
   const tabs: TabItem[] = [
     {
       key: TAB_KEYS.UPCOMING,
       title: TAB_CONFIG[TAB_KEYS.UPCOMING].title,
       count: upcomingEvents.length,
+    },
+    {
+      key: TAB_KEYS.PENDING,
+      title: TAB_CONFIG[TAB_KEYS.PENDING].title,
+      count: pendingEvents.length,
     },
     {
       key: TAB_KEYS.PAST,
@@ -118,25 +133,32 @@ export default function MyEventsScreen() {
     });
   };
 
-  const renderEmptyList = () => (
-    <EmptyState
-      icon={
-        selectedTab === TAB_KEYS.UPCOMING
-          ? 'calendar-outline'
-          : 'checkmark-done-outline'
-      }
-      title={
-        selectedTab === TAB_KEYS.UPCOMING
-          ? 'No Upcoming Events'
-          : 'No Past Events'
-      }
-      message={
-        selectedTab === TAB_KEYS.UPCOMING
-          ? 'You have no events scheduled for the future.'
-          : 'You have no completed events.'
-      }
-    />
-  );
+  const renderEmptyList = () => {
+    let icon = 'calendar-outline';
+    let title = 'No Events Found';
+    let message = "You haven't organized any events yet.";
+
+    if (selectedTab === TAB_KEYS.UPCOMING) {
+      title = 'No Upcoming Events';
+      message = 'You have no approved events scheduled for the future.';
+    } else if (selectedTab === TAB_KEYS.PENDING) {
+      icon = 'time-outline';
+      title = 'No Pending Events';
+      message = 'All your events have been approved or you haven\'t submitted any recently.';
+    } else if (selectedTab === TAB_KEYS.PAST) {
+      icon = 'checkmark-done-outline';
+      title = 'No Past Events';
+      message = 'You have no completed events.';
+    }
+
+    return (
+      <EmptyState
+        icon={icon}
+        title={title}
+        message={message}
+      />
+    );
+  };
 
   if (isLoading) {
     return (
