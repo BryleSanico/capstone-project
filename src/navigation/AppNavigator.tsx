@@ -12,6 +12,7 @@ import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
 import EventFormScreen from "../screens/EventFormScreen";
+import NotificationScreen from "../screens/NotificationScreen";
 
 // This is the heart of your type-safe navigation
 export type RootStackParamList = {
@@ -22,6 +23,7 @@ export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   EventForm: { eventId?: number };
+  Notifications: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -44,6 +46,7 @@ export default function AppNavigator() {
       <Stack.Screen name="Register" component={RegisterScreen} />
 
       <Stack.Screen name="EventForm" component={EventFormScreen} />
+      <Stack.Screen name="Notifications" component={NotificationScreen} />
     </Stack.Navigator>
   );
 }

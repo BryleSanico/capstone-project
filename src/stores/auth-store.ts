@@ -3,20 +3,22 @@ import { supabase } from "../lib/supabase";
 import { AuthError, Session, User } from "@supabase/supabase-js";
 import { AppCacheService } from "../services/AppCacheService";
 import { notificationService } from "../services/notificationService";
+import { UserRole } from "../types/user";
 
 type AuthState = {
   session: Session | null;
   user: User | null;
+  role: UserRole; 
   isInitialized: boolean;
   initialize: () => () => void; // Returns the unsubscribe function
   signInWithPassword: (
     email: string,
-    pass: string,
+    pass: string
   ) => Promise<{ error: AuthError | null }>;
   signUp: (
     fullName: string,
     email: string,
-    pass: string,
+    pass: string
   ) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
 };
@@ -24,7 +26,8 @@ type AuthState = {
 export const useAuth = create<AuthState>((set, get) => ({
   session: null,
   user: null,
-  isInitialized: false, // Start as false
+  role: "user", 
+  isInitialized: false,
 
   initialize: () => {
     console.log("[Auth] Initializing auth listener...");
@@ -33,22 +36,23 @@ export const useAuth = create<AuthState>((set, get) => ({
       async (_event, session) => {
         console.log("[Auth] Auth state changed:", _event);
 
+        // Extract role from metadata (default to 'user')
+        const rawRole = session?.user?.app_metadata?.role;
+        const role: UserRole =
+          rawRole === "admin" || rawRole === "super_admin" ? rawRole : "user";
+
         set({
           session,
           user: session?.user ?? null,
+          role,
           isInitialized: true,
         });
 
         if (session?.user) {
-          console.log("[Auth] User session found. Initializing services...");
-          // Initialize notification service for the user
+          // Initialize notification service
           await notificationService.initialize(session.user.id);
-        } else {
-          // NOTE:
-          // All data is cleared by the effect in App.tsx
-          // which watches for `user` to become null.
         }
-      },
+      }
     );
 
     return () => {
@@ -92,7 +96,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       set({ session: null, user: null });
     } catch (error) {
       console.error("[Auth] Unexpected error during sign out:", error);
-      set({ session: null, user: null });
+      set({ session: null, user: null, role: "user" });
     }
   },
 }));

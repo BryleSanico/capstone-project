@@ -1,4 +1,3 @@
-// src/types/navigation.ts
 import { Ticket } from './ticket';
 import { Event } from './event';
 
@@ -9,6 +8,7 @@ import { Event } from './event';
 export const TAB_KEYS = {
   UPCOMING: 'upcoming',
   PAST: 'past',
+  PENDING: 'pending',
 } as const;
 
 export type TabKey = (typeof TAB_KEYS)[keyof typeof TAB_KEYS];
@@ -24,6 +24,9 @@ export const TAB_CONFIG = {
   [TAB_KEYS.PAST]: {
     title: 'Past',
   },
+  [TAB_KEYS.PENDING]: {
+    title: 'Pending',
+  },
 };
 
 /**
@@ -35,7 +38,7 @@ export type TabItem = {
   count: number;
 };
 
-// --- Helper types for memoized filtering ---
+// Helper types for memoized filtering
 
 /**
  * A helper type to hold a Ticket and its pre-calculated timestamp
@@ -53,4 +56,3 @@ export type EventWithTimestamp = {
   event: Event;
   timestamp: number;
 };
-
