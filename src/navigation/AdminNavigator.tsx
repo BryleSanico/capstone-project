@@ -35,10 +35,7 @@ export default function AdminNavigator() {
       <Stack.Screen
         name="AdminLogs"
         component={AdminLogsScreen}
-        options={{
-          title: "Audit Logs",
-          headerTintColor: "black",
-        }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
