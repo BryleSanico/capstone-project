@@ -9,7 +9,6 @@ import {
   Modal,
   ScrollView,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Loader } from "../../components/LazyLoaders/loader";
 import { useAdminLogs } from "../../hooks/useAdmin";
@@ -20,8 +19,15 @@ import {
 import { AdminLog } from "../../types/admin";
 import { EmptyState } from "../../components/ui/Errors/EmptyState";
 import { formatRelativeTime } from "../../utils/formatters/relativeTimeFormatter";
+import ScreenHeader from "../../components/ui/ScreenHeader";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "@/src/navigation/AppNavigator";
+
+type AdminLogsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function AdminLogsScreen() {
+  const navigation = useNavigation<AdminLogsScreenNavigationProp>();
   const { data: logs = [], isLoading, refetch, isRefetching } = useAdminLogs();
   const [selectedLog, setSelectedLog] = useState<AdminLog | null>(null);
 
@@ -52,8 +58,30 @@ export default function AdminLogsScreen() {
     }
   };
 
+  // Helper to split details into message and reason
+  const parseLogDetails = (details: string) => {
+    const reasonMarker = "Reason: ";
+    const noteMarker = "Note: "; // Fallback for old logs
+
+    let markerIndex = details.indexOf(reasonMarker);
+    if (markerIndex === -1) markerIndex = details.indexOf(noteMarker);
+
+    if (markerIndex !== -1) {
+      const mainMessage = details.substring(0, markerIndex).trim();
+      // Allow for either "Reason: " or "Note: " length
+      const markerLength = details.includes(reasonMarker)
+        ? reasonMarker.length
+        : noteMarker.length;
+      const reason = details.substring(markerIndex + markerLength).trim();
+      return { mainMessage, reason };
+    }
+
+    return { mainMessage: details, reason: null };
+  };
+
   const renderLogItem = ({ item }: { item: AdminLog }) => {
     const config = getActionConfig(item.action_type);
+    const { mainMessage } = parseLogDetails(item.details); // Only show main message in list
 
     return (
       <TouchableOpacity
@@ -80,40 +108,18 @@ export default function AdminLogsScreen() {
           </Text>
         </View>
 
-        <Text style={styles.detailsText} numberOfLines={3}>
-          {item.details}
+        <Text style={styles.detailsText} numberOfLines={2}>
+          {mainMessage}
         </Text>
 
         <View style={styles.adminRow}>
           <Icon name="person-circle-outline" size={16} color="#9ca3af" />
           <Text style={styles.adminName}>
-            By:{" "}
-            {item.admin_name || item.admin_email?.split("@")[0] || "Unknown"}
+            By {item.admin_name || item.admin_email?.split("@")[0] || "Unknown"}
           </Text>
         </View>
       </TouchableOpacity>
     );
-  };
-
-  // Helper to split details into message and reason
-  const parseLogDetails = (details: string) => {
-    const reasonMarker = "Reason: ";
-    const noteMarker = "Note: "; // Fallback for old logs
-
-    let markerIndex = details.indexOf(reasonMarker);
-    if (markerIndex === -1) markerIndex = details.indexOf(noteMarker);
-
-    if (markerIndex !== -1) {
-      const mainMessage = details.substring(0, markerIndex).trim();
-      // Allow for either "Reason: " or "Note: " length
-      const markerLength = details.includes(reasonMarker)
-        ? reasonMarker.length
-        : noteMarker.length;
-      const reason = details.substring(markerIndex + markerLength).trim();
-      return { mainMessage, reason };
-    }
-
-    return { mainMessage: details, reason: null };
   };
 
   if (isLoading) {
@@ -123,14 +129,19 @@ export default function AdminLogsScreen() {
       </View>
     );
   }
-
+  
   // Parse details for the selected log only when rendering the modal
   const parsedDetails = selectedLog
     ? parseLogDetails(selectedLog.details)
     : { mainMessage: "", reason: null };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <ScreenHeader
+        title="Audit Logs"
+        subtitle="History of admin actions"
+        showBackButton={true}
+        onBack={() => navigation.goBack()}/>
       {/* List */}
       {logs.length === 0 ? (
         <EmptyState
@@ -233,7 +244,7 @@ export default function AdminLogsScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
