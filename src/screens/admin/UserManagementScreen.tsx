@@ -8,12 +8,13 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
+  Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Loader } from "../../components/LazyLoaders/loader";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useAuth } from "../../stores/auth-store";
 import { useAllUsers, useUpdateUserRole } from "../../hooks/useAdmin";
+import ScreenHeader from "../../components/ui/ScreenHeader";
 
 export default function UserManagementScreen() {
   const { user: currentUser } = useAuth();
@@ -101,9 +102,8 @@ export default function UserManagementScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.headerTitle}>User Management</Text>
-      <Text style={styles.subtitle}>Super Admin Privilege</Text>
+    <View style={styles.container}>
+      <ScreenHeader title="User Management" subtitle="Manage permissions and roles" />
 
       <FlatList
         data={users}
@@ -123,12 +123,15 @@ export default function UserManagementScreen() {
           <ActivityIndicator color="#6366f1" />
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
+  container: {
+    flex: 1,
+    backgroundColor: Platform.OS === "ios" ? "#f8f9fa" : "#e1e1e8ff",
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: "bold",

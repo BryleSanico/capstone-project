@@ -16,7 +16,7 @@ import {
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Loader } from '../components/LazyLoaders/loader';
 import { EmptyState } from '../components/ui/Errors/EmptyState';
-import MyEventCard from '../components/ui/Cards/MyEventCard';
+import ActionableEventCard from '../components/ui/Cards/ActionableEventCard';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { TabParamList } from '../navigation/TabNavigator';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -193,7 +193,7 @@ export default function MyEventsScreen() {
           data={dataForList}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <MyEventCard
+            <ActionableEventCard
               event={item}
               onPress={() => handleEventPress(item.id)}
               onEdit={() => handleEditPress(item.id)}
