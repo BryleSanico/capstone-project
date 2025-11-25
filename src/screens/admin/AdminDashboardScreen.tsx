@@ -6,30 +6,56 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Loader } from "../../components/LazyLoaders/loader";
 import { useAuth } from "../../stores/auth-store";
-import { useAdminStats } from "../../hooks/useAdmin";
+import { useAdminStats, useAdminLogs } from "../../hooks/useAdmin";
+import { StatCard } from "../../components/ui/Cards/StatCard";
+import { RecentLogsCard } from "../../components/ui/Cards/RecentLogsCard";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { AdminStackParamList } from "../../navigation/AdminNavigator";
+
+type AdminDashboardNavigationProp =
+  NativeStackNavigationProp<AdminStackParamList>;
 
 export default function AdminDashboardScreen() {
+  const navigation = useNavigation<AdminDashboardNavigationProp>();
   const { user, role, signOut } = useAuth();
 
-  // REACT QUERY DATA FETCHING
-  const { data: stats, isLoading, refetch, isRefetching } = useAdminStats();
+  // Fetch Stats
+  const {
+    data: stats,
+    isLoading: isLoadingStats,
+    refetch: refetchStats,
+    isRefetching: isRefetchingStats,
+  } = useAdminStats();
 
-  const StatCard = ({ title, value, icon, color }: any) => (
-    <View style={styles.statCard}>
-      <View style={[styles.iconBg, { backgroundColor: `${color}20` }]}>
-        <Icon name={icon} size={24} color={color} />
-      </View>
-      <View>
-        <Text style={styles.statValue}>{value ?? "-"}</Text>
-        <Text style={styles.statTitle}>{title}</Text>
-      </View>
-    </View>
-  );
+  // Fetch Recent Logs
+  const {
+    data: logs = [],
+    isLoading: isLoadingLogs,
+    refetch: refetchLogs,
+    isRefetching: isRefetchingLogs,
+  } = useAdminLogs();
+
+  const handleRefresh = () => {
+    refetchStats();
+    refetchLogs();
+  };
+
+  const handleLogout = () => {
+    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Sign Out", style: "destructive", onPress: () => signOut() },
+    ]);
+  };
+
+  const isLoading = isLoadingStats || isLoadingLogs;
+  const isRefetching = isRefetchingStats || isRefetchingLogs;
 
   if (isLoading) {
     return (
@@ -40,22 +66,27 @@ export default function AdminDashboardScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
-            onRefresh={refetch}
+            onRefresh={handleRefresh}
             tintColor="#6366f1"
           />
         }
       >
-        <View style={styles.header}>
-          <Text style={styles.greeting}>
-            Hello, {role === "super_admin" ? "Super Admin" : "Admin"}
-          </Text>
-          <Text style={styles.name}>{user?.user_metadata.full_name}</Text>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.greeting}>
+              Hello, {role === "super_admin" ? "Super Admin" : "Admin"}
+            </Text>
+            <Text style={styles.name}>{user?.user_metadata.full_name}</Text>
+          </View>
+          <TouchableOpacity style={styles.logoutIconBtn} onPress={handleLogout}>
+            <Icon name="log-out-outline" size={24} color="#ef4444" />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.grid}>
@@ -85,10 +116,11 @@ export default function AdminDashboardScreen() {
           />
         </View>
 
-        <TouchableOpacity style={styles.logoutBtn} onPress={() => signOut()}>
-          <Icon name="log-out-outline" size={20} color="#ef4444" />
-          <Text style={styles.logoutText}>Sign Out</Text>
-        </TouchableOpacity>
+        {/* New Logs Card */}
+        <RecentLogsCard
+          logs={logs}
+          onShowAll={() => navigation.navigate("AdminLogs")}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -96,8 +128,20 @@ export default function AdminDashboardScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f8f9fa" },
-  content: { padding: 20 },
-  header: { marginBottom: 24 },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f8f9fa",
+  },
+  content: { padding: 20, paddingBottom: 40 },
+
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 24,
+  },
   greeting: {
     fontSize: 14,
     color: "#6b7280",
@@ -105,42 +149,12 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   name: { fontSize: 24, fontWeight: "bold", color: "#1f2937" },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
-  statCard: {
-    width: "47%",
-    backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-    marginBottom: 8,
-  },
-  iconBg: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  statValue: { fontSize: 20, fontWeight: "700", color: "#111827" },
-  statTitle: { fontSize: 13, color: "#6b7280", marginTop: 4 },
-  logoutBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 40,
-    padding: 16,
-    borderRadius: 12,
+
+  logoutIconBtn: {
+    padding: 8,
     backgroundColor: "#fee2e2",
+    borderRadius: 12,
   },
-  logoutText: { color: "#ef4444", fontWeight: "600", marginLeft: 8 },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f8f9fa",
-  },
+
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 16, marginBottom: 24 },
 });
