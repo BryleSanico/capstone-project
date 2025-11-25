@@ -1,60 +1,35 @@
-import React from "react";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import Icon from "react-native-vector-icons/Ionicons";
-import AdminDashboardScreen from "../screens/admin/AdminDashboardScreen";
-import EventApprovalsScreen from "../screens/admin/EventApprovalsScreen";
-import UserManagementScreen from "../screens/admin/UserManagementScreen";
-import { useAuth } from "../stores/auth-store";
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { NavigatorScreenParams } from '@react-navigation/native';
 
-const Tab = createBottomTabNavigator();
+// Screens
+import EventDetailsScreen from '../screens/EventDetailsScreen';
+import AdminTabNavigator, { AdminTabParamList } from './AdminTabNavigator';
 
+// Types
+export type AdminStackParamList = {
+  AdminTabs: NavigatorScreenParams<AdminTabParamList>;
+  EventDetails: { id: number; initialIsFavorite: boolean };
+};
+
+const Stack = createNativeStackNavigator<AdminStackParamList>();
+
+// Main Admin Stack (Wraps Tabs + Details)
 export default function AdminNavigator() {
-  const { role } = useAuth();
-
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: "#6366f1",
-        tabBarInactiveTintColor: "#9ca3af",
-        tabBarStyle: {
-          paddingTop: 8,
-          paddingBottom: 8,
-          paddingLeft: 15,
-          paddingRight: 15,
-          height: 75,
-        },
-      }}
-    >
-      <Tab.Screen
-        name="Dashboard"
-        component={AdminDashboardScreen}
+    <Stack.Navigator screenOptions={{ headerBackTitle: 'Back' }}>
+      <Stack.Screen 
+        name="AdminTabs" 
+        component={AdminTabNavigator} 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="EventDetails" 
+        component={EventDetailsScreen} 
         options={{
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="stats-chart" size={size} color={color} />
-          ),
+          headerTintColor: 'black', 
         }}
       />
-      <Tab.Screen
-        name="Approvals"
-        component={EventApprovalsScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="checkmark-done-circle" size={size} color={color} />
-          ),
-        }}
-      />
-      {role === "super_admin" && (
-        <Tab.Screen
-          name="Users"
-          component={UserManagementScreen}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <Icon name="people" size={size} color={color} />
-            ),
-          }}
-        />
-      )}
-    </Tab.Navigator>
+    </Stack.Navigator>
   );
 }
