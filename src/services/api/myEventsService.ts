@@ -1,11 +1,11 @@
 import { supabase } from "../../lib/supabase";
 import { Event, EventFormData } from "../../types/event";
+import { getCurrentSession } from "../../utils/system/sessionHelper";
 import { eventMapper } from "../../utils/mappers/eventMapper";
 import { Asset } from "react-native-image-picker";
 import { toByteArray } from "react-native-quick-base64";
 import { combineDateTime, parseTags } from "../../utils/domain/eventDataHelper";
 import * as sqliteService from "../sqliteService";
-import { useAuth } from "../../stores/auth-store";
 
 const BUCKET_NAME = "event-images";
 
@@ -95,7 +95,7 @@ export async function createEvent(
   formData: EventFormData,
   imageAsset: Asset | null
 ): Promise<Event> {
-  const session = useAuth();
+  const session = await getCurrentSession();
   const userId = session?.user?.id;
   if (!userId) throw new Error("User must be logged in.");
   if (!imageAsset) throw new Error("Event image is required.");
@@ -140,7 +140,7 @@ export async function updateEvent(
   imageAsset: Asset | null,
   isClosed: boolean
 ): Promise<Event> {
-  const session = useAuth();
+  const session = await getCurrentSession();
   const userId = session?.user?.id;
   if (!userId) throw new Error("User must be logged in.");
 
