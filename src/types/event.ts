@@ -14,11 +14,13 @@ export interface Event {
   capacity: number;
   attendees: number;
   tags: string[];
+  createdAt?: string;
   updatedAt?: string;
   availableSlot: number;
   userMaxTicketPurchase: number;
   isClosed: boolean;
   isApproved: boolean
+  isUpdate?: boolean;
 }
 
 // Represents the data captured by the Event form screen
