@@ -1,50 +1,7 @@
 import storageService from './storageService';
-import { storageKeys } from '../utils/cache/storageKeys';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import { supabase } from '../lib/supabase';
 import { clearPrivateData } from './sqliteService';
-
-/**
- * [PRIVATE] A list of all user-specific cache key generators.
- * This is the single source of truth for what data belongs to a user.
- */
-const userCacheKeys = [
-  storageKeys.getTicketsCacheKey,
-  storageKeys.getTicketsSyncKey,
-  storageKeys.getFavoritesIdsKey,
-  storageKeys.getFavoritesSyncKey,
-  storageKeys.getMyEventsCacheKey,
-];
-
-/**
- * Clears all user-specific data from standard AsyncStorage.
- * This is called on logout to ensure no data leaks between sessions.
- *
- * @param userId The ID of the user logging out.
- */
-async function clearUserCache(userId: string): Promise<void> {
-  if (!userId) return;
-
-  console.log(`[AppCacheService] Clearing user-specific cache for user ${userId}...`);
-
-  // Generate all keys specific to this user
-  const keysToRemove = userCacheKeys.map((keyGen) => keyGen(userId));
-
-  // Remove them all in parallel
-  try {
-    await Promise.all(
-      keysToRemove.map((key) => storageService.removeItem(key))
-    );
-    console.log(
-      `[AppCacheService] Successfully cleared ${keysToRemove.length} user cache items.`
-    );
-  } catch (error) {
-    console.error(
-      '[AppCacheService] Failed to clear user cache:',
-      error
-    );
-  }
-}
 
 /**
  * Clears all non-sensitive app cache data from AsyncStorage.
@@ -97,12 +54,10 @@ async function clearAllSecureStorage(): Promise<void> {
 async function handleLogout(userId: string): Promise<void> {
   console.log('[AppCacheService] Handling logout procedures...');
   // Clear all non-sensitive cache data (tickets, favorites, etc.)
-  await clearUserCache(userId);
-
   await clearPrivateData();
 
   // Clear all sensitive data (auth tokens) from EncryptedStorage.
-  // We call Supabase's signOut(), which in turn calls
+  // Call Supabase's signOut(), which in turn calls
   // storageAdapter.removeItem() for all its keys.
 
   const response = await supabase.auth.signOut();
@@ -115,7 +70,6 @@ async function handleLogout(userId: string): Promise<void> {
 }
 
 export const AppCacheService = {
-  clearUserCache,
   clearAllAppCaches,
   clearAllSecureStorage,
   handleLogout,

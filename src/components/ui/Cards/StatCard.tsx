@@ -11,8 +11,8 @@ interface StatCardProps {
 
 export const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color }) => (
   <View style={styles.statCard}>
-    <View style={[styles.iconBg, { backgroundColor: `${color}20` }]}>
-      <Icon name={icon} size={24} color={color} />
+    <View style={[styles.iconBg]}>
+      <Icon name={icon} size={60} color={color} />
     </View>
     <View>
       <Text style={styles.statValue}>{value ?? '-'}</Text>
@@ -32,23 +32,26 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
     marginBottom: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconBg: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 80,
+    height: 80,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 0,
   },
   statValue: {
     fontSize: 20,
     fontWeight: '700',
     color: '#111827',
+    textAlign: 'center',
   },
   statTitle: {
     fontSize: 13,
     color: '#6b7280',
     marginTop: 4,
+        textAlign: 'center',
   },
 });

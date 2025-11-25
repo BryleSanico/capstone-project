@@ -47,5 +47,6 @@ export const eventMapper = (item: any): Event => {
     userMaxTicketPurchase: item.user_max_ticket_purchase,
     isClosed: item.is_closed ?? false,
     isApproved: item.is_approved ?? false,
+    isUpdate: item.is_update ?? false,
   };
 };

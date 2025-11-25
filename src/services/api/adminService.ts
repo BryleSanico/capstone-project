@@ -1,8 +1,8 @@
 import { supabase } from '../../lib/supabase';
 import { eventMapper } from '../../utils/mappers/eventMapper';
 import { Event } from '../../types/event';
-import { UserRole } from '../../types/user';
-import { AdminStats, AdminUser } from '../../types/admin';
+import { UserRole } from '../../types/user'; 
+import { AdminLog, AdminStats, AdminUser } from '../../types/admin';
 
 export const adminService = {
   /**
@@ -25,28 +25,22 @@ export const adminService = {
         console.error('[AdminService] RPC Error:', error);
         throw error;
     }
-
-    // Safety check: Ensure data is an array before mapping
-    const safeData = data || [];
-
-    return safeData.map((raw: any) => eventMapper(raw));
+    return (data || []).map(eventMapper);
   },
 
-  /**
-   * Approves an event, making it live.
-   */
   async approveEvent(eventId: number): Promise<void> {
     const { error } = await supabase.rpc('admin_approve_event', { p_event_id: eventId });
     if (error) throw error;
   },
-
+  
   /**
    * Rejects an event with a reason message.
    */
-  async rejectEvent(eventId: number, reason: string): Promise<void> {
+  async rejectEvent(eventId: number, reason: string, hardDelete: boolean): Promise<void> {
     const { error } = await supabase.rpc('admin_reject_event', { 
         p_event_id: eventId,
-        p_reason: reason
+        p_reason: reason,
+        p_hard_delete: hardDelete
     });
     if (error) throw error;
   },
@@ -69,5 +63,14 @@ export const adminService = {
       p_role: newRole,
     });
     if (error) throw error;
-  }
+  },
+
+  /**
+   * Fetches admin logs.
+   */
+    async getLogs(): Promise<AdminLog[]> {
+    const { data, error } = await supabase.rpc('get_admin_logs');
+    if (error) throw error;
+    return data as AdminLog[];
+  },
 };

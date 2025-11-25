@@ -18,3 +18,13 @@ export interface AdminUser {
   role: UserRole; 
   created_at: string;
 }
+
+export interface AdminLog {
+  id: number;
+  admin_email: string;
+  admin_name: string | null;
+  action_type: 'APPROVE_EVENT' | 'REJECT_DELETE' | 'REJECT_REVISION' | 'PROMOTE_USER';
+  target_id: string;
+  details: string;
+  created_at: string;
+}

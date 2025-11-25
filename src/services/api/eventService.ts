@@ -97,7 +97,7 @@ export async function fetchEventsByIds(eventIds: number[]): Promise<Event[]> {
     console.log(`[eventService] Offline. Skipping network fetch.`);
   }
 
-  // 2. Offline (or Network Error): Read from SQLite
+  // Offline (or Network Error): Read from SQLite
   console.log(`[eventService] Fetching ${eventIds.length} events from SQLite cache...`);
   const cachedEvents = await sqliteService.getEventsByIds(eventIds);
   console.log(`[eventService] Found ${cachedEvents.length} events in cache.`);
@@ -123,8 +123,10 @@ async function fetchEventByIdFromNetwork(
   }
   const event = eventMapper(data[0]);
 
-  // Insert to SQLite database
+  // Insert to SQLite database IMMEDIATELY
   await sqliteService.saveEvents([event]); // Upsert this event
+  console.log(`[eventService] Updated SQLite cache for event ${eventId}`);
+  
   return event;
 }
 
