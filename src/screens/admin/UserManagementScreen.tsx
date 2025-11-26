@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,20 +8,35 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
-  Platform,
 } from "react-native";
 import { Loader } from "../../components/LazyLoaders/loader";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useAuth } from "../../stores/auth-store";
-import { useAllUsers, useUpdateUserRole } from "../../hooks/useAdmin";
+import { useUsersInfiniteQuery, useUpdateUserRole } from "../../hooks/useAdmin";
 import ScreenHeader from "../../components/ui/ScreenHeader";
+import SearchBar from "../../components/ui/SearchBar";
+import { useDebounce } from "../../hooks/useDebounce";
 
 export default function UserManagementScreen() {
   const { user: currentUser } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedQuery = useDebounce(searchQuery, 1500);
 
-  // REACT QUERY DATA FETCHING
-  const { data: users = [], isLoading, refetch, isRefetching } = useAllUsers();
+  // Use Infinite Query
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+    isRefetching,
+  } = useUsersInfiniteQuery(debouncedQuery);
+
   const roleMutation = useUpdateUserRole();
+
+  // Flatten data pages
+  const users = data?.pages.flatMap((page) => page.users) ?? [];
 
   const handleRoleChange = (userEmail: string, currentRole: string) => {
     Alert.alert("Change Role", `Select new role for ${userEmail}`, [
@@ -41,6 +56,21 @@ export default function UserManagementScreen() {
           roleMutation.mutate({ email: userEmail, role: "super_admin" }),
       },
     ]);
+  };
+
+  const handleLoadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
+
+  const renderFooter = () => {
+    if (!isFetchingNextPage) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color="#6366f1" />
+      </View>
+    );
   };
 
   if (isLoading) {
@@ -103,7 +133,18 @@ export default function UserManagementScreen() {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="User Management" subtitle="Manage permissions and roles" />
+      <ScreenHeader
+        title="User Management"
+        subtitle="Manage permissions and roles"
+      />
+
+      <View style={styles.searchWrapper}>
+        <SearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onFilterPress={() => {}} // Optional: Add filter logic later if needed
+        />
+      </View>
 
       <FlatList
         data={users}
@@ -117,6 +158,16 @@ export default function UserManagementScreen() {
             tintColor="#6366f1"
           />
         }
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={renderFooter}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>
+              No users found matching "{searchQuery}"
+            </Text>
+          </View>
+        }
       />
       {roleMutation.isPending && (
         <View style={styles.loadingOverlay}>
@@ -128,25 +179,20 @@ export default function UserManagementScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1, backgroundColor: "#f8f9fa" },
+  loadingContainer: {
     flex: 1,
-    backgroundColor: Platform.OS === "ios" ? "#f8f9fa" : "#e1e1e8ff",
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    color: "#1f2937",
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#6366f1",
-    paddingHorizontal: 20,
-    marginBottom: 10,
-    fontWeight: "600",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f8f9fa",
   },
   list: { padding: 20 },
+
+  searchWrapper: {
+    marginTop: 8,
+    marginBottom: 8,
+  },
+
   userRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -200,10 +246,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     elevation: 5,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f8f9fa",
-  },
+  emptyState: { alignItems: "center", marginTop: 40 },
+  emptyText: { color: "#6b7280", fontSize: 16 },
+  footerLoader: { paddingVertical: 20, alignItems: "center" },
 });

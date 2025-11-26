@@ -4,6 +4,13 @@ import { Event } from '../../types/event';
 import { UserRole } from '../../types/user'; 
 import { AdminLog, AdminStats, AdminUser } from '../../types/admin';
 
+// Define the response shape for pagination
+export type PaginatedUsersResponse = {
+  users: AdminUser[];
+  totalCount: number;
+  nextPage?: number;
+};
+
 export const adminService = {
   /**
    * Fetches dashboard statistics via RPC.
@@ -46,12 +53,41 @@ export const adminService = {
   },
 
   /**
-   * Fetches all users and their roles (Super Admin only).
+   * Fetches paginated users with search support.
    */
-  async getAllUsers(): Promise<AdminUser[]> {
-    const { data, error } = await supabase.rpc('get_all_users_admin');
+  async getPaginatedUsers({
+    pageParam = 1,
+    query = '',
+    limit = 10
+  }: {
+    pageParam: number;
+    query: string;
+    limit?: number;
+  }): Promise<PaginatedUsersResponse> {
+    const { data, error } = await supabase.rpc('get_paginated_users_admin', {
+      p_page: pageParam,
+      p_limit: limit,
+      p_query: query,
+    });
+
     if (error) throw error;
-    return (data || []) as AdminUser[];
+
+    const users = (data || []).map((user: any) => ({
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      role: user.role as UserRole,
+      created_at: user.created_at,
+    }));
+
+    const totalCount = data && data.length > 0 ? Number(data[0].total_count) : 0;
+    const hasNextPage = users.length === limit && (pageParam * limit) < totalCount;
+
+    return {
+      users,
+      totalCount,
+      nextPage: hasNextPage ? pageParam + 1 : undefined,
+    };
   },
 
   /**

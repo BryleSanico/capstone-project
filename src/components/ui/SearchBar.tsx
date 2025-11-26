@@ -15,7 +15,7 @@ export default function SearchBar({ value, onChangeText, onFilterPress }: Search
         <Icon name="search-outline" size={20} color="#666" style={styles.searchIcon} />
         <TextInput
           style={styles.input}
-          placeholder="Search events..."
+          placeholder="Looking for..."
           value={value}
           onChangeText={onChangeText}
           placeholderTextColor="#999"
