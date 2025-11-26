@@ -2,7 +2,6 @@ import {
   openDatabase,
   SQLiteDatabase,
   enablePromise,
-  ResultSet,
 } from 'react-native-sqlite-storage';
 import { Event } from '../types/event';
 import { Ticket } from '../types/ticket';

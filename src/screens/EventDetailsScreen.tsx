@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect, useEffect } from "react";
+import React, { useState, useLayoutEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -50,8 +50,6 @@ export default function EventDetailsScreen() {
   const scrollY = new Animated.Value(0);
 
   // 2. Activate Real-time Subscription
-  // This will listen for changes to this specific event ID and
-  // automatically invalidate the 'useEventByIdQuery' below when an update happens.
   useEventSubscription(id);
 
   // REACT QUERY DATA
@@ -71,53 +69,7 @@ export default function EventDetailsScreen() {
     (ticket) => ticket.eventId === id
   ).length;
 
-  useLayoutEffect(() => {
-    if (!event) return;
-
-    const handleFavoritePress = () => {
-      if (!session) {
-        Alert.alert("Login Required", "Please log in to save events.", [
-          { text: "Cancel", style: "cancel" },
-          { text: "Login", onPress: () => navigation.navigate("Login") },
-        ]);
-        return;
-      }
-      if (isFavorite) {
-        removeFavorite(event.id);
-      } else {
-        addFavorite(event.id);
-      }
-    };
-
-    navigation.setOptions({
-      title: "",
-      headerTransparent: true,
-      headerTintColor: "#000000ff",
-      headerTitleStyle: { fontWeight: "700", fontSize: 20 },
-      headerRight: () => (
-        <View style={styles.headerButtons}>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={handleSharePress}
-          >
-            <Icon name="share-outline" size={20} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={handleFavoritePress}
-          >
-            <Icon
-              name={isFavorite ? "heart" : "heart-outline"}
-              size={20}
-              color={isFavorite ? "#ff4757" : "#fff"}
-            />
-          </TouchableOpacity>
-        </View>
-      ),
-    });
-  }, [navigation, event, isFavorite, addFavorite, removeFavorite, session]);
-
-  const handleSharePress = async () => {
+  const handleSharePress = useCallback(async () => {
     if (!event) return;
     try {
       await Share.share({
@@ -128,7 +80,56 @@ export default function EventDetailsScreen() {
     } catch (error) {
       console.error("Error sharing:", error);
     }
-  };
+  }, [event]);
+
+  const handleFavoritePress = useCallback(() => {
+    if (!session) {
+      Alert.alert("Login Required", "Please log in to save events.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Login", onPress: () => navigation.navigate("Login") },
+      ]);
+      return;
+    }
+    if (!event) return;
+
+    if (isFavorite) {
+      removeFavorite(event.id);
+    } else {
+      addFavorite(event.id);
+    }
+  }, [session, isFavorite, event, removeFavorite, addFavorite, navigation]);
+  const HeaderRight = useCallback(() => (
+    <View style={styles.headerButtons}>
+      <TouchableOpacity
+        style={styles.headerButton}
+        onPress={handleSharePress}
+      >
+        <Icon name="share-outline" size={20} color="#fff" />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.headerButton}
+        onPress={handleFavoritePress}
+      >
+        <Icon
+          name={isFavorite ? "heart" : "heart-outline"}
+          size={20}
+          color={isFavorite ? "#ff4757" : "#fff"}
+        />
+      </TouchableOpacity>
+    </View>
+  ), [handleSharePress, handleFavoritePress, isFavorite]);
+
+  useLayoutEffect(() => {
+    if (!event) return;
+
+    navigation.setOptions({
+      title: "",
+      headerTransparent: true,
+      headerTintColor: "#000000ff",
+      headerTitleStyle: { fontWeight: "700", fontSize: 20 },
+      headerRight: HeaderRight, // Pass the stable component
+    });
+  }, [navigation, event, HeaderRight]);
 
   const handleBuyTickets = async () => {
     if (!event) return;

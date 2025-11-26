@@ -33,7 +33,7 @@ export function useCreateEvent() {
   >({
     mutationFn: ({ formData, imageAsset }) =>
       myEventsService.createEvent(formData, imageAsset),
-    onSuccess: (newEvent) => {
+    onSuccess: (_newEvent) => {
       // Invalidate both myEvents and the public event list
       queryClient.invalidateQueries({ queryKey: myEventsQueryKey });
       queryClient.invalidateQueries({ queryKey: eventsQueryKey });
