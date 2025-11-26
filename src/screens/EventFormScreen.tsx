@@ -13,6 +13,7 @@ import {
   SafeAreaView,
   Image,
   Switch,
+  Modal, 
 } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -54,6 +55,7 @@ const initialFormData: Omit<EventFormData, 'date' | 'time' | 'imageUrl'> & {
   tags: '',
   userMaxTicketPurchase: '1',
   isClosed: false,
+  isApproved: false,
 };
 
 export default function EventFormScreen() {
@@ -67,16 +69,19 @@ export default function EventFormScreen() {
   const { mutate: createEvent, isPending: isCreating } = useCreateEvent();
   const { mutate: updateEvent, isPending: isUpdating } = useUpdateEvent();
   
-  const isSyncing = isCreating || isUpdating; // Combined loading state
+  const isSyncing = isCreating || isUpdating;
 
   const [formData, setFormData] =
     useState<Omit<EventFormData, 'date' | 'time' | 'imageUrl'>>(
       initialFormData,
     );
   const [errors, setErrors] = useState<EventFormErrors>({});
-  const [isLoading, setIsLoading] = useState(isEditMode); // Local page loading state
+  const [isLoading, setIsLoading] = useState(isEditMode);
   const [isClosed, setIsClosed] = useState(false);
   const [hasPopulated, setHasPopulated] = useState(false);
+  
+  // Modal State
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   const {
     imageAsset,
@@ -103,7 +108,6 @@ export default function EventFormScreen() {
     });
   }, [navigation]);
 
-  // Effect to populate form in Edit Mode
   useEffect(() => {
     if (isEditMode && eventId && !isLoadingMyEvents && myEvents && !hasPopulated) {
       const event = myEvents.find(e => e.id === eventId);
@@ -126,15 +130,15 @@ export default function EventFormScreen() {
           userMaxTicketPurchase:
             event.userMaxTicketPurchase?.toString() || '10',
           isClosed: event.isClosed || false,
+          isApproved: event.isApproved || false,
         });
         setIsLoading(false);
         setHasPopulated(true);
-      } else if (!isLoadingMyEvents) { // Only error if done loading and no event found
+      } else if (!isLoadingMyEvents) {
         Alert.alert('Error', 'Could not find event details.');
         navigation.goBack();
       }
     } else if (!isEditMode) {
-      // Create mode
       const now = new Date();
       now.setHours(now.getHours() + 1);
       now.setMinutes(0);
@@ -168,8 +172,9 @@ export default function EventFormScreen() {
     }
   };
 
-  const handleSubmit = async () => {
-    if (isSyncing) return;
+  // 1. Intercept Submit to show modal first
+  const handlePreSubmit = () => {
+     if (isSyncing) return;
 
     const dataToValidate: EventFormData = {
       ...formData,
@@ -191,6 +196,20 @@ export default function EventFormScreen() {
       return;
     }
 
+    // If valid, show the review modal
+    setShowReviewModal(true);
+  };
+
+  // 2. Actual Submit Logic (Called from Modal "I Understood")
+  const handleConfirmSubmit = async () => {
+    setShowReviewModal(false); // Close modal
+    
+    const dataToValidate: EventFormData = {
+      ...formData,
+      date: formattedDate,
+      time: formattedTime,
+    };
+
     if (isEditMode && eventId) {
       updateEvent(
         {
@@ -202,7 +221,7 @@ export default function EventFormScreen() {
         },
         {
           onSuccess: () => {
-            Alert.alert('Success', 'Event updated successfully!', [
+            Alert.alert('Submitted', 'Your event update has been submitted for review.', [
               { text: 'OK', onPress: () => navigation.goBack() },
             ]);
           },
@@ -216,7 +235,7 @@ export default function EventFormScreen() {
         },
         {
           onSuccess: () => {
-            Alert.alert('Success', 'Event created successfully!', [
+            Alert.alert('Submitted', 'Your event has been submitted for review.', [
               { text: 'OK', onPress: () => navigation.goBack() },
             ]);
           },
@@ -545,7 +564,7 @@ export default function EventFormScreen() {
                 styles.submitButton,
                 isSyncing && styles.submitButtonDisabled,
               ]}
-              onPress={handleSubmit}
+              onPress={handlePreSubmit} // Use handlePreSubmit instead of handleSubmit
               disabled={isSyncing}
             >
               {isSyncing ? (
@@ -558,14 +577,51 @@ export default function EventFormScreen() {
             </TouchableOpacity>
 
             <Text style={styles.disclaimer}>
-              * Required fields.{" "}
-              {!isEditMode && "Your event may be reviewed before publishing."}
+              * Required fields.
             </Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
       {renderDateTimePicker()}
+      
+      {/* REVIEW MODAL */}
+      <Modal
+        visible={showReviewModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowReviewModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.iconContainer}>
+               <Icon name="information-circle" size={48} color="#6366f1" />
+            </View>
+            <Text style={styles.modalTitle}>Admin Review Required</Text>
+            <Text style={styles.modalText}>
+              {isEditMode 
+                ? "Updating this event will require admin approval again. It will be hidden from the 'Discover' feed until approved."
+                : "Your new event will be reviewed by an admin before it appears in the 'Discover' feed."
+              }
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={styles.modalCancelButton} 
+                onPress={() => setShowReviewModal(false)}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.modalConfirmButton} 
+                onPress={handleConfirmSubmit}
+              >
+                <Text style={styles.modalConfirmText}>I Understood</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -782,5 +838,68 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6B7280',
     lineHeight: 18,
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+  },
+  iconContainer: {
+    marginBottom: 16,
+    backgroundColor: '#EEF2FF',
+    padding: 16,
+    borderRadius: 40,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalText: {
+    fontSize: 15,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12,
+  },
+  modalCancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    alignItems: 'center',
+  },
+  modalConfirmButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: '#6366f1',
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  modalConfirmText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
 });
