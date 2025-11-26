@@ -1,9 +1,6 @@
 import {
   useQuery,
   useInfiniteQuery,
-  useQueryClient,
-  useMutation,
-  InfiniteData,
 } from '@tanstack/react-query';
 import * as eventService from '../services/api/eventService';
 import { Event } from '../types/event';
