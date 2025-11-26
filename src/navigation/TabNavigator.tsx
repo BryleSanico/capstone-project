@@ -15,6 +15,24 @@ export type TabParamList = {
   Profile: undefined;
 };
 const Tab = createBottomTabNavigator<TabParamList>();
+
+//  Extracted render functions
+const renderDiscoverIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="search-outline" size={size} color={color} />
+);
+
+const renderMyEventsIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="calendar-outline" size={size} color={color} />
+);
+
+const renderMyTicketsIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="ticket-outline" size={size} color={color} />
+);
+
+const renderProfileIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon2 name="user-o" size={size} color={color} />
+);
+
 export default function TabNavigator() {
   const { session } = useAuth();
   return (
@@ -49,9 +67,7 @@ export default function TabNavigator() {
         component={DiscoverScreen}
         options={{
           tabBarLabel: "Discover",
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="search-outline" size={size} color={color} />
-          ),
+          tabBarIcon: renderDiscoverIcon,
         }}
       />
       {session && (
@@ -61,9 +77,7 @@ export default function TabNavigator() {
             component={MyEventsScreen}
             options={{
               tabBarLabel: "My Events",
-              tabBarIcon: ({ color, size }) => (
-                <Icon name="calendar-outline" size={size} color={color} />
-              ),
+              tabBarIcon: renderMyEventsIcon,
             }}
           />
           <Tab.Screen
@@ -71,9 +85,7 @@ export default function TabNavigator() {
             component={TicketsScreen}
             options={{
               tabBarLabel: "My Tickets",
-              tabBarIcon: ({ color, size }) => (
-                <Icon name="ticket-outline" size={size} color={color} />
-              ),
+              tabBarIcon: renderMyTicketsIcon,
             }}
           />
         </>
@@ -83,9 +95,7 @@ export default function TabNavigator() {
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarIcon: ({ color, size }) => (
-            <Icon2 name="user-o" size={size} color={color} />
-          ),
+          tabBarIcon: renderProfileIcon,
         }}
       />
     </Tab.Navigator>
