@@ -49,8 +49,9 @@ export default function UserManagementScreen() {
   const roleMutation = useUpdateUserRole();
   const banMutation = useBanUser();
 
-  // Flatten data pages
-  const allUsers = data?.pages.flatMap((page) => page.users) ?? [];
+  const allUsers = useMemo(() => {
+    return data?.pages.flatMap((page) => page.users) ?? [];
+  }, [data]);
 
   // Filter users based on selected tab
   const filteredUsers = useMemo(() => {

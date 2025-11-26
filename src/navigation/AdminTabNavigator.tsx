@@ -16,6 +16,19 @@ export type AdminTabParamList = {
 
 const Tab = createBottomTabNavigator<AdminTabParamList>();
 
+// Render functions extracted outside to prevent instability
+const renderDashboardIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="stats-chart" size={size} color={color} />
+);
+
+const renderApprovalsIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="checkmark-done-circle" size={size} color={color} />
+);
+
+const renderUsersIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="people" size={size} color={color} />
+);
+
 // Tab Navigator (Dashboard, Approvals, Users) 
 export default function AdminTabNavigator() {
   const { role } = useAuth();
@@ -39,14 +52,14 @@ export default function AdminTabNavigator() {
         name="Dashboard" 
         component={AdminDashboardScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <Icon name="stats-chart" size={size} color={color} />
+          tabBarIcon: renderDashboardIcon
         }}
       />
       <Tab.Screen 
         name="Approvals" 
         component={EventApprovalsScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <Icon name="checkmark-done-circle" size={size} color={color} />
+          tabBarIcon: renderApprovalsIcon
         }}
       />
       {role === 'super_admin' && (
@@ -54,7 +67,7 @@ export default function AdminTabNavigator() {
           name="Users" 
           component={UserManagementScreen}
           options={{
-            tabBarIcon: ({ color, size }) => <Icon name="people" size={size} color={color} />
+            tabBarIcon: renderUsersIcon
           }}
         />
       )}

@@ -54,7 +54,7 @@ export function filterEventsByDate(
     try {
       timestamp = new Date(event.startTime).getTime();
     } catch (e) {
-      console.error(`Invalid date for event ${event.id}: ${event.startTime}`);
+      console.error(`Invalid date for event ${event.id}: ${event.startTime}`, e);
     }
 
     const item = { event, timestamp };

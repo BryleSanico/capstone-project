@@ -72,11 +72,26 @@ export default function LoginScreen() {
       if (error) {
         // Use Alert for server-side/authentication errors, not validation
         Alert.alert("Login Error", error.message);
+        setIsLoading(false);
       } else {
-        navigation.goBack();
+        // Check role before navigating back.
+        // If Admin/SuperAdmin, App.tsx will swap navigators, unmounting this screen.
+        // calling goBack() on an unmounting navigator causes the "GO_BACK not handled" error.
+        const currentUser = useAuth.getState().user;
+        const role = currentUser?.app_metadata?.role;
+
+        // Only go back if it's a normal user. 
+        // Admins get redirected by the root navigator automatically.
+        if (role !== 'admin' && role !== 'super_admin') {
+             if (navigation.canGoBack()) {
+                navigation.goBack();
+             }
+        }
+        // Note: We don't set isLoading(false) here because the component will unmount/remount
       }
-    } finally {
-      setIsLoading(false);
+    } catch (err) {
+       setIsLoading(false);
+       console.error(err);
     }
   };
   
@@ -373,4 +388,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
-

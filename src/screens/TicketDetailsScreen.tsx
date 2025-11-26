@@ -1,5 +1,4 @@
-// src/screens/TicketDetailsScreen.tsx
-import React, { useLayoutEffect } from 'react';
+import React, { useLayoutEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,11 +16,9 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import QRCode from 'react-native-qrcode-svg';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { formatFullDate } from '../utils/formatters/dateFormatter';
-import { Loader } from '../components/LazyLoaders/loader'; // Import Loader
+import { Loader } from '../components/LazyLoaders/loader';
 
-// --- NEW IMPORT ---
 import { useTicketsQuery } from '../hooks/useTickets';
-// --- END NEW IMPORT ---
 
 type TicketDetailsScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -38,43 +35,13 @@ export default function TicketDetailsScreen() {
 
   const { id } = route.params;
 
-  // --- USE REACT QUERY ---
   // Get the full list of tickets and the loading state
   const { data: tickets = [], isLoading } = useTicketsQuery();
-  // --- END REACT QUERY ---
 
   // Find the specific ticket from the cached list
   const ticket = tickets.find((t) => t.id === id);
 
-  useLayoutEffect(() => {
-    if (ticket) {
-      navigation.setOptions({
-        title: 'My Ticket',
-        headerRight: () => (
-          <View style={styles.headerButtons}>
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={handleShareTicket}
-            >
-              <Icon name="share-outline" size={20} color="#6366f1" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={handleDownloadTicket}
-            >
-              <Icon name="download-outline" size={20} color="#6366f1" />
-            </TouchableOpacity>
-          </View>
-        ),
-      });
-    } else {
-      navigation.setOptions({
-        title: isLoading ? 'Loading...' : 'Ticket Not Found',
-      });
-    }
-  }, [navigation, ticket, isLoading]); // Add isLoading dependency
-
-  const handleShareTicket = async () => {
+  const handleShareTicket = useCallback(async () => {
     if (!ticket) return;
     try {
       await Share.share({
@@ -85,17 +52,44 @@ export default function TicketDetailsScreen() {
     } catch (error) {
       console.error('Error sharing ticket:', error);
     }
-  };
+  }, [ticket]);
 
-  const handleDownloadTicket = () => {
+  const handleDownloadTicket = useCallback(() => {
     Alert.alert(
       'Download Ticket',
       'Ticket download functionality would be implemented here.',
       [{ text: 'OK' }],
     );
-  };
+  }, []);
+  const HeaderRight = useCallback(() => (
+    <View style={styles.headerButtons}>
+      <TouchableOpacity
+        style={styles.headerButton}
+        onPress={handleShareTicket}
+      >
+        <Icon name="share-outline" size={20} color="#6366f1" />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.headerButton}
+        onPress={handleDownloadTicket}
+      >
+        <Icon name="download-outline" size={20} color="#6366f1" />
+      </TouchableOpacity>
+    </View>
+  ), [handleShareTicket, handleDownloadTicket]);
 
-  // --- ADD LOADING STATE ---
+  useLayoutEffect(() => {
+    if (ticket) {
+      navigation.setOptions({
+        title: 'My Ticket',
+        headerRight: HeaderRight,
+      });
+    } else {
+      navigation.setOptions({
+        title: isLoading ? 'Loading...' : 'Ticket Not Found',
+      });
+    }
+  }, [navigation, ticket, isLoading, HeaderRight]);
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, styles.centerScreen]}>
@@ -103,9 +97,6 @@ export default function TicketDetailsScreen() {
       </SafeAreaView>
     );
   }
-  // --- END LOADING STATE ---
-
-  // This check now runs *after* loading is complete
   if (!ticket) {
     return (
       <SafeAreaView style={styles.container}>
@@ -116,7 +107,6 @@ export default function TicketDetailsScreen() {
     );
   }
 
-  // If the ticket is found, render the ticket details
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView

@@ -1,5 +1,4 @@
 import notifee, {
-  AndroidImportance,
   AuthorizationStatus as NotifeeAuthStatus,
   NotificationSettings,
 } from "@notifee/react-native";

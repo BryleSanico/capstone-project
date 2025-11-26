@@ -94,7 +94,6 @@ export default function EventFormScreen() {
   } = useImagePicker();
 
   const {
-    selectedDateTime,
     setSelectedDateTime,
     formattedDate,
     formattedTime,
@@ -152,7 +151,8 @@ export default function EventFormScreen() {
     isLoadingMyEvents, 
     myEvents, 
     setCurrentImageUrl, 
-    setSelectedDateTime
+    setSelectedDateTime,
+    hasPopulated 
   ]);
   
   useEffect(() => {
@@ -564,7 +564,7 @@ export default function EventFormScreen() {
                 styles.submitButton,
                 isSyncing && styles.submitButtonDisabled,
               ]}
-              onPress={handlePreSubmit} // Use handlePreSubmit instead of handleSubmit
+              onPress={handlePreSubmit} 
               disabled={isSyncing}
             >
               {isSyncing ? (
@@ -577,7 +577,8 @@ export default function EventFormScreen() {
             </TouchableOpacity>
 
             <Text style={styles.disclaimer}>
-              * Required fields.
+              * Required fields.{" "}
+              {!isEditMode && "Your event may be reviewed before publishing."}
             </Text>
           </View>
         </ScrollView>

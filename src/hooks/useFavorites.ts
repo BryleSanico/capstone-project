@@ -38,7 +38,7 @@ export function useAddFavorite() {
       queryClient.setQueryData<number[]>(favoritesQueryKey, (old = []) => [...old, eventId]);
       return { previousFavorites };
     },
-    onError: (err, eventId, context) => {
+    onError: (_err, eventId, context) => {
       if (context?.previousFavorites) {
         queryClient.setQueryData(favoritesQueryKey, context.previousFavorites);
       }
@@ -65,7 +65,8 @@ export function useRemoveFavorite() {
       queryClient.setQueryData<number[]>(favoritesQueryKey, (old = []) => old.filter((id) => id !== eventId));
       return { previousFavorites };
     },
-    onError: (err, eventId, context) => {
+    // FIX: Renamed err to _err
+    onError: (_err, eventId, context) => {
       if (context?.previousFavorites) {
         queryClient.setQueryData(favoritesQueryKey, context.previousFavorites);
       }

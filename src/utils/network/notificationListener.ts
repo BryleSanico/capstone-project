@@ -1,4 +1,4 @@
-import { getMessaging, onMessage, setBackgroundMessageHandler } from "@react-native-firebase/messaging";
+import { getMessaging, onMessage } from "@react-native-firebase/messaging";
 import notifee, { AndroidImportance } from "@notifee/react-native";
 import { DEFAULT_NOTIFICATION_CHANNEL } from "../../constants/firebaseConstants";
 /**

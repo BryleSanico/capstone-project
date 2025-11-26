@@ -21,7 +21,6 @@ async function _uploadEventImage(
     );
   }
 
-  const fileExt = asset.fileName.split(".").pop() ?? "jpg";
   const filePath = `events/${userId}/${Date.now()}-${asset.fileName}`;
   const imageBytes = toByteArray(asset.base64);
 
