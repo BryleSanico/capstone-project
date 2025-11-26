@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -16,11 +16,18 @@ import { useUsersInfiniteQuery, useUpdateUserRole } from "../../hooks/useAdmin";
 import ScreenHeader from "../../components/ui/ScreenHeader";
 import SearchBar from "../../components/ui/SearchBar";
 import { useDebounce } from "../../hooks/useDebounce";
+import TabSelector, { TabItem } from "../../components/navigation/TabSelector";
+
+// Tab Constants
+const TAB_ALL = "all";
+const TAB_ADMINS = "admins";
+const TAB_USERS = "users";
 
 export default function UserManagementScreen() {
   const { user: currentUser } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const debouncedQuery = useDebounce(searchQuery, 1500);
+  const [selectedTab, setSelectedTab] = useState<string>(TAB_ALL);
+  const debouncedQuery = useDebounce(searchQuery, 500);
 
   // Use Infinite Query
   const {
@@ -36,7 +43,31 @@ export default function UserManagementScreen() {
   const roleMutation = useUpdateUserRole();
 
   // Flatten data pages
-  const users = data?.pages.flatMap((page) => page.users) ?? [];
+  const allUsers = data?.pages.flatMap((page) => page.users) ?? [];
+
+  // Filter users based on selected tab
+  const filteredUsers = useMemo(() => {
+    if (selectedTab === TAB_ADMINS) {
+      return allUsers.filter(
+        (user) => user.role === "admin" || user.role === "super_admin"
+      );
+    } else if (selectedTab === TAB_USERS) {
+      return allUsers.filter((user) => user.role === "user");
+    }
+    return allUsers;
+  }, [allUsers, selectedTab]);
+
+  // Calculate counts for tabs
+  const adminCount = allUsers.filter(
+    (user) => user.role === "admin" || user.role === "super_admin"
+  ).length;
+  const userCount = allUsers.filter((user) => user.role === "user").length;
+
+  const tabs: TabItem[] = [
+    { key: TAB_ALL, title: "All", count: allUsers.length },
+    { key: TAB_ADMINS, title: "Admins", count: adminCount },
+    { key: TAB_USERS, title: "Users", count: userCount },
+  ];
 
   const handleRoleChange = (userEmail: string, currentRole: string) => {
     Alert.alert("Change Role", `Select new role for ${userEmail}`, [
@@ -146,8 +177,14 @@ export default function UserManagementScreen() {
         />
       </View>
 
+      <TabSelector
+        tabs={tabs}
+        selectedTabKey={selectedTab}
+        onSelectTab={setSelectedTab}
+      />
+
       <FlatList
-        data={users}
+        data={filteredUsers}
         keyExtractor={(item) => item.id}
         renderItem={renderUser}
         contentContainerStyle={styles.list}
@@ -190,7 +227,7 @@ const styles = StyleSheet.create({
 
   searchWrapper: {
     marginTop: 8,
-    marginBottom: 8,
+    marginBottom: 0, // Reduced margin since tab selector adds spacing
   },
 
   userRow: {
