@@ -57,11 +57,11 @@ This Capstone project is a mobile application built to handle the complete event
 * **Framework:** React Native (0.79.x)
 * **Language:** TypeScript
 * **Navigation:** React Navigation (Stack, Bottom Tabs, Composite)
-* **Server State:** `@tanstack/react-query` (Caching, Invalidation, Optimistic Updates)
+* **Server State:** `@tanstack/react-query` (Caching, Invalidation, Optimistic Updates, `useInfinitQuery` for infinite scroll)
 * **Local State:** `Zustand` (Network connectivity & Auth session)
 * **Persistence:** `react-native-sqlite-storage`
 * **UI/UX:** React Native Paper, Linear Gradient, Vector Icons
-* **Secure Storage:** `react-native-encrypted-storage` (Secure and Encrypted storage for Auth token)
+* **Secure Storage:** `react-native-encrypted-storage` (Handles both Android and iOS Platformm Encrypted storage for Auth token)
   - Keychain (iOS) and EncryptedSharedPreference - keystore (Android)
 
 ### Backend (Supabase)
