@@ -188,9 +188,16 @@ The app interacts with Supabase primarily through RPC calls for performance and 
 | Service | Description |
 | :--- | :--- |
 | **adminService** | Handles `approveEvent`, `banUser`, and fetches `adminStats`. |
-| **eventService** | Fetches discovery lists with pagination; handles `create/update` with image upload. |
+| **eventService** | Fetches discovery lists with pagination. |
+| **myEventService** | Fetches Organizer event lists with pagination; handles `create/update` with image upload. |
 | **ticketService** | Manages `purchaseTickets` (transactional) and fetches user QR codes. |
-| **sqliteService** | Handles local CRUD operations to mirror the remote DB. |
+| **favoritesService** | Fetches user favorite events; handles `add/remove` with optimistic update. |
+| **notificationService** | Fetches user notifications. |
+| **sqliteService** | Handles local persistence for offline capability. |
+| **pushNotificationService** | Handles the FCM notification. |
+
+
+
 
 -----
 
