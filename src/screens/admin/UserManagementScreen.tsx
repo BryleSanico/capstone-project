@@ -27,6 +27,7 @@ import { AdminUser } from "../../types/admin";
 const TAB_ALL = "all";
 const TAB_ADMINS = "admins";
 const TAB_USERS = "users";
+const TAB_BANNED = "banned";
 
 export default function UserManagementScreen() {
   const { user: currentUser } = useAuth();
@@ -46,7 +47,7 @@ export default function UserManagementScreen() {
   } = useUsersInfiniteQuery(debouncedQuery);
 
   const roleMutation = useUpdateUserRole();
-  const banMutation = useBanUser(); 
+  const banMutation = useBanUser();
 
   // Flatten data pages
   const allUsers = data?.pages.flatMap((page) => page.users) ?? [];
@@ -59,6 +60,8 @@ export default function UserManagementScreen() {
       );
     } else if (selectedTab === TAB_USERS) {
       return allUsers.filter((user) => user.role === "user");
+    } else if (selectedTab === TAB_BANNED) {
+      return allUsers.filter((user) => !!user.banned_until);
     }
     return allUsers;
   }, [allUsers, selectedTab]);
@@ -68,11 +71,13 @@ export default function UserManagementScreen() {
     (user) => user.role === "admin" || user.role === "super_admin"
   ).length;
   const userCount = allUsers.filter((user) => user.role === "user").length;
+  const bannedCount = allUsers.filter((user) => !!user.banned_until).length;
 
   const tabs: TabItem[] = [
     { key: TAB_ALL, title: "All", count: allUsers.length },
     { key: TAB_ADMINS, title: "Admins", count: adminCount },
     { key: TAB_USERS, title: "Users", count: userCount },
+    { key: TAB_BANNED, title: "Banned", count: bannedCount },
   ];
 
   const handleUserAction = (user: AdminUser) => {
