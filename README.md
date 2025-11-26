@@ -206,6 +206,9 @@ The app interacts with Supabase primarily through RPC calls for performance and 
 npm run test          # Run Jest
 npm run test:coverage # Generate coverage report
 npm run type-check    # TypeScript validation
+npm run lint          # Run Eslint
+npm run lint --fix    # Resolve automatically fixable errors
+
 ```
 
 -----
