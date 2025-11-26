@@ -16,6 +16,7 @@ export interface AdminUser {
   email: string;
   full_name: string;
   role: UserRole; 
+  banned_until: string | null;
   created_at: string;
 }
 

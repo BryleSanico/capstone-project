@@ -23,40 +23,15 @@ import ScreenHeader from "../../components/ui/ScreenHeader";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "@/src/navigation/AppNavigator";
+import { getActionConfig } from "../../utils/ui/adminLogConfig";
 
-type AdminLogsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type AdminLogsScreenNavigationProp =
+  NativeStackNavigationProp<RootStackParamList>;
 
 export default function AdminLogsScreen() {
   const navigation = useNavigation<AdminLogsScreenNavigationProp>();
   const { data: logs = [], isLoading, refetch, isRefetching } = useAdminLogs();
   const [selectedLog, setSelectedLog] = useState<AdminLog | null>(null);
-
-  const getActionConfig = (type: string) => {
-    switch (type) {
-      case "APPROVE_EVENT":
-        return {
-          icon: "checkmark-circle",
-          color: "#10b981",
-          label: "Event Approved",
-        };
-      case "REJECT_DELETE":
-        return { icon: "trash", color: "#ef4444", label: "Event Deleted" };
-      case "REJECT_REVISION":
-        return {
-          icon: "construct",
-          color: "#f59e0b",
-          label: "Revision Requested",
-        };
-      case "PROMOTE_USER":
-        return { icon: "person-add", color: "#3b82f6", label: "User Promoted" };
-      default:
-        return {
-          icon: "information-circle",
-          color: "#6b7280",
-          label: "Admin Action",
-        };
-    }
-  };
 
   // Helper to split details into message and reason
   const parseLogDetails = (details: string) => {
@@ -100,7 +75,7 @@ export default function AdminLogsScreen() {
               style={{ marginRight: 6 }}
             />
             <Text style={[styles.badgeText, { color: config.color }]}>
-              {config.label}
+              {config.title}
             </Text>
           </View>
           <Text style={styles.dateText}>
@@ -129,7 +104,7 @@ export default function AdminLogsScreen() {
       </View>
     );
   }
-  
+
   // Parse details for the selected log only when rendering the modal
   const parsedDetails = selectedLog
     ? parseLogDetails(selectedLog.details)
@@ -141,7 +116,8 @@ export default function AdminLogsScreen() {
         title="Audit Logs"
         subtitle="History of admin actions"
         showBackButton={true}
-        onBack={() => navigation.goBack()}/>
+        onBack={() => navigation.goBack()}
+      />
       {/* List */}
       {logs.length === 0 ? (
         <EmptyState
@@ -191,7 +167,7 @@ export default function AdminLogsScreen() {
                       { color: getActionConfig(selectedLog.action_type).color },
                     ]}
                   >
-                    {getActionConfig(selectedLog.action_type).label}
+                    {getActionConfig(selectedLog.action_type).title}
                   </Text>
                 </View>
 
@@ -332,9 +308,8 @@ const styles = StyleSheet.create({
 
   messageText: { fontSize: 15, color: "#374151", lineHeight: 22 },
 
-  // New styles for the reason box
   reasonBox: {
-    backgroundColor: "#fefefeff", // Light red/pink background for emphasis
+    backgroundColor: "#fefefeff", 
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
