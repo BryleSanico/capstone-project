@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { supabase } from "../lib/supabase";
 import { AuthError, Session, User } from "@supabase/supabase-js";
 import { AppCacheService } from "../services/AppCacheService";
-import { notificationService } from "../services/notificationService";
+import { notificationService } from "../services/pushNotificationService";
 import { UserRole } from "../types/user";
 
 type AuthState = {
