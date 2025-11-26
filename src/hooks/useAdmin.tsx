@@ -1,7 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { adminService } from '../services/api/adminService';
 import { UserRole } from '../types/user';
 import { Alert } from 'react-native';
+
 
 // Query Keys for caching
 export const ADMIN_KEYS = {
@@ -26,10 +27,18 @@ export function usePendingEvents() {
   });
 }
 
-export function useAllUsers() {
-  return useQuery({
-    queryKey: ADMIN_KEYS.users,
-    queryFn: adminService.getAllUsers,
+// Infinite Query for Users
+export function useUsersInfiniteQuery(searchQuery: string = '') {
+  return useInfiniteQuery({
+    queryKey: [...ADMIN_KEYS.users, searchQuery],
+    queryFn: ({ pageParam = 1 }) => 
+      adminService.getPaginatedUsers({ 
+        pageParam, 
+        query: searchQuery,
+        limit: 10 
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
   });
 }
 
