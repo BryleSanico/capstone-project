@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import { adminService } from '../services/api/adminService';
-import { UserRole } from '../types/user';
+import { adminService } from '../../services/api/adminService';
+import { UserRole } from '../../types/user';
 import { Alert } from 'react-native';
 
 

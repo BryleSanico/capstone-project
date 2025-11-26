@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { useQueryClient } from '@tanstack/react-query';
 import { eventsQueryKey } from './useEvents';
 

@@ -18,7 +18,7 @@ import {
   useNotificationsQuery,
   useMarkReadMutation,
   useMarkAllReadMutation,
-} from '../hooks/useNotifications';
+} from '../hooks/';
 import { formatFullDate } from '../utils/formatters/dateFormatter';
 import { AppNotification } from '../services/api/notificationService';
 
