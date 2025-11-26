@@ -61,7 +61,7 @@ This Capstone project is a mobile application built to handle the complete event
 * **Local State:** `Zustand` (Network connectivity & Auth session)
 * **Persistence:** `react-native-sqlite-storage`
 * **UI/UX:** React Native Paper, Linear Gradient, Vector Icons
-* **Secured Storage:** `react-native-encrypted-storage` (Secure and Encrypted storaged for Auth token)
+* **Secure Storage:** `react-native-encrypted-storage` (Secure and Encrypted storage for Auth token)
 
 ### Backend (Supabase)
 * **Database:** PostgreSQL
