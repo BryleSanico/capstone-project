@@ -98,3 +98,19 @@ export function useAdminLogs() {
     queryFn: adminService.getLogs,
   });
 }
+
+export function useBanUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ email, banUntil }: { email: string; banUntil: string | null }) => 
+      adminService.banUser(email, banUntil),
+    onSuccess: (_, variables) => {
+      const action = variables.banUntil ? 'banned' : 'unbanned';
+      Alert.alert('Success', `User has been ${action}.`);
+      queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.users });
+    },
+    onError: (error: any) => {
+      Alert.alert('Error', error.message || 'Failed to change ban status');
+    },
+  });
+}

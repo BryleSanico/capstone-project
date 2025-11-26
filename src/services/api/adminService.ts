@@ -77,6 +77,7 @@ export const adminService = {
       email: user.email,
       full_name: user.full_name,
       role: user.role as UserRole,
+      banned_until: user.banned_until,
       created_at: user.created_at,
     }));
 
@@ -97,6 +98,19 @@ export const adminService = {
     const { error } = await supabase.rpc('promote_user_to_role', {
       p_email: email,
       p_role: newRole,
+    });
+    if (error) throw error;
+  },
+  
+  /**
+   * Bans or Unbans a user.
+   * @param email User email
+   * @param banUntil ISO string date to ban until, or NULL to unban.
+   */
+  async banUser(email: string, banUntil: string | null): Promise<void> {
+    const { error } = await supabase.rpc('admin_ban_user', {
+      p_email: email,
+      p_ban_until: banUntil,
     });
     if (error) throw error;
   },
