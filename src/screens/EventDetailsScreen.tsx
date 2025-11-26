@@ -22,15 +22,14 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 import { formatFullDate, formatTime } from "../utils/formatters/dateFormatter";
 import { useAuth } from "../stores/auth-store";
 import { PurchaseRequest } from "../services/api/ticketsService";
-import { useEventByIdQuery } from "../hooks/useEvents";
-import { useTicketsQuery, usePurchaseTicket } from "../hooks/useTickets";
+import { useEventByIdQuery } from "../hooks/";
+import { useTicketsQuery, usePurchaseTicket } from "../hooks/";
 import {
   useFavoritesQuery,
   useAddFavorite,
   useRemoveFavorite,
-} from "../hooks/useFavorites";
-// 1. Import the subscription hook
-import useEventSubscription from "../hooks/useEventSubscription";
+} from "../hooks";
+import useEventSubscription from "../hooks/data/useEventSubscription";
 
 type EventDetailsScreenRouteProp = RouteProp<
   RootStackParamList,

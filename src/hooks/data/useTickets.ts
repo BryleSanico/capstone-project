@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import * as ticketsService from '../services/api/ticketsService';
-import { Ticket } from '../types/ticket';
+import * as ticketsService from '../../services/api/ticketsService';
+import { Ticket } from '../../types/ticket';
 import { Alert } from 'react-native';
 import { eventsQueryKey } from './useEvents';
-import { useAuth } from '../stores/auth-store'; 
+import { useAuth } from '../../stores/auth-store'; 
 
 export const ticketsQueryKey = ['tickets'];
 

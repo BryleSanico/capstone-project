@@ -15,7 +15,7 @@ import { Loader } from '../components/LazyLoaders/loader';
 import { useNetworkStatus } from '../stores/network-store';
 import { OfflineState } from '../components/ui/Errors/offlineState';
 import { EmptyState } from '../components/ui/Errors/EmptyState';
-import { useFavoriteEventsQuery } from '../hooks/useFavorites';
+import { useFavoriteEventsQuery } from '../hooks/data/useFavorites';
 
 type FavoritesScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,

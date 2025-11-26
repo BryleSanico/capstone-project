@@ -16,10 +16,10 @@ import {
   useUsersInfiniteQuery,
   useUpdateUserRole,
   useBanUser,
-} from "../../hooks/useAdmin";
+} from "../../hooks/";
 import ScreenHeader from "../../components/ui/ScreenHeader";
 import SearchBar from "../../components/ui/SearchBar";
-import { useDebounce } from "../../hooks/useDebounce";
+import { useDebounce } from "../../hooks/";
 import TabSelector, { TabItem } from "../../components/navigation/TabSelector";
 import { AdminUser } from "../../types/admin";
 

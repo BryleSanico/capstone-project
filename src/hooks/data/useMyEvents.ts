@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import * as myEventsService from '../services/api/myEventsService';
-import { Event, EventFormData } from '../types/event';
-import { useAuth } from '../stores/auth-store';
+import * as myEventsService from '../../services/api/myEventsService';
+import { Event, EventFormData } from '../../types/event';
+import { useAuth } from '../../stores/auth-store';
 import { eventsQueryKey } from './useEvents'; 
 import { Asset } from 'react-native-image-picker';
 import { Alert } from 'react-native';

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import * as notificationApiService from '../services/api/notificationService';
-import { useAuth } from '../stores/auth-store';
+import * as notificationApiService from '../../services/api/notificationService';
+import { useAuth } from '../../stores/auth-store';
 
 export const notificationsKeys = {
   all: ['notifications'] as const,
