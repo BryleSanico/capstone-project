@@ -13,7 +13,7 @@
 
 ## 📖 Project Overview
 
-This Capstone project is a robust mobile application built to handle the complete event lifecycle. It bridges the gap between attendees, organizers, and administrators through a unified interface. 
+This Capstone project is a mobile application built to handle the complete event lifecycle. It bridges the gap between attendees, organizers, and administrators through a unified interface. 
 
 **Key Engineering Highlights:**
 * **Offline-First Architecture:** Uses `react-native-sqlite-storage` to cache data locally, ensuring the app works without an internet connection.
