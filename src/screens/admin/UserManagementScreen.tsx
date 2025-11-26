@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -8,39 +8,122 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
-  Platform,
 } from "react-native";
 import { Loader } from "../../components/LazyLoaders/loader";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useAuth } from "../../stores/auth-store";
-import { useAllUsers, useUpdateUserRole } from "../../hooks/useAdmin";
+import {
+  useUsersInfiniteQuery,
+  useUpdateUserRole,
+  useBanUser,
+} from "../../hooks/useAdmin";
 import ScreenHeader from "../../components/ui/ScreenHeader";
+import SearchBar from "../../components/ui/SearchBar";
+import { useDebounce } from "../../hooks/useDebounce";
+import TabSelector, { TabItem } from "../../components/navigation/TabSelector";
+import { AdminUser } from "../../types/admin";
+
+// Tab Constants
+const TAB_ALL = "all";
+const TAB_ADMINS = "admins";
+const TAB_USERS = "users";
+const TAB_BANNED = "banned";
 
 export default function UserManagementScreen() {
   const { user: currentUser } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTab, setSelectedTab] = useState<string>(TAB_ALL);
+  const debouncedQuery = useDebounce(searchQuery, 500);
 
-  // REACT QUERY DATA FETCHING
-  const { data: users = [], isLoading, refetch, isRefetching } = useAllUsers();
+  // Use Infinite Query
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+    isRefetching,
+  } = useUsersInfiniteQuery(debouncedQuery);
+
   const roleMutation = useUpdateUserRole();
+  const banMutation = useBanUser();
 
-  const handleRoleChange = (userEmail: string, currentRole: string) => {
-    Alert.alert("Change Role", `Select new role for ${userEmail}`, [
+  // Flatten data pages
+  const allUsers = data?.pages.flatMap((page) => page.users) ?? [];
+
+  // Filter users based on selected tab
+  const filteredUsers = useMemo(() => {
+    if (selectedTab === TAB_ADMINS) {
+      return allUsers.filter(
+        (user) => user.role === "admin" || user.role === "super_admin"
+      );
+    } else if (selectedTab === TAB_USERS) {
+      return allUsers.filter((user) => user.role === "user");
+    } else if (selectedTab === TAB_BANNED) {
+      return allUsers.filter((user) => !!user.banned_until);
+    }
+    return allUsers;
+  }, [allUsers, selectedTab]);
+
+  // Calculate counts for tabs
+  const adminCount = allUsers.filter(
+    (user) => user.role === "admin" || user.role === "super_admin"
+  ).length;
+  const userCount = allUsers.filter((user) => user.role === "user").length;
+  const bannedCount = allUsers.filter((user) => !!user.banned_until).length;
+
+  const tabs: TabItem[] = [
+    { key: TAB_ALL, title: "All", count: allUsers.length },
+    { key: TAB_ADMINS, title: "Admins", count: adminCount },
+    { key: TAB_USERS, title: "Users", count: userCount },
+    { key: TAB_BANNED, title: "Banned", count: bannedCount },
+  ];
+
+  const handleUserAction = (user: AdminUser) => {
+    const isBanned = !!user.banned_until; // Check if banned
+
+    Alert.alert("Manage User", `Select action for ${user.email}`, [
       { text: "Cancel", style: "cancel" },
       {
-        text: "Make User",
-        onPress: () => roleMutation.mutate({ email: userEmail, role: "user" }),
-        style: currentRole === "user" ? "default" : "destructive",
+        text: "Set as User",
+        onPress: () => roleMutation.mutate({ email: user.email, role: "user" }),
       },
       {
-        text: "Make Admin",
-        onPress: () => roleMutation.mutate({ email: userEmail, role: "admin" }),
-      },
-      {
-        text: "Make Super Admin",
+        text: "Promote to Admin",
         onPress: () =>
-          roleMutation.mutate({ email: userEmail, role: "super_admin" }),
+          roleMutation.mutate({ email: user.email, role: "admin" }),
+      },
+      {
+        text: "Promote to Super Admin",
+        onPress: () =>
+          roleMutation.mutate({ email: user.email, role: "super_admin" }),
+      },
+      {
+        text: isBanned ? "Unban User" : "Ban User (Indefinite)",
+        onPress: () =>
+          banMutation.mutate({
+            email: user.email,
+            banUntil: isBanned ? null : "2099-01-01 00:00:00+00", // Toggle Ban
+          }),
+        style: "destructive",
       },
     ]);
+  };
+
+  const handleLoadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
+
+  const renderFooter = () => {
+    if (!isFetchingNextPage) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color="#6366f1" />
+      </View>
+    );
   };
 
   if (isLoading) {
@@ -51,17 +134,60 @@ export default function UserManagementScreen() {
     );
   }
 
-  const renderUser = ({ item }: any) => {
+  // Helper to determine styles based on status
+  const getRoleStyle = (user: AdminUser) => {
+    if (user.banned_until) return styles.bgBanned;
+    switch (user.role) {
+      case "super_admin":
+        return styles.bgSuper;
+      case "admin":
+        return styles.bgAdmin;
+      default:
+        return styles.bgUser;
+    }
+  };
+
+  const getRoleTextStyle = (user: AdminUser) => {
+    if (user.banned_until) return styles.textBanned;
+    switch (user.role) {
+      case "super_admin":
+        return styles.textSuper;
+      case "admin":
+        return styles.textAdmin;
+      default:
+        return styles.textUser;
+    }
+  };
+
+  const renderUser = ({ item }: { item: AdminUser }) => {
     const isMe = item.email === currentUser?.email;
+    const isBanned = !!item.banned_until;
 
     return (
-      <View style={styles.userRow}>
+      <View style={[styles.userRow, isBanned && styles.bannedRow]}>
         <View style={styles.leftSection}>
-          <View style={styles.avatarPlaceholder}>
-            <Icon name="person" size={20} color="#6366f1" />
+          <View
+            style={[
+              styles.avatarPlaceholder,
+              isBanned && { backgroundColor: "#fee2e2" },
+            ]}
+          >
+            <Icon
+              name={isBanned ? "ban" : "person"}
+              size={20}
+              color={isBanned ? "#ef4444" : "#6366f1"}
+            />
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>
+            <Text
+              style={[
+                styles.userName,
+                isBanned && {
+                  color: "#9ca3af",
+                  textDecorationLine: "line-through",
+                },
+              ]}
+            >
               {item.full_name || "No Name"} {isMe && "(You)"}
             </Text>
             <Text style={styles.userEmail}>{item.email}</Text>
@@ -69,30 +195,18 @@ export default function UserManagementScreen() {
         </View>
 
         <TouchableOpacity
-          style={[
-            styles.roleBadge,
-            item.role === "super_admin"
-              ? styles.bgSuper
-              : item.role === "admin"
-              ? styles.bgAdmin
-              : styles.bgUser,
-          ]}
-          onPress={() => !isMe && handleRoleChange(item.email, item.role)}
-          disabled={isMe || roleMutation.isPending}
+          style={[styles.roleBadge, getRoleStyle(item)]}
+          onPress={() => !isMe && handleUserAction(item)}
+          disabled={isMe || roleMutation.isPending || banMutation.isPending}
         >
-          <Text
-            style={[
-              styles.roleText,
-              item.role === "super_admin" ? styles.textSuper : styles.textAdmin,
-            ]}
-          >
-            {item.role}
+          <Text style={[styles.roleText, getRoleTextStyle(item)]}>
+            {isBanned ? "Banned" : item.role}
           </Text>
           {!isMe && (
             <Icon
               name="chevron-down"
               size={12}
-              color="#6b7280"
+              color={isBanned ? "#ef4444" : "#6b7280"}
               style={{ marginLeft: 4 }}
             />
           )}
@@ -103,10 +217,27 @@ export default function UserManagementScreen() {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="User Management" subtitle="Manage permissions and roles" />
+      <ScreenHeader
+        title="User Management"
+        subtitle="Manage permissions and roles"
+      />
+
+      <View style={styles.searchWrapper}>
+        <SearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onFilterPress={() => {}}
+        />
+      </View>
+
+      <TabSelector
+        tabs={tabs}
+        selectedTabKey={selectedTab}
+        onSelectTab={setSelectedTab}
+      />
 
       <FlatList
-        data={users}
+        data={filteredUsers}
         keyExtractor={(item) => item.id}
         renderItem={renderUser}
         contentContainerStyle={styles.list}
@@ -117,8 +248,18 @@ export default function UserManagementScreen() {
             tintColor="#6366f1"
           />
         }
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={renderFooter}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>
+              No users found matching "{searchQuery}"
+            </Text>
+          </View>
+        }
       />
-      {roleMutation.isPending && (
+      {(roleMutation.isPending || banMutation.isPending) && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator color="#6366f1" />
         </View>
@@ -128,25 +269,20 @@ export default function UserManagementScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1, backgroundColor: "#f8f9fa" },
+  loadingContainer: {
     flex: 1,
-    backgroundColor: Platform.OS === "ios" ? "#f8f9fa" : "#e1e1e8ff",
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    color: "#1f2937",
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#6366f1",
-    paddingHorizontal: 20,
-    marginBottom: 10,
-    fontWeight: "600",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f8f9fa",
   },
   list: { padding: 20 },
+
+  searchWrapper: {
+    marginTop: 8,
+    marginBottom: 0,
+  },
+
   userRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -159,6 +295,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 1,
+  },
+  bannedRow: {
+    backgroundColor: "#fff1f2", // Light red tint for banned users row
+    opacity: 0.9,
   },
   leftSection: { flexDirection: "row", alignItems: "center", flex: 1 },
   avatarPlaceholder: {
@@ -183,6 +323,11 @@ const styles = StyleSheet.create({
   bgSuper: { backgroundColor: "#fef3c7" },
   bgAdmin: { backgroundColor: "#dbeafe" },
   bgUser: { backgroundColor: "#f3f4f6" },
+  bgBanned: {
+    backgroundColor: "#fee2e2",
+    borderWidth: 1,
+    borderColor: "#fecaca",
+  },
   roleText: {
     fontSize: 12,
     fontWeight: "700",
@@ -191,6 +336,8 @@ const styles = StyleSheet.create({
   },
   textSuper: { color: "#d97706" },
   textAdmin: { color: "#2563eb" },
+  textUser: { color: "#374151" },
+  textBanned: { color: "#dc2626" },
   loadingOverlay: {
     position: "absolute",
     bottom: 40,
@@ -200,10 +347,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     elevation: 5,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f8f9fa",
-  },
+  emptyState: { alignItems: "center", marginTop: 40 },
+  emptyText: { color: "#6b7280", fontSize: 16 },
+  footerLoader: { paddingVertical: 20, alignItems: "center" },
 });

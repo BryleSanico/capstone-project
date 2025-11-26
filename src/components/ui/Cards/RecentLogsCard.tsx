@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { AdminLog } from "../../../types/admin";
 import { formatRelativeTime } from "../../../utils/formatters/relativeTimeFormatter";
+import { getActionConfig } from "../../../utils/ui/adminLogConfig";
 
 interface RecentLogsCardProps {
   logs: AdminLog[];
@@ -13,33 +14,6 @@ export const RecentLogsCard: React.FC<RecentLogsCardProps> = ({
   logs,
   onShowAll,
 }) => {
-  const getActionConfig = (type: string) => {
-    switch (type) {
-      case "APPROVE_EVENT":
-        return {
-          name: "checkmark-circle",
-          color: "#10b981",
-          title: "Event Approved",
-        };
-      case "REJECT_DELETE":
-        return { name: "trash", color: "#ef4444", title: "Event Deleted" };
-      case "REJECT_REVISION":
-        return {
-          name: "construct",
-          color: "#f59e0b",
-          title: "Revision Requested",
-        };
-      case "PROMOTE_USER":
-        return { name: "person-add", color: "#3b82f6", title: "User Promoted" };
-      default:
-        return {
-          name: "information-circle",
-          color: "#6b7280",
-          title: "Admin Action",
-        };
-    }
-  };
-
   const renderLogItem = (log: AdminLog, index: number) => {
     const config = getActionConfig(log.action_type);
 
@@ -60,7 +34,7 @@ export const RecentLogsCard: React.FC<RecentLogsCardProps> = ({
         <View
           style={[styles.iconBox, { backgroundColor: `${config.color}15` }]}
         >
-          <Icon name={config.name} size={16} color={config.color} />
+          <Icon name={config.icon} size={16} color={config.color} />
         </View>
         <View style={styles.logContent}>
           <Text style={styles.logTitle}>{config.title}</Text>

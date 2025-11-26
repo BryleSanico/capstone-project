@@ -12,7 +12,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import { Event } from "../../../types/event";
 import { formatFullDate } from "../../../utils/formatters/dateFormatter";
 
-type MyEventCardProps = {
+type ActionableEventCardProps = {
   event: Event;
   onPress: () => void;
   // Legacy props for backward compatibility
@@ -22,14 +22,14 @@ type MyEventCardProps = {
   containerStyle?: ViewStyle;
 };
 
-export default function MyEventCard({
+export default function ActionableEventCard({
   event,
   onPress,
   onEdit,
   onDelete,
   renderActions,
   containerStyle,
-}: MyEventCardProps) {
+}: ActionableEventCardProps) {
   const renderDefaultActions = () => (
     <View style={styles.actionsContainer}>
       {onEdit && (

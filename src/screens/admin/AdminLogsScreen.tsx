@@ -9,7 +9,6 @@ import {
   Modal,
   ScrollView,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Loader } from "../../components/LazyLoaders/loader";
 import { useAdminLogs } from "../../hooks/useAdmin";
@@ -20,80 +19,19 @@ import {
 import { AdminLog } from "../../types/admin";
 import { EmptyState } from "../../components/ui/Errors/EmptyState";
 import { formatRelativeTime } from "../../utils/formatters/relativeTimeFormatter";
+import ScreenHeader from "../../components/ui/ScreenHeader";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "@/src/navigation/AppNavigator";
+import { getActionConfig } from "../../utils/ui/adminLogConfig";
+
+type AdminLogsScreenNavigationProp =
+  NativeStackNavigationProp<RootStackParamList>;
 
 export default function AdminLogsScreen() {
+  const navigation = useNavigation<AdminLogsScreenNavigationProp>();
   const { data: logs = [], isLoading, refetch, isRefetching } = useAdminLogs();
   const [selectedLog, setSelectedLog] = useState<AdminLog | null>(null);
-
-  const getActionConfig = (type: string) => {
-    switch (type) {
-      case "APPROVE_EVENT":
-        return {
-          icon: "checkmark-circle",
-          color: "#10b981",
-          label: "Event Approved",
-        };
-      case "REJECT_DELETE":
-        return { icon: "trash", color: "#ef4444", label: "Event Deleted" };
-      case "REJECT_REVISION":
-        return {
-          icon: "construct",
-          color: "#f59e0b",
-          label: "Revision Requested",
-        };
-      case "PROMOTE_USER":
-        return { icon: "person-add", color: "#3b82f6", label: "User Promoted" };
-      default:
-        return {
-          icon: "information-circle",
-          color: "#6b7280",
-          label: "Admin Action",
-        };
-    }
-  };
-
-  const renderLogItem = ({ item }: { item: AdminLog }) => {
-    const config = getActionConfig(item.action_type);
-
-    return (
-      <TouchableOpacity
-        style={styles.logCard}
-        onPress={() => setSelectedLog(item)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.headerRow}>
-          <View
-            style={[styles.badge, { backgroundColor: `${config.color}15` }]}
-          >
-            <Icon
-              name={config.icon}
-              size={14}
-              color={config.color}
-              style={{ marginRight: 6 }}
-            />
-            <Text style={[styles.badgeText, { color: config.color }]}>
-              {config.label}
-            </Text>
-          </View>
-          <Text style={styles.dateText}>
-            {formatRelativeTime(item.created_at)}
-          </Text>
-        </View>
-
-        <Text style={styles.detailsText} numberOfLines={3}>
-          {item.details}
-        </Text>
-
-        <View style={styles.adminRow}>
-          <Icon name="person-circle-outline" size={16} color="#9ca3af" />
-          <Text style={styles.adminName}>
-            By:{" "}
-            {item.admin_name || item.admin_email?.split("@")[0] || "Unknown"}
-          </Text>
-        </View>
-      </TouchableOpacity>
-    );
-  };
 
   // Helper to split details into message and reason
   const parseLogDetails = (details: string) => {
@@ -116,6 +54,49 @@ export default function AdminLogsScreen() {
     return { mainMessage: details, reason: null };
   };
 
+  const renderLogItem = ({ item }: { item: AdminLog }) => {
+    const config = getActionConfig(item.action_type);
+    const { mainMessage } = parseLogDetails(item.details); // Only show main message in list
+
+    return (
+      <TouchableOpacity
+        style={styles.logCard}
+        onPress={() => setSelectedLog(item)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.headerRow}>
+          <View
+            style={[styles.badge, { backgroundColor: `${config.color}15` }]}
+          >
+            <Icon
+              name={config.icon}
+              size={14}
+              color={config.color}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={[styles.badgeText, { color: config.color }]}>
+              {config.title}
+            </Text>
+          </View>
+          <Text style={styles.dateText}>
+            {formatRelativeTime(item.created_at)}
+          </Text>
+        </View>
+
+        <Text style={styles.detailsText} numberOfLines={2}>
+          {mainMessage}
+        </Text>
+
+        <View style={styles.adminRow}>
+          <Icon name="person-circle-outline" size={16} color="#9ca3af" />
+          <Text style={styles.adminName}>
+            By {item.admin_name || item.admin_email?.split("@")[0] || "Unknown"}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -130,7 +111,13 @@ export default function AdminLogsScreen() {
     : { mainMessage: "", reason: null };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <ScreenHeader
+        title="Audit Logs"
+        subtitle="History of admin actions"
+        showBackButton={true}
+        onBack={() => navigation.goBack()}
+      />
       {/* List */}
       {logs.length === 0 ? (
         <EmptyState
@@ -180,7 +167,7 @@ export default function AdminLogsScreen() {
                       { color: getActionConfig(selectedLog.action_type).color },
                     ]}
                   >
-                    {getActionConfig(selectedLog.action_type).label}
+                    {getActionConfig(selectedLog.action_type).title}
                   </Text>
                 </View>
 
@@ -233,7 +220,7 @@ export default function AdminLogsScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -321,9 +308,8 @@ const styles = StyleSheet.create({
 
   messageText: { fontSize: 15, color: "#374151", lineHeight: 22 },
 
-  // New styles for the reason box
   reasonBox: {
-    backgroundColor: "#fefefeff", // Light red/pink background for emphasis
+    backgroundColor: "#fefefeff", 
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
