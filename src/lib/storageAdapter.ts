@@ -87,7 +87,7 @@ export const StorageAdapter: SupportedStorage = {
         console.log(`[StorageAdapter] Removed from secure storage: ${key.substring(0, 30)}...`);
       } catch (error: any) {
         // Log it as info, not a warning.
-        console.log(`[StorageAdapter] Secure key not found or already removed: ${key.substring(0, 30)}...`);
+        console.log(`[StorageAdapter] Secure key not found or already removed: ${key.substring(0, 30)}...`, error.message);
       }
 
       // Try to remove from AsyncStorage

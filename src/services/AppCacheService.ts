@@ -51,7 +51,7 @@ async function clearAllSecureStorage(): Promise<void> {
  *
  * @param userId The ID of the user logging out.
  */
-async function handleLogout(userId: string): Promise<void> {
+async function handleLogout(): Promise<void> {
   console.log('[AppCacheService] Handling logout procedures...');
   // Clear all non-sensitive cache data (tickets, favorites, etc.)
   await clearPrivateData();
