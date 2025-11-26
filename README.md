@@ -62,6 +62,7 @@ This Capstone project is a mobile application built to handle the complete event
 * **Persistence:** `react-native-sqlite-storage`
 * **UI/UX:** React Native Paper, Linear Gradient, Vector Icons
 * **Secure Storage:** `react-native-encrypted-storage` (Secure and Encrypted storage for Auth token)
+  - Keychain (iOS) and EncryptedSharedPreference - keystore (Android)
 
 ### Backend (Supabase)
 * **Database:** PostgreSQL
