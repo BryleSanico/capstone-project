@@ -17,6 +17,8 @@ export default function useEventSubscription(eventId: number | null) {
   useEffect(() => {
     if (!eventId) return;
 
+    console.log(`[EventSubscription] Subscribing to event ${eventId}...`);
+
     const channel = supabase
       .channel(`event-details-${eventId}`)
       .on(
@@ -30,22 +32,19 @@ export default function useEventSubscription(eventId: number | null) {
         (payload) => {
           console.log('🟢 Real-time event update received!', payload.new);
           
-          const updatedEvent = eventMapper(payload.new);
-          
-          // Get the query key for this specific event
+          // Invalidate to refetch fresh data (safest for relations)
+          // This fetches the full event again including joined tables (organizer, etc.)
           const queryKey = [...eventsQueryKey, 'detail', eventId];
+          queryClient.invalidateQueries({ queryKey });
           
-          // Set the new data in the cache for this query.
-          // Instantly update EventDetailsScreen if it's open.
-          queryClient.setQueryData<Event>(queryKey, updatedEvent);
-          queryClient.invalidateQueries({
-             queryKey: ['events', 'list']
-          });
+          // Also refresh the list view so the main feed is accurate
+          queryClient.invalidateQueries({ queryKey: ['events', 'list'] });
         },
       )
       .subscribe();
 
     return () => {
+      console.log(`[EventSubscription] Unsubscribing from event ${eventId}`);
       supabase.removeChannel(channel);
     };
   }, [eventId, queryClient]);
