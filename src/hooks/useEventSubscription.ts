@@ -1,9 +1,7 @@
 import { useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { eventMapper } from '../utils/mappers/eventMapper';
 import { useQueryClient } from '@tanstack/react-query';
 import { eventsQueryKey } from './useEvents';
-import { Event } from '../types/event';
 
 /**
  * A custom hook that subscribes to real-time updates for a single event.

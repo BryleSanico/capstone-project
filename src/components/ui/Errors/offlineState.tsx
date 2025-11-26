@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 interface OfflineStateProps {
@@ -13,6 +13,7 @@ export const OfflineState: React.FC<OfflineStateProps> = ({ message, onRefresh }
       <Icon name="cloud-offline-outline" size={64} color="#ccc" />
       <Text style={styles.errorTitle}>Connection Error</Text>
       <Text style={styles.errorText}>{message}</Text>
+      <Text style={styles.errorText} onPress={onRefresh}>Tap to retry</Text>
     </View>
   );
 };
