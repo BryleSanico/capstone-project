@@ -4,8 +4,8 @@ import {
   validateFileType,
   validateFileSize,
   hasBase64Data,
-} from '../utils/validations/validation';
-import { checkAndRequestPhotoPermission } from '../utils/validations/permissions';
+} from '../../utils/validations/validation';
+import { checkAndRequestPhotoPermission } from '../../utils/validations/permissions';
 
 const MAX_FILE_SIZE_MB = 2;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];

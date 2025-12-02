@@ -25,14 +25,14 @@ import {
   EventFormErrors,
 } from '../utils/validations/eventValidation';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useDateTimePicker } from '../hooks/useDateTimePicker';
-import { useImagePicker } from '../hooks/useImagePicker';
+import { useDateTimePicker } from '../hooks/';
+import { useImagePicker } from '../hooks/';
 import LinearGradient from 'react-native-linear-gradient';
 import {
   useMyEventsQuery,
   useCreateEvent,
   useUpdateEvent,
-} from '../hooks/useMyEvents';
+} from '../hooks/';
 import { Loader } from '../components/LazyLoaders/loader';
 
 type EventFormScreenRouteProp = RouteProp<RootStackParamList, 'EventForm'>;

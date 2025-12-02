@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
-import { useNetworkStatus } from '../stores/network-store';
+import { useNetworkStatus } from '../../stores/network-store';
 import { useQueryClient } from '@tanstack/react-query';
 
 export function useNetworkMonitor() {
