@@ -10,7 +10,7 @@ import {
   useFavoritesQuery,
   useAddFavorite,
   useRemoveFavorite,
-} from '../../../hooks/useFavorites';
+} from '../../../hooks/data/useFavorites';
 interface EventCardProps {
   event: Event;
   onPress: () => void;

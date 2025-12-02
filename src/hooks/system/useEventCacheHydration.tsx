@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import * as sqliteService from '../services/sqliteService';
-import { eventsQueryKey } from './useEvents';
+import * as sqliteService from '../../services/sqliteService';
+import { eventsQueryKey } from '../data/useEvents';
 
 export const useEventCacheHydration = () => {
   const [isHydrated, setIsHydrated] = useState(false);

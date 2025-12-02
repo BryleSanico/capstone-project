@@ -6,12 +6,12 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AppNavigator from "./src/navigation/AppNavigator";
 import AdminNavigator from "./src/navigation/AdminNavigator";
 import SplashScreen from "react-native-splash-screen";
-import { useNetworkMonitor } from "./src/hooks/useNetworkMonitor";
+import { useNetworkMonitor } from "./src/hooks/system/useNetworkMonitor";
 import { Provider as PaperProvider } from "react-native-paper";
 import { NetworkSnackbar } from "./src/components/ui/SnackBars/NetworkSnackbar";
 import { useAuth } from "./src/stores/auth-store";
-import { useEventCacheHydration } from "./src/hooks/useEventCacheHydration";
-import { useUserDataSync } from "./src/hooks/useUserDataSync";
+import { useEventCacheHydration } from "./src/hooks";
+import { useUserDataSync } from "./src/hooks/";
 
 const queryClient = new QueryClient();
 

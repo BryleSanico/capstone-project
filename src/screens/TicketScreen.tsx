@@ -28,7 +28,7 @@ import {
   TAB_CONFIG,
 } from '../types/TabSegment';
 import { filterTicketsByDate } from '../utils/domain/filterUtils';
-import { useTicketsQuery } from '../hooks/useTickets'; // Import new hook
+import { useTicketsQuery } from '../hooks'; 
 
 // Define the navigation tab
 type TicketsScreenNavigationProp = CompositeNavigationProp<

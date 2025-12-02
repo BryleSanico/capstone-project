@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Loader } from "../../components/LazyLoaders/loader";
-import { useAdminLogs } from "../../hooks/useAdmin";
+import { useAdminLogs } from "../../hooks/";
 import {
   formatFullDate,
   formatTime,

@@ -12,7 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Loader } from "../../components/LazyLoaders/loader";
 import { useAuth } from "../../stores/auth-store";
-import { useAdminStats, useAdminLogs } from "../../hooks/useAdmin";
+import { useAdminStats, useAdminLogs } from "../../hooks/";
 import { StatCard } from "../../components/ui/Cards/StatCard";
 import { RecentLogsCard } from "../../components/ui/Cards/RecentLogsCard";
 import { useNavigation } from "@react-navigation/native";

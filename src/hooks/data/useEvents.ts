@@ -2,8 +2,8 @@ import {
   useQuery,
   useInfiniteQuery,
 } from '@tanstack/react-query';
-import * as eventService from '../services/api/eventService';
-import { Event } from '../types/event';
+import * as eventService from '../../services/api/eventService';
+import { Event } from '../../types/event';
 
 // This key is used to invalidate event queries from other hooks
 export const eventsQueryKey = ['events'];

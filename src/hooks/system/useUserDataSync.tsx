@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../stores/auth-store';
-import { useNetworkStatus } from '../stores/network-store';
-import * as sqliteService from '../services/sqliteService';
-import { ticketsQueryKey } from './useTickets';
-import { favoritesQueryKey } from './useFavorites';
-import { myEventsQueryKey } from './useMyEvents';
-import { eventsQueryKey } from './useEvents';
+import { useAuth } from '../../stores/auth-store';
+import { useNetworkStatus } from '../../stores/network-store';
+import * as sqliteService from '../../services/sqliteService';
+import { ticketsQueryKey } from '../data/useTickets';
+import { favoritesQueryKey } from '../data/useFavorites';
+import { myEventsQueryKey } from '../data/useMyEvents';
+import { eventsQueryKey } from '../data/useEvents';
 
 /**
  * Manages the synchronization of user-specific data (Tickets, MyEvents, Favorites).

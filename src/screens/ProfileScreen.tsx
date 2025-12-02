@@ -26,9 +26,9 @@ import { useAuth } from "../stores/auth-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AppCacheService } from "../services/AppCacheService";
 
-import { useTicketsQuery } from "../hooks/useTickets";
-import { useFavoritesQuery } from "../hooks/useFavorites";
-import { useUnreadCountQuery } from "../hooks/useNotifications"; // Ensure this hook exists from previous steps
+import { useTicketsQuery } from "../hooks/";
+import { useFavoritesQuery } from "../hooks/";
+import { useUnreadCountQuery } from "../hooks/"; 
 
 // Define the types for route and navigation
 type ProfileScreenNavigationProp = CompositeNavigationProp<

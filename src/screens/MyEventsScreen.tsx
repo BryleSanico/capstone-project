@@ -30,7 +30,7 @@ import {
   TAB_CONFIG,
 } from '../types/TabSegment';
 import { filterEventsByDate } from '../utils/domain/filterUtils';
-import { useMyEventsQuery, useDeleteEvent } from '../hooks/useMyEvents';
+import { useMyEventsQuery, useDeleteEvent } from '../hooks';
 
 type MyEventsScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'My Events'>,

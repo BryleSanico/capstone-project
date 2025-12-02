@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import * as favoritesService from '../services/api/favoritesService';
-import * as eventService from '../services/api/eventService';
+import * as favoritesService from '../../services/api/favoritesService';
+import * as eventService from '../../services/api/eventService';
 import { Alert } from 'react-native';
 import HapticFeedback from 'react-native-haptic-feedback';
-import { useAuth } from '../stores/auth-store';
-import { Event } from '../types/event';
+import { useAuth } from '../../stores/auth-store';
+import { Event } from '../../types/event';
 
 export const favoritesQueryKey = ['favorites'];
 

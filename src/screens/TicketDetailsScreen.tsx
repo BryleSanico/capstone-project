@@ -18,7 +18,7 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { formatFullDate } from '../utils/formatters/dateFormatter';
 import { Loader } from '../components/LazyLoaders/loader';
 
-import { useTicketsQuery } from '../hooks/useTickets';
+import { useTicketsQuery } from '../hooks/';
 
 type TicketDetailsScreenRouteProp = RouteProp<
   RootStackParamList,
