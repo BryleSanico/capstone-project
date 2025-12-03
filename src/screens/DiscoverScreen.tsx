@@ -1,34 +1,30 @@
-import React, {
-  useState,
-  useLayoutEffect,
-  useCallback,
-} from 'react';
+import React, { useState, useLayoutEffect, useCallback } from "react";
 import {
   View,
   StyleSheet,
   FlatList,
   RefreshControl,
   SafeAreaView,
-} from 'react-native';
+} from "react-native";
 import {
   useNavigation,
   CompositeNavigationProp,
-} from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import EventCard from '../components/ui/Cards/EventCard';
-import SearchBar from '../components/ui/SearchBar';
-import CategoryFilter from '../components/ui/CategoryFilter';
-import { Event } from '../types/event';
-import { OfflineState } from '../components/ui/Errors/offlineState';
-import { LoaderSearch } from '../components/LazyLoaders/loaderSearch';
-import { useNetworkStatus } from '../stores/network-store';
-import { EmptyState } from '../components/ui/Errors/EmptyState';
-import { useDebounce } from '../hooks/';
-import { useEventsInfiniteQuery } from '../hooks/';
-import { Loader } from '../components/LazyLoaders/loader';
-import { RootStackParamList } from '../navigation/AppNavigator';
-import { TabParamList } from '../navigation/TabNavigator';
+} from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import EventCard from "../components/ui/Cards/EventCard";
+import SearchBar from "../components/ui/SearchBar";
+import CategoryFilter from "../components/ui/CategoryFilter";
+import { Event } from "../types/event";
+import { OfflineState } from "../components/ui/Errors/offlineState";
+import { LoaderSearch } from "../components/LazyLoaders/loaderSearch";
+import { useNetworkStatus } from "../stores/network-store";
+import { EmptyState } from "../components/ui/Errors/EmptyState";
+import { useDebounce } from "../hooks/";
+import { useEventsInfiniteQuery } from "../hooks/";
+import { Loader } from "../components/LazyLoaders/loader";
+import { RootStackParamList } from "../navigation/AppNavigator";
+import { TabParamList } from "../navigation/TabNavigator";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -39,8 +35,8 @@ type DiscoverScreenNavigationProp = CompositeNavigationProp<
 
 export default function DiscoverScreen() {
   const navigation = useNavigation<DiscoverScreenNavigationProp>();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const debouncedQuery = useDebounce(searchQuery, 500);
   const isConnected = useNetworkStatus((state) => state.isConnected);
 
@@ -53,10 +49,7 @@ export default function DiscoverScreen() {
     fetchNextPage,
     hasNextPage,
     refetch,
-  } = useEventsInfiniteQuery(
-    debouncedQuery,
-    selectedCategory,
-  );
+  } = useEventsInfiniteQuery(debouncedQuery, selectedCategory);
 
   const allEvents = data?.events ?? [];
 
@@ -72,7 +65,7 @@ export default function DiscoverScreen() {
   const handleEventPress = (event: Event) => {
     navigation.navigate("EventDetails", {
       id: event.id,
-      initialIsFavorite: false, 
+      initialIsFavorite: false,
     });
   };
 

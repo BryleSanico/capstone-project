@@ -58,7 +58,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   return (
     <View style={{ flex: 1 }}>
       {hasAction
-        ? renderEmptyStateWithAction(icon, title, message, actionText, handlePress)
+        ? renderEmptyStateWithAction(
+            icon,
+            title,
+            message,
+            actionText,
+            handlePress
+          )
         : renderEmptyState(icon, title, message)}
     </View>
   );

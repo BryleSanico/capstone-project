@@ -17,7 +17,7 @@ export function isEmail(value: string): boolean {
  * @param value The value to check.
  */
 export function isRequired(value: string | null | undefined): boolean {
-  return value != null && value.trim() !== '';
+  return value != null && value.trim() !== "";
 }
 
 /**
@@ -26,7 +26,7 @@ export function isRequired(value: string | null | undefined): boolean {
  * @param length The minimum required length.
  */
 export function minLength(value: string, length: number): boolean {
-    return value.length >= length;
+  return value.length >= length;
 }
 
 /**

@@ -18,12 +18,12 @@ const toDate = (dateString: string | undefined | null): Date | null => {
  */
 export const formatFullDate = (dateString: string): string => {
   const date = toDate(dateString);
-  if (!date) return 'Invalid Date';
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  if (!date) return "Invalid Date";
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 };
 
@@ -33,10 +33,10 @@ export const formatFullDate = (dateString: string): string => {
  */
 export const formatTime = (dateString: string): string => {
   const date = toDate(dateString);
-  if (!date) return ''; // Return empty string for invalid time
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
+  if (!date) return ""; // Return empty string for invalid time
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
     hour12: true,
   });
 };
@@ -47,10 +47,10 @@ export const formatTime = (dateString: string): string => {
  */
 export const formatDateMMDD = (dateString: string): string => {
   const date = toDate(dateString);
-  if (!date) return '';
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
+  if (!date) return "";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
   });
 };
 
@@ -59,11 +59,11 @@ export const formatDateMMDD = (dateString: string): string => {
  * @example "Oct 19, 2025"
  */
 export const formatDateMMDDYY = (dateString: string): string => {
-    const date = toDate(dateString);
-    if (!date) return '';
-    return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
+  const date = toDate(dateString);
+  if (!date) return "";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 };

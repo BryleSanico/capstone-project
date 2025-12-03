@@ -1,5 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
 
 interface CategoryFilterProps {
   selectedCategory: string;
@@ -8,23 +14,26 @@ interface CategoryFilterProps {
 
 // Define static categories - these should match your database categories
 const CATEGORIES = [
-  'All',
-  'Music',
-  'Sports',
-  'Arts',
-  'Food',
-  'Technology',
-  'Business',
-  'Health',
-  'Education',
-  'Other',
+  "All",
+  "Music",
+  "Sports",
+  "Arts",
+  "Food",
+  "Technology",
+  "Business",
+  "Health",
+  "Education",
+  "Other",
 ];
 
-export default function CategoryFilter({ selectedCategory, onSelectCategory }: CategoryFilterProps) {
+export default function CategoryFilter({
+  selectedCategory,
+  onSelectCategory,
+}: CategoryFilterProps) {
   return (
     <View style={styles.container}>
-      <ScrollView 
-        horizontal 
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -33,14 +42,14 @@ export default function CategoryFilter({ selectedCategory, onSelectCategory }: C
             key={category}
             style={[
               styles.categoryButton,
-              selectedCategory === category && styles.selectedCategory
+              selectedCategory === category && styles.selectedCategory,
             ]}
             onPress={() => onSelectCategory(category)}
           >
             <Text
               style={[
                 styles.categoryText,
-                selectedCategory === category && styles.selectedCategoryText
+                selectedCategory === category && styles.selectedCategoryText,
               ]}
             >
               {category}
@@ -55,9 +64,9 @@ export default function CategoryFilter({ selectedCategory, onSelectCategory }: C
 const styles = StyleSheet.create({
   container: {
     paddingVertical: 12,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   scrollContent: {
     paddingHorizontal: 16,
@@ -67,20 +76,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: "#e9ecef",
   },
   selectedCategory: {
-    backgroundColor: '#6366f1',
-    borderColor: '#6366f1',
+    backgroundColor: "#6366f1",
+    borderColor: "#6366f1",
   },
   categoryText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
+    fontWeight: "600",
+    color: "#666",
   },
   selectedCategoryText: {
-    color: '#fff',
+    color: "#fff",
   },
 });

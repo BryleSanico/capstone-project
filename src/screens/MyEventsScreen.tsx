@@ -1,4 +1,4 @@
-import React, { useCallback, useLayoutEffect, useState, useMemo } from 'react';
+import React, { useCallback, useLayoutEffect, useState, useMemo } from "react";
 import {
   StyleSheet,
   FlatList,
@@ -7,46 +7,41 @@ import {
   TouchableOpacity,
   Platform,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   CompositeNavigationProp,
   useNavigation,
-} from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Loader } from '../components/LazyLoaders/loader';
-import { EmptyState } from '../components/ui/Errors/EmptyState';
-import ActionableEventCard from '../components/ui/Cards/ActionableEventCard';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { TabParamList } from '../navigation/TabNavigator';
-import { RootStackParamList } from '../navigation/AppNavigator';
-import FeatherIcon from 'react-native-vector-icons/Feather';
-import ScreenHeader from '../components/ui/ScreenHeader';
-import TabSelector from '../components/navigation/TabSelector';
-import {
-  TabKey,
-  TabItem,
-  TAB_KEYS,
-  TAB_CONFIG,
-} from '../types/TabSegment';
-import { filterEventsByDate } from '../utils/domain/filterUtils';
-import { useMyEventsQuery, useDeleteEvent } from '../hooks';
+} from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { Loader } from "../components/LazyLoaders/loader";
+import { EmptyState } from "../components/ui/Errors/EmptyState";
+import ActionableEventCard from "../components/ui/Cards/ActionableEventCard";
+import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { TabParamList } from "../navigation/TabNavigator";
+import { RootStackParamList } from "../navigation/AppNavigator";
+import FeatherIcon from "react-native-vector-icons/Feather";
+import ScreenHeader from "../components/ui/ScreenHeader";
+import TabSelector from "../components/navigation/TabSelector";
+import { TabKey, TabItem, TAB_KEYS, TAB_CONFIG } from "../types/TabSegment";
+import { filterEventsByDate } from "../utils/domain/filterUtils";
+import { useMyEventsQuery, useDeleteEvent } from "../hooks";
 
 type MyEventsScreenNavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<TabParamList, 'My Events'>,
+  BottomTabNavigationProp<TabParamList, "My Events">,
   NativeStackNavigationProp<RootStackParamList>
 >;
 
 export default function MyEventsScreen() {
   const navigation = useNavigation<MyEventsScreenNavigationProp>();
-  
-  const { 
-    data: myEvents = [], 
-    isLoading, 
-    isRefetching, 
-    refetch 
+
+  const {
+    data: myEvents = [],
+    isLoading,
+    isRefetching,
+    refetch,
   } = useMyEventsQuery();
-  
+
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
 
   const [selectedTab, setSelectedTab] = useState<TabKey>(TAB_KEYS.UPCOMING);
@@ -57,7 +52,11 @@ export default function MyEventsScreen() {
     });
   }, [navigation]);
 
-  const { upcoming: upcomingEvents, past: pastEvents, pending: pendingEvents } = useMemo(() => {
+  const {
+    upcoming: upcomingEvents,
+    past: pastEvents,
+    pending: pendingEvents,
+  } = useMemo(() => {
     const now = new Date().getTime();
     return filterEventsByDate(myEvents, now);
   }, [myEvents]);
@@ -96,7 +95,7 @@ export default function MyEventsScreen() {
   const createEventButton = (
     <TouchableOpacity
       style={styles.createButton}
-      onPress={() => navigation.navigate('EventForm', {})}
+      onPress={() => navigation.navigate("EventForm", {})}
     >
       <FeatherIcon name="plus" size={24} color="#8b5cf6" />
     </TouchableOpacity>
@@ -109,55 +108,50 @@ export default function MyEventsScreen() {
   const handleDeletePress = (eventId: number, title: string) => {
     if (isDeleting) return;
     Alert.alert(
-      'Delete Event',
+      "Delete Event",
       `Are you sure you want to delete "${title}"? This action cannot be undone.`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Delete',
-          style: 'destructive',
+          text: "Delete",
+          style: "destructive",
           onPress: () => deleteEvent(eventId),
         },
-      ],
+      ]
     );
   };
 
   const handleEditPress = (eventId: number) => {
-    navigation.navigate('EventForm', { eventId });
+    navigation.navigate("EventForm", { eventId });
   };
 
   const handleEventPress = (eventId: number) => {
-    navigation.navigate('EventDetails', {
+    navigation.navigate("EventDetails", {
       id: eventId,
       initialIsFavorite: false,
     });
   };
 
   const renderEmptyList = () => {
-    let icon = 'calendar-outline';
-    let title = 'No Events Found';
+    let icon = "calendar-outline";
+    let title = "No Events Found";
     let message = "You haven't organized any events yet.";
 
     if (selectedTab === TAB_KEYS.UPCOMING) {
-      title = 'No Upcoming Events';
-      message = 'You have no approved events scheduled for the future.';
+      title = "No Upcoming Events";
+      message = "You have no approved events scheduled for the future.";
     } else if (selectedTab === TAB_KEYS.PENDING) {
-      icon = 'time-outline';
-      title = 'No Pending Events';
-      message = 'All your events have been approved or you haven\'t submitted any recently.';
+      icon = "time-outline";
+      title = "No Pending Events";
+      message =
+        "All your events have been approved or you haven't submitted any recently.";
     } else if (selectedTab === TAB_KEYS.PAST) {
-      icon = 'checkmark-done-outline';
-      title = 'No Past Events';
-      message = 'You have no completed events.';
+      icon = "checkmark-done-outline";
+      title = "No Past Events";
+      message = "You have no completed events.";
     }
 
-    return (
-      <EmptyState
-        icon={icon}
-        title={title}
-        message={message}
-      />
-    );
+    return <EmptyState icon={icon} title={title} message={message} />;
   };
 
   if (isLoading) {
@@ -221,16 +215,16 @@ export default function MyEventsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Platform.OS === 'ios' ? '#f8f9fa' : '#e1e1e8ff',
+    backgroundColor: Platform.OS === "ios" ? "#f8f9fa" : "#e1e1e8ff",
   },
   createButton: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -238,17 +232,17 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   listContent: {
-    marginTop: Platform.OS === 'ios' ? 10 : 10,
+    marginTop: Platform.OS === "ios" ? 10 : 10,
     paddingBottom: 20,
   },
   emptyStateContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingBottom: 60,
   },
 });

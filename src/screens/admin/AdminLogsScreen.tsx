@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   messageText: { fontSize: 15, color: "#374151", lineHeight: 22 },
 
   reasonBox: {
-    backgroundColor: "#fefefeff", 
+    backgroundColor: "#fefefeff",
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,

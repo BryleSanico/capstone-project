@@ -1,6 +1,9 @@
-import { Event } from '../../types/event';
-import { Ticket } from '../../types/ticket';
-import { EventWithTimestamp, TicketWithTimestamp } from '../../types/TabSegment';
+import { Event } from "../../types/event";
+import { Ticket } from "../../types/ticket";
+import {
+  EventWithTimestamp,
+  TicketWithTimestamp,
+} from "../../types/TabSegment";
 
 /**
  * A reusable, optimized function to filter and sort data into
@@ -54,7 +57,10 @@ export function filterEventsByDate(
     try {
       timestamp = new Date(event.startTime).getTime();
     } catch (e) {
-      console.error(`Invalid date for event ${event.id}: ${event.startTime}`, e);
+      console.error(
+        `Invalid date for event ${event.id}: ${event.startTime}`,
+        e
+      );
     }
 
     const item = { event, timestamp };
@@ -70,8 +76,8 @@ export function filterEventsByDate(
 
   // Sort lists
   upcomingWithTs.sort((a, b) => a.timestamp - b.timestamp); // Ascending (soonest first)
-  pastWithTs.sort((a, b) => b.timestamp - a.timestamp);     // Descending (most recent first)
-  pendingWithTs.sort((a, b) => b.timestamp - a.timestamp);  // Descending (newest submission first)
+  pastWithTs.sort((a, b) => b.timestamp - a.timestamp); // Descending (most recent first)
+  pendingWithTs.sort((a, b) => b.timestamp - a.timestamp); // Descending (newest submission first)
 
   return {
     upcoming: upcomingWithTs.map((i) => i.event),
@@ -97,11 +103,12 @@ export function filterTicketsByDate(
       timestamp = new Date(ticket.eventDate).getTime();
 
       if (isNaN(timestamp)) {
-         // Fallback in case eventDate is NOT a valid string, to prevent crash
-         console.warn(`Invalid date string for ticket ${ticket.id}: ${ticket.eventDate}`);
-         timestamp = 0;
+        // Fallback in case eventDate is NOT a valid string, to prevent crash
+        console.warn(
+          `Invalid date string for ticket ${ticket.id}: ${ticket.eventDate}`
+        );
+        timestamp = 0;
       }
-
     } catch (e) {
       console.error(
         `Error parsing date for ticket ${ticket.id}: ${ticket.eventDate}`,

@@ -15,7 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useAuth } from '../stores/auth-store';
+import { useAuth } from "../stores/auth-store";
 import { Loader } from "../components/LazyLoaders/loader";
 import { isEmail, isRequired } from "../utils/validations/validation";
 
@@ -60,7 +60,7 @@ export default function LoginScreen() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
+
   const handleLogin = async () => {
     if (!validate()) {
       return;
@@ -80,33 +80,33 @@ export default function LoginScreen() {
         const currentUser = useAuth.getState().user;
         const role = currentUser?.app_metadata?.role;
 
-        // Only go back if it's a normal user. 
+        // Only go back if it's a normal user.
         // Admins get redirected by the root navigator automatically.
-        if (role !== 'admin' && role !== 'super_admin') {
-             if (navigation.canGoBack()) {
-                navigation.goBack();
-             }
+        if (role !== "admin" && role !== "super_admin") {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          }
         }
         // Note: We don't set isLoading(false) here because the component will unmount/remount
       }
     } catch (err) {
-       setIsLoading(false);
-       console.error(err);
+      setIsLoading(false);
+      console.error(err);
     }
   };
-  
+
   // Handlers to clear errors on input change
   const handleEmailChange = (text: string) => {
     setEmail(text);
     if (errors.email) {
-      setErrors(prev => ({ ...prev, email: null }));
+      setErrors((prev) => ({ ...prev, email: null }));
     }
   };
 
   const handlePasswordChange = (text: string) => {
     setPassword(text);
     if (errors.password) {
-      setErrors(prev => ({ ...prev, password: null }));
+      setErrors((prev) => ({ ...prev, password: null }));
     }
   };
 
@@ -122,22 +122,29 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.headerWrapper}>
-          <LinearGradient
-            colors={["#6366f1", "#8b5cf6"]}
-            style={styles.header}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <View style={styles.headerText}>
-              <Text style={styles.title}>Welcome Back</Text>
-              <Text style={styles.subtitle}>Sign in to continue</Text>
-            </View>
-          </LinearGradient>
+            <LinearGradient
+              colors={["#6366f1", "#8b5cf6"]}
+              style={styles.header}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.headerText}>
+                <Text style={styles.title}>Welcome Back</Text>
+                <Text style={styles.subtitle}>Sign in to continue</Text>
+              </View>
+            </LinearGradient>
           </View>
           <View style={styles.formContainer}>
             <View style={styles.fieldContainer}>
-              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
-              <View style={[styles.inputContainer, errors.email ? styles.errorInputContainer : null]}>
+              {errors.email && (
+                <Text style={styles.errorText}>{errors.email}</Text>
+              )}
+              <View
+                style={[
+                  styles.inputContainer,
+                  errors.email ? styles.errorInputContainer : null,
+                ]}
+              >
                 <View style={styles.inputIcon}>
                   <Icon name="mail-outline" size={20} color="#666" />
                 </View>
@@ -156,8 +163,15 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.fieldContainer}>
-              {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
-              <View style={[styles.inputContainer, errors.password ? styles.errorInputContainer : null]}>
+              {errors.password && (
+                <Text style={styles.errorText}>{errors.password}</Text>
+              )}
+              <View
+                style={[
+                  styles.inputContainer,
+                  errors.password ? styles.errorInputContainer : null,
+                ]}
+              >
                 <View style={styles.inputIcon}>
                   <Icon name="lock-closed-outline" size={20} color="#666" />
                 </View>
@@ -286,7 +300,7 @@ const styles = StyleSheet.create({
   formContainer: {
     flex: 0,
     padding: 24,
-    marginVertical: -60
+    marginVertical: -60,
   },
   fieldContainer: {
     marginBottom: 16,
@@ -299,10 +313,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     height: 56,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: "transparent",
   },
   errorInputContainer: {
-    borderColor: '#ff4757',
+    borderColor: "#ff4757",
   },
   inputIcon: {
     marginRight: 12,
@@ -316,7 +330,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   errorText: {
-    color: '#ff4757',
+    color: "#ff4757",
     fontSize: 12,
     marginBottom: 4,
     marginLeft: 4,
@@ -331,12 +345,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   buttonContainer: {
-    height: 50, 
-    justifyContent: 'center',
-    alignItems: 'center',
+    height: 50,
+    justifyContent: "center",
+    alignItems: "center",
   },
   loginButton: {
-    width: '100%', 
+    width: "100%",
     borderRadius: 12,
     overflow: "hidden",
     shadowColor: "#6366f1",
@@ -350,7 +364,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     height: 50,
     justifyContent: "center",
-    width: '100%',
+    width: "100%",
   },
   loginButtonText: {
     fontSize: 16,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 /**
  * A custom hook to delay the update of a value until a specified time has passed

@@ -13,7 +13,7 @@ const storageService = {
   async getItem<T>(key: string): Promise<T | null> {
     try {
       const jsonValue = await AsyncStorage.getItem(key);
-      return jsonValue != null ? JSON.parse(jsonValue) as T : null;
+      return jsonValue != null ? (JSON.parse(jsonValue) as T) : null;
     } catch (e) {
       console.error(`Failed to get item with key "${key}" from storage`, e);
       return null;
@@ -45,15 +45,15 @@ const storageService = {
       console.error(`Failed to remove item with key "${key}" from storage`, e);
     }
   },
-  
+
   // Clears all data from AsyncStorage.
   async clearAll(): Promise<void> {
     try {
-        await AsyncStorage.clear();
-    } catch(e) {
-        console.error('Failed to clear all data from storage', e);
+      await AsyncStorage.clear();
+    } catch (e) {
+      console.error("Failed to clear all data from storage", e);
     }
-  }
+  },
 };
 
 export default storageService;

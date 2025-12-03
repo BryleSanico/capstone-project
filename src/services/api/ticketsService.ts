@@ -1,17 +1,17 @@
-import { supabase } from '../../lib/supabase';
-import { Ticket } from '../../types/ticket';
-import { ticketMapper } from '../../utils/mappers/ticketMapper';
-import * as sqliteService from '../sqliteService';
+import { supabase } from "../../lib/supabase";
+import { Ticket } from "../../types/ticket";
+import { ticketMapper } from "../../utils/mappers/ticketMapper";
+import * as sqliteService from "../sqliteService";
 
 /**
  * Fetches the user's tickets.
  */
 export async function getTickets(): Promise<Ticket[]> {
-  const { data, error } = await supabase.rpc('get_user_tickets', {
+  const { data, error } = await supabase.rpc("get_user_tickets", {
     last_sync_time: null,
   });
   if (error) throw error;
-  
+
   const serverTickets = data.map(ticketMapper);
 
   // Insert to SQLite database
@@ -34,9 +34,9 @@ export type PurchaseRequest = {
  * Calls the atomic RPC to purchase tickets.
  */
 export async function purchaseTickets(
-  request: PurchaseRequest,
+  request: PurchaseRequest
 ): Promise<Ticket[]> {
-  const { data, error } = await supabase.rpc('purchase_tickets', {
+  const { data, error } = await supabase.rpc("purchase_tickets", {
     p_event_id: request.eventId,
     p_quantity: request.quantity,
     p_event_title: request.eventTitle,

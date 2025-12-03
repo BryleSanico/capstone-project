@@ -17,21 +17,37 @@ export type TabParamList = {
 const Tab = createBottomTabNavigator<TabParamList>();
 
 //  Extracted render functions
-const renderDiscoverIcon = ({ color, size }: { color: string; size: number }) => (
-  <Icon name="search-outline" size={size} color={color} />
-);
+const renderDiscoverIcon = ({
+  color,
+  size,
+}: {
+  color: string;
+  size: number;
+}) => <Icon name="search-outline" size={size} color={color} />;
 
-const renderMyEventsIcon = ({ color, size }: { color: string; size: number }) => (
-  <Icon name="calendar-outline" size={size} color={color} />
-);
+const renderMyEventsIcon = ({
+  color,
+  size,
+}: {
+  color: string;
+  size: number;
+}) => <Icon name="calendar-outline" size={size} color={color} />;
 
-const renderMyTicketsIcon = ({ color, size }: { color: string; size: number }) => (
-  <Icon name="ticket-outline" size={size} color={color} />
-);
+const renderMyTicketsIcon = ({
+  color,
+  size,
+}: {
+  color: string;
+  size: number;
+}) => <Icon name="ticket-outline" size={size} color={color} />;
 
-const renderProfileIcon = ({ color, size }: { color: string; size: number }) => (
-  <Icon2 name="user-o" size={size} color={color} />
-);
+const renderProfileIcon = ({
+  color,
+  size,
+}: {
+  color: string;
+  size: number;
+}) => <Icon2 name="user-o" size={size} color={color} />;
 
 export default function TabNavigator() {
   const { session } = useAuth();
@@ -90,7 +106,7 @@ export default function TabNavigator() {
           />
         </>
       )}
-    
+
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}

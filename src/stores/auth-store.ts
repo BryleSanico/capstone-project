@@ -8,7 +8,7 @@ import { UserRole } from "../types/user";
 type AuthState = {
   session: Session | null;
   user: User | null;
-  role: UserRole; 
+  role: UserRole;
   isInitialized: boolean;
   initialize: () => () => void; // Returns the unsubscribe function
   signInWithPassword: (
@@ -26,7 +26,7 @@ type AuthState = {
 export const useAuth = create<AuthState>((set, get) => ({
   session: null,
   user: null,
-  role: "user", 
+  role: "user",
   isInitialized: false,
 
   initialize: () => {

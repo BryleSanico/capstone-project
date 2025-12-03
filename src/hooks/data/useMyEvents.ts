@@ -1,13 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import * as myEventsService from '../../services/api/myEventsService';
-import { Event, EventFormData } from '../../types/event';
-import { useAuth } from '../../stores/auth-store';
-import { eventsQueryKey } from './useEvents'; 
-import { Asset } from 'react-native-image-picker';
-import { Alert } from 'react-native';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import * as myEventsService from "../../services/api/myEventsService";
+import { Event, EventFormData } from "../../types/event";
+import { useAuth } from "../../stores/auth-store";
+import { eventsQueryKey } from "./useEvents";
+import { Asset } from "react-native-image-picker";
+import { Alert } from "react-native";
 
 // Define the central query key
-export const myEventsQueryKey = ['myEvents'];
+export const myEventsQueryKey = ["myEvents"];
 
 /**
  * Fetches all events organized by the current user.
@@ -39,7 +39,7 @@ export function useCreateEvent() {
       queryClient.invalidateQueries({ queryKey: eventsQueryKey });
     },
     onError: (error) => {
-      Alert.alert('Create Failed', error.message);
+      Alert.alert("Create Failed", error.message);
     },
   });
 }
@@ -60,24 +60,25 @@ export function useUpdateEvent() {
       isClosed: boolean;
     }
   >({
-    mutationFn: (variables) => myEventsService.updateEvent(
-      variables.eventId,
-      variables.formData,
-      variables.currentImageUrl,
-      variables.imageAsset,
-      variables.isClosed,
-    ),
+    mutationFn: (variables) =>
+      myEventsService.updateEvent(
+        variables.eventId,
+        variables.formData,
+        variables.currentImageUrl,
+        variables.imageAsset,
+        variables.isClosed
+      ),
     onSuccess: (updatedEvent) => {
       // Invalidate all event-related data
       queryClient.invalidateQueries({ queryKey: myEventsQueryKey });
       queryClient.invalidateQueries({ queryKey: eventsQueryKey });
       // Also invalidate the specific detail query for this event
       queryClient.invalidateQueries({
-        queryKey: [...eventsQueryKey, 'detail', updatedEvent.id],
+        queryKey: [...eventsQueryKey, "detail", updatedEvent.id],
       });
     },
     onError: (error) => {
-      Alert.alert('Update Failed', error.message);
+      Alert.alert("Update Failed", error.message);
     },
   });
 }
@@ -95,7 +96,7 @@ export function useDeleteEvent() {
       queryClient.invalidateQueries({ queryKey: eventsQueryKey });
     },
     onError: (error) => {
-      Alert.alert('Delete Failed', error.message);
+      Alert.alert("Delete Failed", error.message);
     },
   });
 }

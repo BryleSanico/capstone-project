@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState, useEffect } from 'react';
+import React, { useLayoutEffect, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,47 +13,43 @@ import {
   SafeAreaView,
   Image,
   Switch,
-  Modal, 
-} from 'react-native';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
-import { EventFormData } from '../types/event';
+  Modal,
+} from "react-native";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../navigation/AppNavigator";
+import { EventFormData } from "../types/event";
 import {
   validateEventForm,
   hasValidationErrors,
   EventFormErrors,
-} from '../utils/validations/eventValidation';
-import Icon from 'react-native-vector-icons/Ionicons';
-import { useDateTimePicker } from '../hooks/';
-import { useImagePicker } from '../hooks/';
-import LinearGradient from 'react-native-linear-gradient';
-import {
-  useMyEventsQuery,
-  useCreateEvent,
-  useUpdateEvent,
-} from '../hooks/';
-import { Loader } from '../components/LazyLoaders/loader';
+} from "../utils/validations/eventValidation";
+import Icon from "react-native-vector-icons/Ionicons";
+import { useDateTimePicker } from "../hooks/";
+import { useImagePicker } from "../hooks/";
+import LinearGradient from "react-native-linear-gradient";
+import { useMyEventsQuery, useCreateEvent, useUpdateEvent } from "../hooks/";
+import { Loader } from "../components/LazyLoaders/loader";
 
-type EventFormScreenRouteProp = RouteProp<RootStackParamList, 'EventForm'>;
+type EventFormScreenRouteProp = RouteProp<RootStackParamList, "EventForm">;
 type EventFormScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  'EventForm'
+  "EventForm"
 >;
 
-const initialFormData: Omit<EventFormData, 'date' | 'time' | 'imageUrl'> & {
+const initialFormData: Omit<EventFormData, "date" | "time" | "imageUrl"> & {
   date?: string;
   time?: string;
 } = {
-  title: '',
-  description: '',
-  location: '',
-  address: '',
-  price: '',
-  category: '',
-  capacity: '',
-  tags: '',
-  userMaxTicketPurchase: '1',
+  title: "",
+  description: "",
+  location: "",
+  address: "",
+  price: "",
+  category: "",
+  capacity: "",
+  tags: "",
+  userMaxTicketPurchase: "1",
   isClosed: false,
   isApproved: false,
 };
@@ -61,25 +57,25 @@ const initialFormData: Omit<EventFormData, 'date' | 'time' | 'imageUrl'> & {
 export default function EventFormScreen() {
   const navigation = useNavigation<EventFormScreenNavigationProp>();
   const route = useRoute<EventFormScreenRouteProp>();
-  
+
   const eventId = route.params?.eventId;
   const isEditMode = !!eventId;
 
   const { data: myEvents, isLoading: isLoadingMyEvents } = useMyEventsQuery();
   const { mutate: createEvent, isPending: isCreating } = useCreateEvent();
   const { mutate: updateEvent, isPending: isUpdating } = useUpdateEvent();
-  
+
   const isSyncing = isCreating || isUpdating;
 
   const [formData, setFormData] =
-    useState<Omit<EventFormData, 'date' | 'time' | 'imageUrl'>>(
-      initialFormData,
+    useState<Omit<EventFormData, "date" | "time" | "imageUrl">>(
+      initialFormData
     );
   const [errors, setErrors] = useState<EventFormErrors>({});
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [isClosed, setIsClosed] = useState(false);
   const [hasPopulated, setHasPopulated] = useState(false);
-  
+
   // Modal State
   const [showReviewModal, setShowReviewModal] = useState(false);
 
@@ -108,9 +104,15 @@ export default function EventFormScreen() {
   }, [navigation]);
 
   useEffect(() => {
-    if (isEditMode && eventId && !isLoadingMyEvents && myEvents && !hasPopulated) {
-      const event = myEvents.find(e => e.id === eventId);
-      
+    if (
+      isEditMode &&
+      eventId &&
+      !isLoadingMyEvents &&
+      myEvents &&
+      !hasPopulated
+    ) {
+      const event = myEvents.find((e) => e.id === eventId);
+
       if (event) {
         const eventDate = new Date(event.startTime);
         setSelectedDateTime(eventDate);
@@ -121,20 +123,20 @@ export default function EventFormScreen() {
           title: event.title,
           description: event.description,
           location: event.location,
-          address: event.address || '',
+          address: event.address || "",
           price: event.price.toString(),
           category: event.category,
-          capacity: event.capacity?.toString() || '',
-          tags: event.tags?.join(', ') || '',
+          capacity: event.capacity?.toString() || "",
+          tags: event.tags?.join(", ") || "",
           userMaxTicketPurchase:
-            event.userMaxTicketPurchase?.toString() || '10',
+            event.userMaxTicketPurchase?.toString() || "10",
           isClosed: event.isClosed || false,
           isApproved: event.isApproved || false,
         });
         setIsLoading(false);
         setHasPopulated(true);
       } else if (!isLoadingMyEvents) {
-        Alert.alert('Error', 'Could not find event details.');
+        Alert.alert("Error", "Could not find event details.");
         navigation.goBack();
       }
     } else if (!isEditMode) {
@@ -145,26 +147,26 @@ export default function EventFormScreen() {
       setIsLoading(false);
     }
   }, [
-    eventId, 
-    isEditMode, 
-    navigation, 
-    isLoadingMyEvents, 
-    myEvents, 
-    setCurrentImageUrl, 
+    eventId,
+    isEditMode,
+    navigation,
+    isLoadingMyEvents,
+    myEvents,
+    setCurrentImageUrl,
     setSelectedDateTime,
-    hasPopulated 
+    hasPopulated,
   ]);
-  
+
   useEffect(() => {
     if (imageError) {
-      Alert.alert('Upload Failed', imageError);
+      Alert.alert("Upload Failed", imageError);
       clearImageError();
     }
   }, [imageError, clearImageError]);
 
   const handleInputChange = (
-    name: keyof Omit<EventFormData, 'date' | 'time' | 'imageUrl'>,
-    value: string,
+    name: keyof Omit<EventFormData, "date" | "time" | "imageUrl">,
+    value: string
   ) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof EventFormErrors]) {
@@ -174,7 +176,7 @@ export default function EventFormScreen() {
 
   // 1. Intercept Submit to show modal first
   const handlePreSubmit = () => {
-     if (isSyncing) return;
+    if (isSyncing) return;
 
     const dataToValidate: EventFormData = {
       ...formData,
@@ -185,14 +187,14 @@ export default function EventFormScreen() {
     const validationErrors = validateEventForm(dataToValidate);
 
     if (!isEditMode && !imageAsset) {
-      validationErrors.imageUrl = 'Event image is required.';
+      validationErrors.imageUrl = "Event image is required.";
     } else if (!displayImageUri) {
-      validationErrors.imageUrl = 'Event image is required.';
+      validationErrors.imageUrl = "Event image is required.";
     }
 
     setErrors(validationErrors);
     if (hasValidationErrors(validationErrors)) {
-      Alert.alert('Validation Error', 'Please check the required fields.');
+      Alert.alert("Validation Error", "Please check the required fields.");
       return;
     }
 
@@ -203,7 +205,7 @@ export default function EventFormScreen() {
   // 2. Actual Submit Logic (Called from Modal "I Understood")
   const handleConfirmSubmit = async () => {
     setShowReviewModal(false); // Close modal
-    
+
     const dataToValidate: EventFormData = {
       ...formData,
       date: formattedDate,
@@ -215,17 +217,19 @@ export default function EventFormScreen() {
         {
           eventId,
           formData: dataToValidate,
-          currentImageUrl: currentImageUrl || '',
+          currentImageUrl: currentImageUrl || "",
           imageAsset: imageAsset || null,
           isClosed: isClosed,
         },
         {
           onSuccess: () => {
-            Alert.alert('Submitted', 'Your event update has been submitted for review.', [
-              { text: 'OK', onPress: () => navigation.goBack() },
-            ]);
+            Alert.alert(
+              "Submitted",
+              "Your event update has been submitted for review.",
+              [{ text: "OK", onPress: () => navigation.goBack() }]
+            );
           },
-        },
+        }
       );
     } else {
       createEvent(
@@ -235,11 +239,13 @@ export default function EventFormScreen() {
         },
         {
           onSuccess: () => {
-            Alert.alert('Submitted', 'Your event has been submitted for review.', [
-              { text: 'OK', onPress: () => navigation.goBack() },
-            ]);
+            Alert.alert(
+              "Submitted",
+              "Your event has been submitted for review.",
+              [{ text: "OK", onPress: () => navigation.goBack() }]
+            );
           },
-        },
+        }
       );
     }
   };
@@ -274,7 +280,9 @@ export default function EventFormScreen() {
               color="#fff"
               style={styles.sparkleIcon}
             />
-            <Text style={styles.headerTitle}>{isEditMode ? "Edit Event" : "Create Event"}</Text>
+            <Text style={styles.headerTitle}>
+              {isEditMode ? "Edit Event" : "Create Event"}
+            </Text>
             <Text style={styles.headerSubtitle}>
               Share your experience with the world
             </Text>
@@ -301,9 +309,7 @@ export default function EventFormScreen() {
                 </View>
                 <View style={styles.toggleRow}>
                   <View style={styles.toggleTextContainer}>
-                    <Text style={styles.toggleLabel}>
-                      Close Event
-                    </Text>
+                    <Text style={styles.toggleLabel}>Close Event</Text>
                     <Text style={styles.toggleDescription}>
                       {isClosed
                         ? "Event is closed. New tickets cannot be purchased."
@@ -564,7 +570,7 @@ export default function EventFormScreen() {
                 styles.submitButton,
                 isSyncing && styles.submitButtonDisabled,
               ]}
-              onPress={handlePreSubmit} 
+              onPress={handlePreSubmit}
               disabled={isSyncing}
             >
               {isSyncing ? (
@@ -585,7 +591,7 @@ export default function EventFormScreen() {
       </KeyboardAvoidingView>
 
       {renderDateTimePicker()}
-      
+
       {/* REVIEW MODAL */}
       <Modal
         visible={showReviewModal}
@@ -596,24 +602,23 @@ export default function EventFormScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.iconContainer}>
-               <Icon name="information-circle" size={48} color="#6366f1" />
+              <Icon name="information-circle" size={48} color="#6366f1" />
             </View>
             <Text style={styles.modalTitle}>Admin Review Required</Text>
             <Text style={styles.modalText}>
-              {isEditMode 
+              {isEditMode
                 ? "Updating this event will require admin approval again. It will be hidden from the 'Discover' feed until approved."
-                : "Your new event will be reviewed by an admin before it appears in the 'Discover' feed."
-              }
+                : "Your new event will be reviewed by an admin before it appears in the 'Discover' feed."}
             </Text>
             <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={styles.modalCancelButton} 
+              <TouchableOpacity
+                style={styles.modalCancelButton}
                 onPress={() => setShowReviewModal(false)}
               >
                 <Text style={styles.modalCancelText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.modalConfirmButton} 
+              <TouchableOpacity
+                style={styles.modalConfirmButton}
                 onPress={handleConfirmSubmit}
               >
                 <Text style={styles.modalConfirmText}>I Understood</Text>
@@ -622,28 +627,27 @@ export default function EventFormScreen() {
           </View>
         </View>
       </Modal>
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F5F5F7' },
+  safeArea: { flex: 1, backgroundColor: "#F5F5F7" },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
   },
   keyboardView: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: 40 },
   formContainer: { paddingHorizontal: 20, paddingTop: 16 },
   fieldGroup: {
     marginBottom: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 20,
-    shadowColor: '#4B5563',
+    shadowColor: "#4B5563",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -652,72 +656,72 @@ const styles = StyleSheet.create({
   groupTitle: {
     marginBottom: 12,
     fontSize: 20,
-    fontWeight: '600' as const,
-    color: '#1a1a1a',
+    fontWeight: "600" as const,
+    color: "#1a1a1a",
   },
   inputGroup: { marginBottom: 16 },
   label: {
     fontSize: 13,
-    fontWeight: '600' as const,
-    color: '#3C3C43',
+    fontWeight: "600" as const,
+    color: "#3C3C43",
     marginBottom: 10,
-    textTransform: 'uppercase' as const,
+    textTransform: "uppercase" as const,
     letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#F9FAFB",
     borderRadius: 8,
     paddingVertical: 14,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: '#111827',
+    color: "#111827",
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: "#D1D5DB",
     minHeight: 50,
   },
-  inputError: { borderColor: '#EF4444' },
-  errorText: { color: '#EF4444', fontSize: 13, marginTop: 5 },
-  textArea: { minHeight: 100, paddingTop: 14, textAlignVertical: 'top' },
-  row: { flexDirection: 'row', gap: 16 },
+  inputError: { borderColor: "#EF4444" },
+  errorText: { color: "#EF4444", fontSize: 13, marginTop: 5 },
+  textArea: { minHeight: 100, paddingTop: 14, textAlignVertical: "top" },
+  row: { flexDirection: "row", gap: 16 },
   halfWidth: { flex: 1 },
   pickerInput: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#F9FAFB",
     borderRadius: 8,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: "#D1D5DB",
     minHeight: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
-  pickerIcon: { marginRight: 10, color: '#6B7280' },
-  pickerText: { fontSize: 16, color: '#111827', flex: 1 },
+  pickerIcon: { marginRight: 10, color: "#6B7280" },
+  pickerText: { fontSize: 16, color: "#111827", flex: 1 },
   submitButton: {
-    backgroundColor: '#6366f1',
+    backgroundColor: "#6366f1",
     borderRadius: 12,
     paddingVertical: 16,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 16,
     marginBottom: 16,
-    shadowColor: '#4f46e5',
+    shadowColor: "#4f46e5",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 4,
     minHeight: 52,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   submitButtonDisabled: {
-    backgroundColor: '#A5B4FC',
+    backgroundColor: "#A5B4FC",
     elevation: 0,
     shadowOpacity: 0,
   },
-  submitButtonText: { fontSize: 16, fontWeight: '600', color: '#FFFFFF' },
+  submitButtonText: { fontSize: 16, fontWeight: "600", color: "#FFFFFF" },
   disclaimer: {
     fontSize: 13,
-    color: '#6B7280',
-    textAlign: 'center',
+    color: "#6B7280",
+    textAlign: "center",
     lineHeight: 18,
     marginBottom: 20,
   },
@@ -725,26 +729,26 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#F3F0FF',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F3F0FF",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
     marginBottom: 10,
   },
   cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 20,
-    color: '#111827',
+    color: "#111827",
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: "#E5E7EB",
   },
   header: {
     marginHorizontal: 0,
     borderRadius: 20,
     ...Platform.select({
       ios: {
-        shadowColor: '#6366f1',
+        shadowColor: "#6366f1",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 12,
@@ -761,68 +765,68 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   headerContent: {
-    marginTop: Platform.OS === 'ios' ? 100 : 80,
+    marginTop: Platform.OS === "ios" ? 100 : 80,
     marginBottom: 50,
     marginHorizontal: 15,
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "column",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   headerTitle: {
     fontSize: 32,
-    fontWeight: '800' as const,
-    color: '#fff',
+    fontWeight: "800" as const,
+    color: "#fff",
     marginBottom: 8,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.9)',
-    fontWeight: '500' as const,
+    color: "rgba(255,255,255,0.9)",
+    fontWeight: "500" as const,
   },
   backButton: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 50 : 20,
+    position: "absolute",
+    top: Platform.OS === "ios" ? 50 : 20,
     left: 20,
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(255,255,255,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
   },
-    backButtonText: {
+  backButtonText: {
     fontSize: 24,
-    color: '#fff',
-    fontWeight: '400' as const,
+    color: "#fff",
+    fontWeight: "400" as const,
   },
   sparkleIcon: {
     marginBottom: 8,
   },
   imagePicker: {
-    width: '100%',
+    width: "100%",
     height: 200,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
+    borderColor: "#D1D5DB",
+    borderStyle: "dashed",
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
   },
-  imagePreview: { width: '100%', height: '100%', resizeMode: 'cover' },
-  imagePlaceholder: { justifyContent: 'center', alignItems: 'center' },
+  imagePreview: { width: "100%", height: "100%", resizeMode: "cover" },
+  imagePlaceholder: { justifyContent: "center", alignItems: "center" },
   imagePlaceholderText: {
     marginTop: 12,
     fontSize: 14,
-    fontWeight: '600' as const,
-    color: '#1a1a1a',
+    fontWeight: "600" as const,
+    color: "#1a1a1a",
   },
-  imageSizeText: { marginTop: 4, fontSize: 12, color: '#9CA3AF' },
+  imageSizeText: { marginTop: 4, fontSize: 12, color: "#9CA3AF" },
   toggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 8,
   },
   toggleTextContainer: {
@@ -831,51 +835,51 @@ const styles = StyleSheet.create({
   },
   toggleLabel: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1a1a1a',
+    fontWeight: "600",
+    color: "#1a1a1a",
     marginBottom: 4,
   },
   toggleDescription: {
     fontSize: 13,
-    color: '#6B7280',
+    color: "#6B7280",
     lineHeight: 18,
   },
   // Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 20,
     padding: 24,
-    alignItems: 'center',
+    alignItems: "center",
   },
   iconContainer: {
     marginBottom: 16,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: "#EEF2FF",
     padding: 16,
     borderRadius: 40,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#111827',
+    fontWeight: "bold",
+    color: "#111827",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   modalText: {
     fontSize: 15,
-    color: '#6B7280',
-    textAlign: 'center',
+    color: "#6B7280",
+    textAlign: "center",
     lineHeight: 22,
     marginBottom: 24,
   },
   modalButtons: {
-    flexDirection: 'row',
-    width: '100%',
+    flexDirection: "row",
+    width: "100%",
     gap: 12,
   },
   modalCancelButton: {
@@ -883,24 +887,24 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    alignItems: 'center',
+    borderColor: "#D1D5DB",
+    alignItems: "center",
   },
   modalConfirmButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 10,
-    backgroundColor: '#6366f1',
-    alignItems: 'center',
+    backgroundColor: "#6366f1",
+    alignItems: "center",
   },
   modalCancelText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
+    fontWeight: "600",
+    color: "#374151",
   },
   modalConfirmText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: "600",
+    color: "#fff",
   },
 });

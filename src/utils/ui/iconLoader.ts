@@ -13,6 +13,6 @@ export const getIconComponent = (library: IconLibrary) => {
     case "FontAwesome":
       return FontAwesome;
     default:
-      return Ionicons; 
+      return Ionicons;
   }
 };

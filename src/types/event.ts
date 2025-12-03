@@ -19,7 +19,7 @@ export interface Event {
   availableSlot: number;
   userMaxTicketPurchase: number;
   isClosed: boolean;
-  isApproved: boolean
+  isApproved: boolean;
   isUpdate?: boolean;
 }
 

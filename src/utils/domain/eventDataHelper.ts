@@ -8,14 +8,19 @@
  * @param date YYYY-MM-DD
  * @param time HH:MM
  */
-export function combineDateTime(date: string, time: string): string { // Return string or throw
-  console.log('[combineDateTime] Input:', { date, time });
+export function combineDateTime(date: string, time: string): string {
+  // Return string or throw
+  console.log("[combineDateTime] Input:", { date, time });
   if (!date || !time) {
-     console.error("[combineDateTime] Date or Time is missing.");
-     throw new Error("Date and Time are required.");
+    console.error("[combineDateTime] Date or Time is missing.");
+    throw new Error("Date and Time are required.");
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) {
-    console.error("[combineDateTime] Invalid date or time format received:", date, time);
+    console.error(
+      "[combineDateTime] Invalid date or time format received:",
+      date,
+      time
+    );
     throw new Error("Invalid Date (YYYY-MM-DD) or Time (HH:MM) format.");
   }
   try {
@@ -26,7 +31,7 @@ export function combineDateTime(date: string, time: string): string { // Return 
     if (isNaN(d.getTime())) {
       throw new Error("Invalid date/time combination resulted in NaN.");
     }
-     console.log('[combineDateTime] Output ISO:', d.toISOString());
+    console.log("[combineDateTime] Output ISO:", d.toISOString());
     return d.toISOString();
   } catch (e: any) {
     console.error("[combineDateTime] Error creating ISO string:", e.message);
@@ -40,7 +45,8 @@ export function combineDateTime(date: string, time: string): string { // Return 
  */
 export function parseTags(tagsString: string): string[] {
   if (!tagsString) return [];
-  return tagsString.split(',')
-    .map(tag => tag.trim()) // Remove whitespace
+  return tagsString
+    .split(",")
+    .map((tag) => tag.trim()) // Remove whitespace
     .filter(Boolean); // Remove any empty strings (e.g., from "tag1,,tag2")
 }

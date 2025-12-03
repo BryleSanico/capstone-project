@@ -1,8 +1,8 @@
-import { supabase } from '../../lib/supabase';
-import { Event } from '../../types/event';
-import { eventMapper } from '../../utils/mappers/eventMapper';
-import * as sqliteService from '../sqliteService';
-import { useNetworkStatus } from '../../stores/network-store';
+import { supabase } from "../../lib/supabase";
+import { Event } from "../../types/event";
+import { eventMapper } from "../../utils/mappers/eventMapper";
+import * as sqliteService from "../sqliteService";
+import { useNetworkStatus } from "../../stores/network-store";
 
 const EVENTS_PER_PAGE = 5;
 
@@ -25,12 +25,12 @@ export async function fetchEvents({
   if (!isConnected) {
     // If offline, dont fetch. React Query will use the
     // (already hydrated) cache data and not even call this.
-    throw new Error('Offline. Cannot fetch new events.');
+    throw new Error("Offline. Cannot fetch new events.");
   }
 
   // If Online, Fetch from Server
   console.log(`[eventService] Fetching page ${pageParam} from network...`);
-  const { data, error } = await supabase.rpc('get_paginated_events', {
+  const { data, error } = await supabase.rpc("get_paginated_events", {
     p_page: pageParam,
     p_limit: EVENTS_PER_PAGE,
     p_query: query,
@@ -72,25 +72,32 @@ export async function fetchEventsByIds(eventIds: number[]): Promise<Event[]> {
   // Online: Fetch, Map, SAVE to SQLite, Return
   if (isConnected) {
     try {
-      console.log(`[eventService] Online. Fetching ${eventIds.length} events...`);
-      const { data, error } = await supabase.rpc('get_events_by_ids', {
+      console.log(
+        `[eventService] Online. Fetching ${eventIds.length} events...`
+      );
+      const { data, error } = await supabase.rpc("get_events_by_ids", {
         event_ids: eventIds,
       });
       if (error) throw error;
-      
+
       if (!data) return [];
-      
+
       const events = data.map(eventMapper);
-      
+
       // Save the details to SQLite so they exist offline
       if (events.length > 0) {
-        console.log(`[eventService] Caching ${events.length} fetched events to SQLite...`);
+        console.log(
+          `[eventService] Caching ${events.length} fetched events to SQLite...`
+        );
         await sqliteService.saveEvents(events);
       }
-      
+
       return events;
     } catch (error) {
-      console.warn('[eventService] Network request failed. Falling back to cache.', error);
+      console.warn(
+        "[eventService] Network request failed. Falling back to cache.",
+        error
+      );
       // Fall through to cache logic below
     }
   } else {
@@ -98,35 +105,34 @@ export async function fetchEventsByIds(eventIds: number[]): Promise<Event[]> {
   }
 
   // Offline (or Network Error): Read from SQLite
-  console.log(`[eventService] Fetching ${eventIds.length} events from SQLite cache...`);
+  console.log(
+    `[eventService] Fetching ${eventIds.length} events from SQLite cache...`
+  );
   const cachedEvents = await sqliteService.getEventsByIds(eventIds);
   console.log(`[eventService] Found ${cachedEvents.length} events in cache.`);
-  
+
   return cachedEvents;
 }
-
 
 /**
  * [NETWORK ONLY] Fetches a single event by its ID.
  * This is for the EventDetailsScreen.
  */
-async function fetchEventByIdFromNetwork(
-  eventId: number,
-): Promise<Event> {
+async function fetchEventByIdFromNetwork(eventId: number): Promise<Event> {
   // This queryFn is now just for fetching fresh data.
-  const { data, error } = await supabase.rpc('get_events_by_ids', {
+  const { data, error } = await supabase.rpc("get_events_by_ids", {
     event_ids: [eventId],
   });
   if (error) throw error;
   if (!data || data.length === 0) {
-    throw new Error('Event not found');
+    throw new Error("Event not found");
   }
   const event = eventMapper(data[0]);
 
   // Insert to SQLite database IMMEDIATELY
   await sqliteService.saveEvents([event]); // Upsert this event
   console.log(`[eventService] Updated SQLite cache for event ${eventId}`);
-  
+
   return event;
 }
 
@@ -138,13 +144,17 @@ export async function fetchEventById(eventId: number): Promise<Event> {
   const isConnected = useNetworkStatus.getState().isConnected;
 
   if (isConnected) {
-    console.log(`[eventService] Online. Fetching event ${eventId} from network...`);
+    console.log(
+      `[eventService] Online. Fetching event ${eventId} from network...`
+    );
     // If online, get from network (which also saves to SQLite)
     return await fetchEventByIdFromNetwork(eventId);
   }
 
   // If offline, attempt to get from cache
-  console.log(`[eventService] Offline. Fetching event ${eventId} from cache...`);
+  console.log(
+    `[eventService] Offline. Fetching event ${eventId} from cache...`
+  );
   const cachedEvent = await sqliteService.getEventById(eventId);
 
   if (cachedEvent) {
@@ -152,5 +162,5 @@ export async function fetchEventById(eventId: number): Promise<Event> {
   }
 
   // If offline AND not in cache, we must throw an error
-  throw new Error('You are offline and this event has not been cached.');
+  throw new Error("You are offline and this event has not been cached.");
 }

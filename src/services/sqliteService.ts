@@ -2,14 +2,14 @@ import {
   openDatabase,
   SQLiteDatabase,
   enablePromise,
-} from 'react-native-sqlite-storage';
-import { Event } from '../types/event';
-import { Ticket } from '../types/ticket';
+} from "react-native-sqlite-storage";
+import { Event } from "../types/event";
+import { Ticket } from "../types/ticket";
 
 enablePromise(true);
 // Semaphore to prevent overlapping saves
 let isSavingFavorites = false;
-const DB_NAME = 'EventAppCache.db';
+const DB_NAME = "EventAppCache.db";
 let db: SQLiteDatabase;
 
 // promise-safe connection handlers
@@ -29,13 +29,16 @@ const getDB = (): Promise<SQLiteDatabase> => {
   // Create the promise and store it
   dbOpenPromise = new Promise(async (resolve, reject) => {
     try {
-      console.log('[SQLite] Opening database connection...');
-      const database = await openDatabase({ name: DB_NAME, location: 'default' });
+      console.log("[SQLite] Opening database connection...");
+      const database = await openDatabase({
+        name: DB_NAME,
+        location: "default",
+      });
       db = database; // Set global instance
-      console.log('[SQLite] Database connection opened.');
+      console.log("[SQLite] Database connection opened.");
       resolve(db);
     } catch (e) {
-      console.error('[SQLite] FAILED to open database connection:', e);
+      console.error("[SQLite] FAILED to open database connection:", e);
       dbOpenPromise = null; // Reset promise on failure
       reject(e);
     }
@@ -56,7 +59,7 @@ export const initDB = (): Promise<void> => {
   dbInitializationPromise = new Promise(async (resolve, reject) => {
     try {
       const dbInstance = await getDB(); // Wait for the single connection
-      console.log('[SQLite] Initializing tables...');
+      console.log("[SQLite] Initializing tables...");
 
       // Run each CREATE statement in its own transaction
       await dbInstance.transaction(async (tx) => {
@@ -67,7 +70,7 @@ export const initDB = (): Promise<void> => {
           );
         `);
       });
-      console.log('[SQLite] Table [Events] initialized.');
+      console.log("[SQLite] Table [Events] initialized.");
 
       await dbInstance.transaction(async (tx) => {
         await tx.executeSql(`
@@ -77,7 +80,7 @@ export const initDB = (): Promise<void> => {
           );
         `);
       });
-      console.log('[SQLite] Table [MyEvents] initialized.');
+      console.log("[SQLite] Table [MyEvents] initialized.");
 
       await dbInstance.transaction(async (tx) => {
         await tx.executeSql(`
@@ -87,7 +90,7 @@ export const initDB = (): Promise<void> => {
           );
         `);
       });
-      console.log('[SQLite] Table [Tickets] initialized.');
+      console.log("[SQLite] Table [Tickets] initialized.");
 
       await dbInstance.transaction(async (tx) => {
         await tx.executeSql(`
@@ -96,12 +99,12 @@ export const initDB = (): Promise<void> => {
           );
         `);
       });
-      console.log('[SQLite] Table [FavoriteEventIds] initialized.');
+      console.log("[SQLite] Table [FavoriteEventIds] initialized.");
 
-      console.log('[SQLite] All database tables initialized.');
+      console.log("[SQLite] All database tables initialized.");
       resolve();
     } catch (e) {
-      console.error('[SQLite] FAILED to initialize tables:', e);
+      console.error("[SQLite] FAILED to initialize tables:", e);
       dbInitializationPromise = null; // Reset promise on failure
       reject(e);
     }
@@ -118,13 +121,13 @@ export const clearPrivateData = async () => {
     await initDB(); // Ensure tables exist before clearing
     const dbInstance = await getDB();
     await dbInstance.transaction(async (tx) => {
-      await tx.executeSql('DELETE FROM MyEvents');
-      await tx.executeSql('DELETE FROM Tickets');
-      await tx.executeSql('DELETE FROM FavoriteEventIds');
+      await tx.executeSql("DELETE FROM MyEvents");
+      await tx.executeSql("DELETE FROM Tickets");
+      await tx.executeSql("DELETE FROM FavoriteEventIds");
     });
-    console.log('[SQLite] Private user data cleared');
+    console.log("[SQLite] Private user data cleared");
   } catch (e) {
-    console.error('[SQLite] FAILED to clear private data:', e);
+    console.error("[SQLite] FAILED to clear private data:", e);
   }
 };
 
@@ -135,10 +138,10 @@ const upsertItems = async (
   table: string,
   idColumn: string,
   dataColumn: string,
-  items: any[],
+  items: any[]
 ) => {
   console.log(
-    `[SQLite] Attempting to SAVE ${items.length} items to table [${table}]`,
+    `[SQLite] Attempting to SAVE ${items.length} items to table [${table}]`
   );
 
   if (items.length === 0) return;
@@ -152,8 +155,8 @@ const upsertItems = async (
       for (let i = 0; i < items.length; i += chunkSize) {
         const chunk = items.slice(i, i + chunkSize);
         const query = `INSERT OR REPLACE INTO ${table} (${idColumn}, ${dataColumn}) VALUES ${chunk
-          .map(() => '(?, ?)')
-          .join(', ')};`;
+          .map(() => "(?, ?)")
+          .join(", ")};`;
 
         const params: (string | number)[] = [];
         chunk.forEach((item) => {
@@ -166,7 +169,7 @@ const upsertItems = async (
     });
 
     console.log(
-      `[SQLite] SUCCESSFULLY SAVED ${items.length} items to table [${table}]`,
+      `[SQLite] SUCCESSFULLY SAVED ${items.length} items to table [${table}]`
     );
   } catch (e) {
     console.error(`[SQLite] FAILED to SAVE items to table [${table}]:`, e);
@@ -176,16 +179,13 @@ const upsertItems = async (
 /**
  * A generic helper to read all items from a table.
  */
-const getItems = async <T>(
-  table: string,
-  dataColumn: string,
-): Promise<T[]> => {
+const getItems = async <T>(table: string, dataColumn: string): Promise<T[]> => {
   try {
     await initDB(); // Ensure table exists before reading
     const dbInstance = await getDB();
 
     const [results] = await dbInstance.executeSql(
-      `SELECT ${dataColumn} FROM ${table}`,
+      `SELECT ${dataColumn} FROM ${table}`
     );
     if (results.rows.length === 0) {
       console.log(`[SQLite] GET query on table [${table}]: No data found.`);
@@ -196,13 +196,13 @@ const getItems = async <T>(
     console.log(
       `[SQLite] GET query on table [${table}]: Found ${
         data.length
-      } items. Data: ${JSON.stringify(data, null, 2)}`,
+      } items. Data: ${JSON.stringify(data, null, 2)}`
     );
 
     return data;
   } catch (e: any) {
     console.error(`[SQLite] FAILED to GET items from table [${table}]:`, e);
-    if (e.message.includes('no such table')) {
+    if (e.message.includes("no such table")) {
       console.warn(`[SQLite] Table ${table} not found, re-initializing DB.`);
       // Re-run init and try one more time
       dbInitializationPromise = null; // Force re-init
@@ -215,26 +215,25 @@ const getItems = async <T>(
 
 // Events
 export const saveEvents = (events: Event[]) =>
-  upsertItems('Events', 'id', 'eventData', events);
+  upsertItems("Events", "id", "eventData", events);
 export const getEvents = (): Promise<Event[]> =>
-  getItems<Event>('Events', 'eventData');
+  getItems<Event>("Events", "eventData");
 
 // MyEvents
 export const saveMyEvents = (events: Event[]) =>
-  upsertItems('MyEvents', 'id', 'eventData', events);
+  upsertItems("MyEvents", "id", "eventData", events);
 export const getMyEvents = (): Promise<Event[]> =>
-  getItems<Event>('MyEvents', 'eventData');
+  getItems<Event>("MyEvents", "eventData");
 
 // Tickets
 export const saveTickets = (tickets: Ticket[]) =>
-  upsertItems('Tickets', 'id', 'ticketData', tickets);
+  upsertItems("Tickets", "id", "ticketData", tickets);
 export const getTickets = (): Promise<Ticket[]> =>
-  getItems<Ticket>('Tickets', 'ticketData');
-
+  getItems<Ticket>("Tickets", "ticketData");
 
 export const saveFavoriteIds = async (ids: number[]) => {
   if (isSavingFavorites) {
-    console.warn('[SQLite] Save already in progress, skipping.');
+    console.warn("[SQLite] Save already in progress, skipping.");
     return;
   }
   isSavingFavorites = true;
@@ -243,11 +242,11 @@ export const saveFavoriteIds = async (ids: number[]) => {
   try {
     await initDB();
     const dbInstance = await getDB();
-    const numericIds = ids.map(id => Number(id)).filter(id => !isNaN(id));
+    const numericIds = ids.map((id) => Number(id)).filter((id) => !isNaN(id));
 
     // Clear table (Atomic Transaction)
     await dbInstance.transaction(async (tx) => {
-      await tx.executeSql('DELETE FROM FavoriteEventIds');
+      await tx.executeSql("DELETE FROM FavoriteEventIds");
     });
 
     // Batch Insert (Loop OUTSIDE transaction, chunked)
@@ -256,9 +255,9 @@ export const saveFavoriteIds = async (ids: number[]) => {
       const chunkSize = 50;
       for (let i = 0; i < numericIds.length; i += chunkSize) {
         const chunk = numericIds.slice(i, i + chunkSize);
-        
+
         await dbInstance.transaction(async (tx) => {
-          const placeholders = chunk.map(() => '(?)').join(', ');
+          const placeholders = chunk.map(() => "(?)").join(", ");
           const query = `INSERT INTO FavoriteEventIds (id) VALUES ${placeholders}`;
           await tx.executeSql(query, chunk);
         });
@@ -266,9 +265,12 @@ export const saveFavoriteIds = async (ids: number[]) => {
     }
 
     //Verification
-    const [result] = await dbInstance.executeSql('SELECT count(*) as count FROM FavoriteEventIds');
-    console.log(`[SQLite] Favorite IDs saved. Count: ${result.rows.item(0).count}`);
-
+    const [result] = await dbInstance.executeSql(
+      "SELECT count(*) as count FROM FavoriteEventIds"
+    );
+    console.log(
+      `[SQLite] Favorite IDs saved. Count: ${result.rows.item(0).count}`
+    );
   } catch (e) {
     console.error(`[SQLite] FAILED to SAVE favorite IDs:`, e);
     throw e;
@@ -283,8 +285,10 @@ export const getFavoriteIds = async (): Promise<number[]> => {
     const dbInstance = await getDB();
 
     // Similar to getItems structure
-    const [results] = await dbInstance.executeSql('SELECT id FROM FavoriteEventIds');
-    
+    const [results] = await dbInstance.executeSql(
+      "SELECT id FROM FavoriteEventIds"
+    );
+
     const ids: number[] = [];
     for (let i = 0; i < results.rows.length; i++) {
       ids.push(results.rows.item(i).id);
@@ -298,14 +302,11 @@ export const getFavoriteIds = async (): Promise<number[]> => {
   }
 };
 
-
 /**
  * Gets a single event by its ID from the cache.
  * It checks both Events (public) and MyEvents (private) tables.
  */
-export const getEventById = async (
-  eventId: number,
-): Promise<Event | null> => {
+export const getEventById = async (eventId: number): Promise<Event | null> => {
   if (!eventId) return null;
   await initDB(); // Ensure tables exist
   const dbInstance = await getDB();
@@ -313,28 +314,34 @@ export const getEventById = async (
   try {
     // Try to find in the main 'Events' table first
     let [results] = await dbInstance.executeSql(
-      'SELECT eventData FROM Events WHERE id = ?',
-      [eventId],
+      "SELECT eventData FROM Events WHERE id = ?",
+      [eventId]
     );
 
     if (results.rows.length > 0) {
-      console.log(`[SQLite] getEventById: Found event ${eventId} in 'Events' table.`);
+      console.log(
+        `[SQLite] getEventById: Found event ${eventId} in 'Events' table.`
+      );
       return JSON.parse(results.rows.item(0).eventData);
     }
 
     // If not found, try the 'MyEvents' table
     [results] = await dbInstance.executeSql(
-      'SELECT eventData FROM MyEvents WHERE id = ?',
-      [eventId],
+      "SELECT eventData FROM MyEvents WHERE id = ?",
+      [eventId]
     );
 
     if (results.rows.length > 0) {
-      console.log(`[SQLite] getEventById: Found event ${eventId} in 'MyEvents' table.`);
+      console.log(
+        `[SQLite] getEventById: Found event ${eventId} in 'MyEvents' table.`
+      );
       return JSON.parse(results.rows.item(0).eventData);
     }
 
     // If not found in either
-    console.log(`[SQLite] getEventById: Event ${eventId} not found in any cache.`);
+    console.log(
+      `[SQLite] getEventById: Event ${eventId} not found in any cache.`
+    );
     return null;
   } catch (e) {
     console.error(`[SQLite] FAILED to GET event ${eventId}:`, e);
@@ -344,14 +351,16 @@ export const getEventById = async (
 
 export const getEventsByIds = async (eventIds: number[]): Promise<Event[]> => {
   if (!eventIds || eventIds.length === 0) return [];
-  
+
   try {
     await initDB();
     const dbInstance = await getDB();
     const eventsMap = new Map<number, Event>();
-    const placeholders = eventIds.map(() => '?').join(',');
+    const placeholders = eventIds.map(() => "?").join(",");
 
-    console.log(`[SQLite] getEventsByIds: Searching for IDs: [${eventIds.join(',')}]`);
+    console.log(
+      `[SQLite] getEventsByIds: Searching for IDs: [${eventIds.join(",")}]`
+    );
 
     // Search in 'Events' (Public Cache)
     const [publicResults] = await dbInstance.executeSql(
@@ -365,9 +374,9 @@ export const getEventsByIds = async (eventIds: number[]): Promise<Event[]> => {
     }
 
     // Search in 'MyEvents' (Private Cache)
-    const missingIds = eventIds.filter(id => !eventsMap.has(id));
+    const missingIds = eventIds.filter((id) => !eventsMap.has(id));
     if (missingIds.length > 0) {
-      const myPlaceholders = missingIds.map(() => '?').join(',');
+      const myPlaceholders = missingIds.map(() => "?").join(",");
       const [myResults] = await dbInstance.executeSql(
         `SELECT eventData FROM MyEvents WHERE id IN (${myPlaceholders})`,
         missingIds
@@ -380,9 +389,10 @@ export const getEventsByIds = async (eventIds: number[]): Promise<Event[]> => {
     }
 
     const foundEvents = Array.from(eventsMap.values());
-    console.log(`[SQLite] getEventsByIds: Returned ${foundEvents.length} / ${eventIds.length} events.`);
+    console.log(
+      `[SQLite] getEventsByIds: Returned ${foundEvents.length} / ${eventIds.length} events.`
+    );
     return foundEvents;
-
   } catch (e) {
     console.error(`[SQLite] FAILED to GET events by IDs:`, e);
     return [];

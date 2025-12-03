@@ -6,7 +6,7 @@ import { AndroidImportance } from "@notifee/react-native";
 export const DEFAULT_NOTIFICATION_CHANNEL = {
   id: "default",
   name: "Default Channel",
-  importance: AndroidImportance.HIGH
+  importance: AndroidImportance.HIGH,
 };
 
 /**

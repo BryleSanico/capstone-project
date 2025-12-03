@@ -1,12 +1,12 @@
-import { useEffect, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../../stores/auth-store';
-import { useNetworkStatus } from '../../stores/network-store';
-import * as sqliteService from '../../services/sqliteService';
-import { ticketsQueryKey } from '../data/useTickets';
-import { favoritesQueryKey } from '../data/useFavorites';
-import { myEventsQueryKey } from '../data/useMyEvents';
-import { eventsQueryKey } from '../data/useEvents';
+import { useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "../../stores/auth-store";
+import { useNetworkStatus } from "../../stores/network-store";
+import * as sqliteService from "../../services/sqliteService";
+import { ticketsQueryKey } from "../data/useTickets";
+import { favoritesQueryKey } from "../data/useFavorites";
+import { myEventsQueryKey } from "../data/useMyEvents";
+import { eventsQueryKey } from "../data/useEvents";
 
 /**
  * Manages the synchronization of user-specific data (Tickets, MyEvents, Favorites).
@@ -24,7 +24,9 @@ export function useUserDataSync(isPublicCacheHydrated: boolean) {
     }
 
     const loadUserData = async (isAppLaunch: boolean) => {
-      console.log(`[UserDataSync] Loading user data. App Launch: ${isAppLaunch}`);
+      console.log(
+        `[UserDataSync] Loading user data. App Launch: ${isAppLaunch}`
+      );
 
       // Hydrate from SQLite (Only on App Launch)
       if (isAppLaunch) {
@@ -42,15 +44,15 @@ export function useUserDataSync(isPublicCacheHydrated: boolean) {
             cachedFavorites.length > 0;
 
           if (hasPrivateCache) {
-            console.log('[UserDataSync] SQLite data found. Hydrating cache...');
+            console.log("[UserDataSync] SQLite data found. Hydrating cache...");
             queryClient.setQueryData(myEventsQueryKey, cachedMyEvents);
             queryClient.setQueryData(ticketsQueryKey, cachedTickets);
             queryClient.setQueryData(favoritesQueryKey, cachedFavorites);
           } else {
-            console.log('[UserDataSync] SQLite is empty. Skipping hydration.');
+            console.log("[UserDataSync] SQLite is empty. Skipping hydration.");
           }
         } catch (error) {
-          console.error('[UserDataSync] Failed to read from SQLite:', error);
+          console.error("[UserDataSync] Failed to read from SQLite:", error);
         }
       }
 
@@ -58,15 +60,17 @@ export function useUserDataSync(isPublicCacheHydrated: boolean) {
       const isConnected = useNetworkStatus.getState().isConnected;
 
       if (isConnected) {
-        console.log('[UserDataSync] Online. Triggering query invalidation...');
+        console.log("[UserDataSync] Online. Triggering query invalidation...");
         queryClient.invalidateQueries();
       } else {
-        console.log('[UserDataSync] Offline. Skipping network refresh.');
+        console.log("[UserDataSync] Offline. Skipping network refresh.");
       }
     };
 
     const handleLogout = async () => {
-      console.log('[UserDataSync] User logged out. Clearing user-specific caches.');
+      console.log(
+        "[UserDataSync] User logged out. Clearing user-specific caches."
+      );
 
       // Cancel any outgoing refetches to prevent race conditions
       await queryClient.cancelQueries();
@@ -76,19 +80,19 @@ export function useUserDataSync(isPublicCacheHydrated: boolean) {
       queryClient.removeQueries({ queryKey: ticketsQueryKey });
       queryClient.removeQueries({ queryKey: favoritesQueryKey });
       queryClient.removeQueries({ queryKey: myEventsQueryKey });
-      
+
       // Remove Admin & Notification keys (using string literals to avoid circular deps)
-      queryClient.removeQueries({ queryKey: ['admin'] });
-      queryClient.removeQueries({ queryKey: ['notifications'] });
-      
+      queryClient.removeQueries({ queryKey: ["admin"] });
+      queryClient.removeQueries({ queryKey: ["notifications"] });
+
       // Clear Private Data from SQLite (Security)
       await sqliteService.clearPrivateData();
 
       // Invalidate public events not showing stale data
       // This triggers a background refetch on DiscoverScreen without showing a hard loading state
       queryClient.invalidateQueries({ queryKey: eventsQueryKey });
-      
-      console.log('[UserDataSync] Logout cleanup complete.');
+
+      console.log("[UserDataSync] Logout cleanup complete.");
     };
 
     if (!hasAuthBeenInitialized.current) {
@@ -98,8 +102,8 @@ export function useUserDataSync(isPublicCacheHydrated: boolean) {
         loadUserData(true);
       } else {
         // App Start + Logged Out -> Refresh Public Data Only
-        console.log('[UserDataSync] App start, user is logged out.');
-        queryClient.invalidateQueries({ queryKey: ['events'] });
+        console.log("[UserDataSync] App start, user is logged out.");
+        queryClient.invalidateQueries({ queryKey: ["events"] });
       }
       return;
     }

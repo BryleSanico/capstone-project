@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import * as sqliteService from '../../services/sqliteService';
-import { eventsQueryKey } from '../data/useEvents';
+import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import * as sqliteService from "../../services/sqliteService";
+import { eventsQueryKey } from "../data/useEvents";
 
 export const useEventCacheHydration = () => {
   const [isHydrated, setIsHydrated] = useState(false);
@@ -12,27 +12,27 @@ export const useEventCacheHydration = () => {
       try {
         // Create the tables
         await sqliteService.initDB();
-        
+
         // Hydrate Event Data ONLY
-        console.log('[Hydration] Hydrating event data...');
+        console.log("[Hydration] Hydrating event data...");
         const cachedEvents = await sqliteService.getEvents();
         if (cachedEvents.length > 0) {
-          queryClient.setQueryData(
-            [...eventsQueryKey, 'list', '', 'All'],
-            {
-              pages: [{
+          queryClient.setQueryData([...eventsQueryKey, "list", "", "All"], {
+            pages: [
+              {
                 events: cachedEvents,
                 totalCount: cachedEvents.length,
                 nextPage: 2,
-              }],
-              pageParams: [1],
-            }
-          );
+              },
+            ],
+            pageParams: [1],
+          });
         }
-        console.log(`[Hydration] Hydrated ${cachedEvents.length} public events.`);
-
+        console.log(
+          `[Hydration] Hydrated ${cachedEvents.length} public events.`
+        );
       } catch (error) {
-        console.error('[Hydration] Failed to hydrate event cache:', error);
+        console.error("[Hydration] Failed to hydrate event cache:", error);
       } finally {
         setIsHydrated(true);
       }

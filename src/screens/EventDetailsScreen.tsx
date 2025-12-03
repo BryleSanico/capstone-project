@@ -24,11 +24,7 @@ import { useAuth } from "../stores/auth-store";
 import { PurchaseRequest } from "../services/api/ticketsService";
 import { useEventByIdQuery } from "../hooks/";
 import { useTicketsQuery, usePurchaseTicket } from "../hooks/";
-import {
-  useFavoritesQuery,
-  useAddFavorite,
-  useRemoveFavorite,
-} from "../hooks";
+import { useFavoritesQuery, useAddFavorite, useRemoveFavorite } from "../hooks";
 import useEventSubscription from "../hooks/data/useEventSubscription";
 
 type EventDetailsScreenRouteProp = RouteProp<
@@ -97,26 +93,29 @@ export default function EventDetailsScreen() {
       addFavorite(event.id);
     }
   }, [session, isFavorite, event, removeFavorite, addFavorite, navigation]);
-  const HeaderRight = useCallback(() => (
-    <View style={styles.headerButtons}>
-      <TouchableOpacity
-        style={styles.headerButton}
-        onPress={handleSharePress}
-      >
-        <Icon name="share-outline" size={20} color="#fff" />
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.headerButton}
-        onPress={handleFavoritePress}
-      >
-        <Icon
-          name={isFavorite ? "heart" : "heart-outline"}
-          size={20}
-          color={isFavorite ? "#ff4757" : "#fff"}
-        />
-      </TouchableOpacity>
-    </View>
-  ), [handleSharePress, handleFavoritePress, isFavorite]);
+  const HeaderRight = useCallback(
+    () => (
+      <View style={styles.headerButtons}>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={handleSharePress}
+        >
+          <Icon name="share-outline" size={20} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={handleFavoritePress}
+        >
+          <Icon
+            name={isFavorite ? "heart" : "heart-outline"}
+            size={20}
+            color={isFavorite ? "#ff4757" : "#fff"}
+          />
+        </TouchableOpacity>
+      </View>
+    ),
+    [handleSharePress, handleFavoritePress, isFavorite]
+  );
 
   useLayoutEffect(() => {
     if (!event) return;

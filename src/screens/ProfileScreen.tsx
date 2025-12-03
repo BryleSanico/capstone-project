@@ -28,7 +28,7 @@ import { AppCacheService } from "../services/AppCacheService";
 
 import { useTicketsQuery } from "../hooks/";
 import { useFavoritesQuery } from "../hooks/";
-import { useUnreadCountQuery } from "../hooks/"; 
+import { useUnreadCountQuery } from "../hooks/";
 
 // Define the types for route and navigation
 type ProfileScreenNavigationProp = CompositeNavigationProp<

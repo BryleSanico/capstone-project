@@ -5,7 +5,7 @@ export interface Ticket {
   eventDate: string;
   eventTime: string;
   eventLocation: string;
-  totalPrice: number; 
+  totalPrice: number;
   purchaseDate: string;
   qrCode: string;
 }

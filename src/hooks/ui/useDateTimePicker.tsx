@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { Platform, Modal, View, Button, StyleSheet } from 'react-native';
+import React, { useState, useMemo } from "react";
+import { Platform, Modal, View, Button, StyleSheet } from "react-native";
 import DateTimePicker, {
   DateTimePickerEvent,
-} from '@react-native-community/datetimepicker';
-import { format } from 'date-fns';
+} from "@react-native-community/datetimepicker";
+import { format } from "date-fns";
 
 /**
  * A custom hook to encapsulate all logic for handling date and time selection.
@@ -11,22 +11,22 @@ import { format } from 'date-fns';
  */
 export const useDateTimePicker = (initialDate: Date) => {
   const [selectedDateTime, setSelectedDateTime] = useState(initialDate);
-  const [pickerMode, setPickerMode] = useState<'date' | 'time' | null>(null);
-  
+  const [pickerMode, setPickerMode] = useState<"date" | "time" | null>(null);
+
   // tempDateTime is used for the iOS modal picker
   const [tempDateTime, setTempDateTime] = useState(initialDate);
 
   // Memoize formatted values
   const formattedDate = useMemo(
-    () => format(selectedDateTime, 'yyyy-MM-dd'),
+    () => format(selectedDateTime, "yyyy-MM-dd"),
     [selectedDateTime]
   );
   const formattedTime = useMemo(
-    () => format(selectedDateTime, 'HH:mm'),
+    () => format(selectedDateTime, "HH:mm"),
     [selectedDateTime]
   );
 
-  const showPicker = (mode: 'date' | 'time') => {
+  const showPicker = (mode: "date" | "time") => {
     setTempDateTime(selectedDateTime);
     setPickerMode(mode);
   };
@@ -36,9 +36,9 @@ export const useDateTimePicker = (initialDate: Date) => {
   };
 
   const onPickerChange = (event: DateTimePickerEvent, newDateTime?: Date) => {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === "android") {
       hidePicker();
-      if (event.type === 'set' && newDateTime) {
+      if (event.type === "set" && newDateTime) {
         setSelectedDateTime(newDateTime);
       }
     } else if (newDateTime) {
@@ -60,20 +60,20 @@ export const useDateTimePicker = (initialDate: Date) => {
    * Renders the modal or inline picker based on OS.
    */
   const renderDateTimePicker = () => {
-    if (Platform.OS === 'android' && pickerMode) {
+    if (Platform.OS === "android" && pickerMode) {
       return (
         <DateTimePicker
-          testID={pickerMode === 'date' ? 'datePicker' : 'timePicker'}
+          testID={pickerMode === "date" ? "datePicker" : "timePicker"}
           value={selectedDateTime}
           mode={pickerMode}
           is24Hour={true}
-          display={'default'}
+          display={"default"}
           onChange={onPickerChange}
         />
       );
     }
 
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === "ios") {
       return (
         <Modal
           transparent={true}
@@ -85,7 +85,7 @@ export const useDateTimePicker = (initialDate: Date) => {
             <View style={styles.modalContent}>
               {pickerMode && (
                 <DateTimePicker
-                  testID={pickerMode === 'date' ? 'datePicker' : 'timePicker'}
+                  testID={pickerMode === "date" ? "datePicker" : "timePicker"}
                   value={tempDateTime}
                   mode={pickerMode}
                   is24Hour={true}
@@ -124,22 +124,22 @@ export const useDateTimePicker = (initialDate: Date) => {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingTop: 10,
   },
   modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    backgroundColor: '#F9FAFB',
+    borderTopColor: "#E5E7EB",
+    backgroundColor: "#F9FAFB",
   },
 });

@@ -1,14 +1,14 @@
-import { Ticket } from './ticket';
-import { Event } from './event';
+import { Ticket } from "./ticket";
+import { Event } from "./event";
 
 /**
  * Defines the keys for our standard "Upcoming/Past" tabs.
  * Using this makes our components more robust and avoids typos.
  */
 export const TAB_KEYS = {
-  UPCOMING: 'upcoming',
-  PAST: 'past',
-  PENDING: 'pending',
+  UPCOMING: "upcoming",
+  PAST: "past",
+  PENDING: "pending",
 } as const;
 
 export type TabKey = (typeof TAB_KEYS)[keyof typeof TAB_KEYS];
@@ -19,13 +19,13 @@ export type TabKey = (typeof TAB_KEYS)[keyof typeof TAB_KEYS];
  */
 export const TAB_CONFIG = {
   [TAB_KEYS.UPCOMING]: {
-    title: 'Upcoming',
+    title: "Upcoming",
   },
   [TAB_KEYS.PAST]: {
-    title: 'Past',
+    title: "Past",
   },
   [TAB_KEYS.PENDING]: {
-    title: 'Pending',
+    title: "Pending",
   },
 };
 

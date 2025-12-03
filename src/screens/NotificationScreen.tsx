@@ -1,4 +1,4 @@
-import React, { useLayoutEffect } from 'react';
+import React, { useLayoutEffect } from "react";
 import {
   View,
   Text,
@@ -6,27 +6,33 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import Icon from 'react-native-vector-icons/Ionicons';
-import { RootStackParamList } from '../navigation/AppNavigator';
-import ScreenHeader from '../components/ui/ScreenHeader';
-import { EmptyState } from '../components/ui/Errors/EmptyState';
-import { Loader } from '../components/LazyLoaders/loader';
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import Icon from "react-native-vector-icons/Ionicons";
+import { RootStackParamList } from "../navigation/AppNavigator";
+import ScreenHeader from "../components/ui/ScreenHeader";
+import { EmptyState } from "../components/ui/Errors/EmptyState";
+import { Loader } from "../components/LazyLoaders/loader";
 import {
   useNotificationsQuery,
   useMarkReadMutation,
   useMarkAllReadMutation,
-} from '../hooks/';
-import { formatFullDate } from '../utils/formatters/dateFormatter';
-import { AppNotification } from '../services/api/notificationService';
+} from "../hooks/";
+import { formatFullDate } from "../utils/formatters/dateFormatter";
+import { AppNotification } from "../services/api/notificationService";
 
-type NotificationScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type NotificationScreenNavigationProp =
+  NativeStackNavigationProp<RootStackParamList>;
 
 export default function NotificationScreen() {
   const navigation = useNavigation<NotificationScreenNavigationProp>();
-  const { data: notifications = [], isLoading, refetch, isRefetching } = useNotificationsQuery();
+  const {
+    data: notifications = [],
+    isLoading,
+    refetch,
+    isRefetching,
+  } = useNotificationsQuery();
   const { mutate: markRead } = useMarkReadMutation();
   const { mutate: markAllRead } = useMarkAllReadMutation();
 
@@ -39,17 +45,21 @@ export default function NotificationScreen() {
       markRead(item.id);
     }
     // If it's an event rejection, navigate to the edit form
-    if (item.event_id && item.type === 'error') {
-      navigation.navigate('EventForm', { eventId: item.event_id });
+    if (item.event_id && item.type === "error") {
+      navigation.navigate("EventForm", { eventId: item.event_id });
     }
   };
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'error': return { name: 'alert-circle', color: '#ef4444' };
-      case 'success': return { name: 'checkmark-circle', color: '#10b981' };
-      case 'warning': return { name: 'warning', color: '#f59e0b' };
-      default: return { name: 'information-circle', color: '#6366f1' };
+      case "error":
+        return { name: "alert-circle", color: "#ef4444" };
+      case "success":
+        return { name: "checkmark-circle", color: "#10b981" };
+      case "warning":
+        return { name: "warning", color: "#f59e0b" };
+      default:
+        return { name: "information-circle", color: "#6366f1" };
     }
   };
 
@@ -66,7 +76,9 @@ export default function NotificationScreen() {
         </View>
         <View style={styles.textContainer}>
           <Text style={styles.cardTitle}>{item.title}</Text>
-          <Text style={styles.cardMessage} numberOfLines={3}>{item.message}</Text>
+          <Text style={styles.cardMessage} numberOfLines={3}>
+            {item.message}
+          </Text>
           <Text style={styles.dateText}>{formatFullDate(item.created_at)}</Text>
         </View>
         {!item.is_read && <View style={styles.unreadDot} />}
@@ -110,7 +122,11 @@ export default function NotificationScreen() {
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#6366f1" />
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={refetch}
+              tintColor="#6366f1"
+            />
           }
         />
       )}
@@ -121,33 +137,33 @@ export default function NotificationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   listContent: {
     padding: 16,
   },
   card: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
   unreadCard: {
-    backgroundColor: '#f0fdf4', // Very light green tint for unread, or just white
+    backgroundColor: "#f0fdf4", // Very light green tint for unread, or just white
     borderLeftWidth: 4,
-    borderLeftColor: '#6366f1',
+    borderLeftColor: "#6366f1",
   },
   iconContainer: {
     marginRight: 12,
@@ -158,31 +174,31 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#1a1a1a',
+    fontWeight: "700",
+    color: "#1a1a1a",
     marginBottom: 4,
   },
   cardMessage: {
     fontSize: 14,
-    color: '#4b5563',
+    color: "#4b5563",
     lineHeight: 20,
     marginBottom: 8,
   },
   dateText: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: "#9ca3af",
   },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#6366f1',
+    backgroundColor: "#6366f1",
     marginLeft: 8,
     marginTop: 6,
   },
   readAllBtn: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: "rgba(255,255,255,0.2)",
     padding: 8,
     borderRadius: 20,
-  }
+  },
 });

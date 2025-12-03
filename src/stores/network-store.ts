@@ -5,7 +5,7 @@ type NetworkState = {
   isConnected: boolean;
   lastKnownState: NetInfoState | null;
   message: string | null;
-  subscribe: () => () => void; 
+  subscribe: () => () => void;
   setMessage: (msg: string | null) => void;
   registerReconnectCallback: (callback: () => Promise<void>) => void;
 };
@@ -41,7 +41,7 @@ export const useNetworkStatus = create<NetworkState>((set, get) => ({
     const unsubscribe = NetInfo.addEventListener(async (state) => {
       const prevConnected = get().isConnected;
       const nowConnected = state.isConnected ?? false;
-      
+
       // Immediately update state
       set({ isConnected: nowConnected, lastKnownState: state });
 
@@ -59,7 +59,7 @@ export const useNetworkStatus = create<NetworkState>((set, get) => ({
         }
       } else if (prevConnected && !nowConnected) {
         console.log("🔴 Disconnected from the internet");
-        set({ message: "You're offline."});
+        set({ message: "You're offline." });
       }
     });
     return unsubscribe;

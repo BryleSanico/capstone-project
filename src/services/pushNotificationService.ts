@@ -121,7 +121,7 @@ class NotificationService {
         );
         await storageService.setItem(rejectionKey, 0);
       }
-      return true; 
+      return true;
     }
 
     // Check rejection limit (Only if not currently granted)
@@ -244,10 +244,11 @@ class NotificationService {
       if (token) {
         console.log("FCM Token obtained:", token.substring(0, 10) + "..."); // Log truncated token
         const { error } = await withRetry(() =>
-        supabase
-          .from("profiles")
-          .update({ fcm_token: token })
-          .eq("id", userId));
+          supabase
+            .from("profiles")
+            .update({ fcm_token: token })
+            .eq("id", userId)
+        );
         if (error) {
           console.error("Error saving FCM token:", error);
         } else {
@@ -261,10 +262,11 @@ class NotificationService {
       onTokenRefresh(messaging, async (newToken) => {
         console.log("FCM token refreshed:", newToken.substring(0, 10) + "...");
         const { error: refreshError } = await withRetry(() =>
-        supabase
-          .from("profiles")
-          .update({ fcm_token: newToken })
-          .eq("id", userId));
+          supabase
+            .from("profiles")
+            .update({ fcm_token: newToken })
+            .eq("id", userId)
+        );
         if (refreshError)
           console.error("Error saving refreshed FCM token:", refreshError);
       });
@@ -277,10 +279,8 @@ class NotificationService {
     if (!userId) return;
     try {
       const { error } = await withRetry(() =>
-      supabase
-        .from("profiles")
-        .update({ fcm_token: null })
-        .eq("id", userId));
+        supabase.from("profiles").update({ fcm_token: null }).eq("id", userId)
+      );
 
       if (error) {
         console.error("Failed to nullify FCM token on server:", error);

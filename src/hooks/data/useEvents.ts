@@ -1,12 +1,9 @@
-import {
-  useQuery,
-  useInfiniteQuery,
-} from '@tanstack/react-query';
-import * as eventService from '../../services/api/eventService';
-import { Event } from '../../types/event';
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import * as eventService from "../../services/api/eventService";
+import { Event } from "../../types/event";
 
 // This key is used to invalidate event queries from other hooks
-export const eventsQueryKey = ['events'];
+export const eventsQueryKey = ["events"];
 
 /**
  * Fetches a single event by ID.
@@ -14,7 +11,7 @@ export const eventsQueryKey = ['events'];
  */
 export function useEventByIdQuery(eventId: number) {
   return useQuery<Event, Error>({
-    queryKey: [...eventsQueryKey, 'detail', eventId],
+    queryKey: [...eventsQueryKey, "detail", eventId],
     queryFn: () => eventService.fetchEventById(eventId),
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnReconnect: false,
@@ -38,11 +35,8 @@ type SelectedEventsData = {
  * Fetches events with infinite scrolling.
  * Used on DiscoverScreen.
  */
-export function useEventsInfiniteQuery(
-  query: string,
-  category: string,
-) {
-  const queryKey = [...eventsQueryKey, 'list', query, category];
+export function useEventsInfiniteQuery(query: string, category: string) {
+  const queryKey = [...eventsQueryKey, "list", query, category];
 
   return useInfiniteQuery<
     EventsPage,
@@ -56,7 +50,7 @@ export function useEventsInfiniteQuery(
     queryFn: ({ pageParam = 1 }) =>
       eventService.fetchEvents({
         pageParam: pageParam,
-        query: query,       // Pass primitive
+        query: query, // Pass primitive
         category: category, // Pass primitive
       }),
     initialPageParam: 1,

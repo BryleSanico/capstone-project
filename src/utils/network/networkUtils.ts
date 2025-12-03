@@ -1,15 +1,15 @@
-import { useNetworkStatus } from '../../stores/network-store';
+import { useNetworkStatus } from "../../stores/network-store";
 
-// Constants 
+// Constants
 const DEFAULT_REQUEST_TIMEOUT = 8000; // 8 seconds per attempt
 const DEFAULT_RETRY_ATTEMPTS = 3; // Total 3 attempts (1 initial + 2 retry)
 const RETRY_DELAY = 2000; // 1 second delay between retries
 
-// Custom Error for Timeouts 
+// Custom Error for Timeouts
 class TimeoutError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'TimeoutError';
+    this.name = "TimeoutError";
   }
 }
 
@@ -29,7 +29,7 @@ const wait = (ms: number): Promise<void> =>
  */
 const withTimeout = <T>(
   promise: PromiseLike<T>, // Use PromiseLike<T> since supabase returns then-ables
-  ms: number,
+  ms: number
 ): Promise<T> => {
   const timeout = new Promise<T>((_, reject) => {
     const id = setTimeout(() => {
@@ -52,22 +52,21 @@ const withTimeout = <T>(
  * @param options.errorMessage The message to show in the snackbar on final failure.
  */
 export const withRetry = async <T>(
-  asyncFn: () => PromiseLike<T>, 
+  asyncFn: () => PromiseLike<T>,
   options?: {
     attempts?: number;
     delay?: number;
     timeoutPerAttempt?: number;
     errorMessage?: string;
-  },
+  }
 ): Promise<T> => {
   const attempts = options?.attempts ?? DEFAULT_RETRY_ATTEMPTS;
   const delayMs = options?.delay ?? RETRY_DELAY;
   const timeoutMs = options?.timeoutPerAttempt ?? DEFAULT_REQUEST_TIMEOUT;
   const errorMessage =
-    options?.errorMessage ??
-    'Slow internet connection... Something went wrong';
+    options?.errorMessage ?? "Slow internet connection... Something went wrong";
 
-  let lastError: Error | unknown = new Error('Request failed');
+  let lastError: Error | unknown = new Error("Request failed");
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
@@ -92,13 +91,12 @@ export const withRetry = async <T>(
   }
 
   // All attempts failed
-  console.error('[withRetry] All attempts failed.', lastError);
+  console.error("[withRetry] All attempts failed.", lastError);
   // Show snackbar on final failure (if it wasn't shown already)
   if (!(lastError instanceof TimeoutError)) {
-     useNetworkStatus.getState().setMessage(errorMessage);
+    useNetworkStatus.getState().setMessage(errorMessage);
   }
-  
+
   // Re-throw the last error to be caught by the service/store
   throw lastError;
 };
-

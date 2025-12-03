@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
-import { useQueryClient } from '@tanstack/react-query';
-import { eventsQueryKey } from './useEvents';
+import { useEffect } from "react";
+import { supabase } from "../../lib/supabase";
+import { useQueryClient } from "@tanstack/react-query";
+import { eventsQueryKey } from "./useEvents";
 
 /**
  * A custom hook that subscribes to real-time updates for a single event.
@@ -20,24 +20,24 @@ export default function useEventSubscription(eventId: number | null) {
     const channel = supabase
       .channel(`event-details-${eventId}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'events',
+          event: "UPDATE",
+          schema: "public",
+          table: "events",
           filter: `id=eq.${eventId}`,
         },
         (payload) => {
-          console.log('🟢 Real-time event update received!', payload.new);
-          
+          console.log("🟢 Real-time event update received!", payload.new);
+
           // Invalidate to refetch fresh data (safest for relations)
           // This fetches the full event again including joined tables (organizer, etc.)
-          const queryKey = [...eventsQueryKey, 'detail', eventId];
+          const queryKey = [...eventsQueryKey, "detail", eventId];
           queryClient.invalidateQueries({ queryKey });
-          
+
           // Also refresh the list view so the main feed is accurate
-          queryClient.invalidateQueries({ queryKey: ['events', 'list'] });
-        },
+          queryClient.invalidateQueries({ queryKey: ["events", "list"] });
+        }
       )
       .subscribe();
 

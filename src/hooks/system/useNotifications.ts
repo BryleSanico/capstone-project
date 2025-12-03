@@ -1,10 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import * as notificationApiService from '../../services/api/notificationService';
-import { useAuth } from '../../stores/auth-store';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import * as notificationApiService from "../../services/api/notificationService";
+import { useAuth } from "../../stores/auth-store";
 
 export const notificationsKeys = {
-  all: ['notifications'] as const,
-  count: ['notifications', 'count'] as const,
+  all: ["notifications"] as const,
+  count: ["notifications", "count"] as const,
 };
 
 export function useNotificationsQuery() {

@@ -36,29 +36,28 @@ const handleForegroundMessage = async (remoteMessage: any) => {
   });
 };
 
+export const handleBackgroundMessage = async (remoteMessage: any) => {
+  console.log(" Background message:", remoteMessage);
 
-  export const handleBackgroundMessage = async (remoteMessage: any) => {
-    console.log(" Background message:", remoteMessage);
+  const title = toSafeString(
+    remoteMessage.notification?.title ?? remoteMessage.data?.title,
+    "Background Notification"
+  );
+  const body = toSafeString(
+    remoteMessage.notification?.body ?? remoteMessage.data?.body,
+    "You received a new message while app was in background."
+  );
 
-    const title = toSafeString(
-      remoteMessage.notification?.title ?? remoteMessage.data?.title,
-      "Background Notification"
-    );
-    const body = toSafeString(
-      remoteMessage.notification?.body ?? remoteMessage.data?.body,
-      "You received a new message while app was in background."
-    );
-
-    await notifee.displayNotification({
-      title,
-      body,
-      android: {
-        channelId: DEFAULT_NOTIFICATION_CHANNEL.id,
-        importance: AndroidImportance.HIGH,
-        pressAction: { id: "default" },
-      },
-    });
-  };
+  await notifee.displayNotification({
+    title,
+    body,
+    android: {
+      channelId: DEFAULT_NOTIFICATION_CHANNEL.id,
+      importance: AndroidImportance.HIGH,
+      pressAction: { id: "default" },
+    },
+  });
+};
 
 /**
  * Register listeners for foreground & background
@@ -68,5 +67,4 @@ export const setupNotificationListeners = () => {
   // Foreground listener
   const unsubscribe = onMessage(messaging, handleForegroundMessage);
   return unsubscribe;
-
 };

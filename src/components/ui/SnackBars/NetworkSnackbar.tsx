@@ -8,9 +8,9 @@ import { useNetworkStatus } from "../../../stores/network-store";
  */
 const getSnackbarColor = (message: string | null): string => {
   if (!message) return "#333333"; // Default gray
-  
+
   const lowerCaseMessage = message.toLowerCase();
-  
+
   // List of error-indicating keywords
   if (
     lowerCaseMessage.includes("offline") ||
@@ -22,10 +22,13 @@ const getSnackbarColor = (message: string | null): string => {
   }
 
   // Explicitly check for success
-  if (lowerCaseMessage.includes("online") || lowerCaseMessage.includes("connected")) {
+  if (
+    lowerCaseMessage.includes("online") ||
+    lowerCaseMessage.includes("connected")
+  ) {
     return "#16a34a"; // Green
   }
-  
+
   return "#333333"; // Default gray
 };
 
@@ -77,4 +80,3 @@ export const NetworkSnackbar = () => {
     </Snackbar>
   );
 };
-

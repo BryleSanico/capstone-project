@@ -1,8 +1,14 @@
 // src/components/ScreenHeader.tsx
-import React from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import Icon from 'react-native-vector-icons/Ionicons';
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  TouchableOpacity,
+} from "react-native";
+import LinearGradient from "react-native-linear-gradient";
+import Icon from "react-native-vector-icons/Ionicons";
 
 interface ScreenHeaderProps {
   title: string;
@@ -22,7 +28,7 @@ export default function ScreenHeader({
   return (
     <View style={styles.header}>
       <LinearGradient
-        colors={['#8b5cf6', '#6366f1']}
+        colors={["#8b5cf6", "#6366f1"]}
         style={styles.headerGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -30,7 +36,11 @@ export default function ScreenHeader({
         <View style={styles.headerContent}>
           <View style={styles.leftContainer}>
             {showBackButton && (
-              <TouchableOpacity onPress={onBack} style={styles.backButton} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+              <TouchableOpacity
+                onPress={onBack}
+                style={styles.backButton}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
                 <Icon name="arrow-back" size={24} color="#fff" />
               </TouchableOpacity>
             )}
@@ -53,7 +63,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     ...Platform.select({
       ios: {
-        shadowColor: '#6366f1',
+        shadowColor: "#6366f1",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 12,
@@ -73,35 +83,35 @@ const styles = StyleSheet.create({
     marginTop: Platform.OS === "ios" ? 60 : 25,
     marginBottom: 25,
     marginHorizontal: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   leftContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
   },
   backButton: {
     marginRight: 12,
     padding: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderRadius: 12,
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: '800',
-    color: '#fff',
+    fontWeight: "800",
+    color: "#fff",
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '500',
+    color: "rgba(255, 255, 255, 0.9)",
+    fontWeight: "500",
   },
   // Placeholder to keep title aligned left when no right content exists
   placeholder: {
-    width: 56, 
+    width: 56,
     height: 56,
   },
 });

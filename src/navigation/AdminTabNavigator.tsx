@@ -1,13 +1,13 @@
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Icon from 'react-native-vector-icons/Ionicons';
-import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
-import EventApprovalsScreen from '../screens/admin/EventApprovalsScreen';
-import UserManagementScreen from '../screens/admin/UserManagementScreen';
+import React from "react";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import Icon from "react-native-vector-icons/Ionicons";
+import AdminDashboardScreen from "../screens/admin/AdminDashboardScreen";
+import EventApprovalsScreen from "../screens/admin/EventApprovalsScreen";
+import UserManagementScreen from "../screens/admin/UserManagementScreen";
 
-import { useAuth } from '../stores/auth-store';
+import { useAuth } from "../stores/auth-store";
 
-// Types 
+// Types
 export type AdminTabParamList = {
   Dashboard: undefined;
   Approvals: undefined;
@@ -17,19 +17,27 @@ export type AdminTabParamList = {
 const Tab = createBottomTabNavigator<AdminTabParamList>();
 
 // Render functions extracted outside to prevent instability
-const renderDashboardIcon = ({ color, size }: { color: string; size: number }) => (
-  <Icon name="stats-chart" size={size} color={color} />
-);
+const renderDashboardIcon = ({
+  color,
+  size,
+}: {
+  color: string;
+  size: number;
+}) => <Icon name="stats-chart" size={size} color={color} />;
 
-const renderApprovalsIcon = ({ color, size }: { color: string; size: number }) => (
-  <Icon name="checkmark-done-circle" size={size} color={color} />
-);
+const renderApprovalsIcon = ({
+  color,
+  size,
+}: {
+  color: string;
+  size: number;
+}) => <Icon name="checkmark-done-circle" size={size} color={color} />;
 
 const renderUsersIcon = ({ color, size }: { color: string; size: number }) => (
   <Icon name="people" size={size} color={color} />
 );
 
-// Tab Navigator (Dashboard, Approvals, Users) 
+// Tab Navigator (Dashboard, Approvals, Users)
 export default function AdminTabNavigator() {
   const { role } = useAuth();
 
@@ -37,37 +45,37 @@ export default function AdminTabNavigator() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#6366f1',
-        tabBarInactiveTintColor: '#9ca3af',
+        tabBarActiveTintColor: "#6366f1",
+        tabBarInactiveTintColor: "#9ca3af",
         tabBarStyle: {
           paddingTop: 8,
           paddingBottom: 8,
           paddingLeft: 15,
           paddingRight: 15,
           height: 75,
-        }
+        },
       }}
     >
-      <Tab.Screen 
-        name="Dashboard" 
+      <Tab.Screen
+        name="Dashboard"
         component={AdminDashboardScreen}
         options={{
-          tabBarIcon: renderDashboardIcon
+          tabBarIcon: renderDashboardIcon,
         }}
       />
-      <Tab.Screen 
-        name="Approvals" 
+      <Tab.Screen
+        name="Approvals"
         component={EventApprovalsScreen}
         options={{
-          tabBarIcon: renderApprovalsIcon
+          tabBarIcon: renderApprovalsIcon,
         }}
       />
-      {role === 'super_admin' && (
-        <Tab.Screen 
-          name="Users" 
+      {role === "super_admin" && (
+        <Tab.Screen
+          name="Users"
           component={UserManagementScreen}
           options={{
-            tabBarIcon: renderUsersIcon
+            tabBarIcon: renderUsersIcon,
           }}
         />
       )}

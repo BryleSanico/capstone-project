@@ -1,38 +1,28 @@
 // src/screens/TicketScreen.tsx
-import React, { useCallback, useLayoutEffect, useState, useMemo } from 'react';
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  RefreshControl,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import TicketCard from '../components/ui/Cards/TicketCard';
-import { Ticket } from '../types/ticket';
+import React, { useCallback, useLayoutEffect, useState, useMemo } from "react";
+import { View, StyleSheet, FlatList, RefreshControl } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import TicketCard from "../components/ui/Cards/TicketCard";
+import { Ticket } from "../types/ticket";
 import {
   useNavigation,
   CompositeNavigationProp,
-} from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
-import { TabParamList } from '../navigation/TabNavigator';
-import { Loader } from '../components/LazyLoaders/loader';
-import { EmptyState } from '../components/ui/Errors/EmptyState';
-import ScreenHeader from '../components/ui/ScreenHeader';
-import TabSelector from '../components/navigation/TabSelector';
-import {
-  TabKey,
-  TabItem,
-  TAB_KEYS,
-  TAB_CONFIG,
-} from '../types/TabSegment';
-import { filterTicketsByDate } from '../utils/domain/filterUtils';
-import { useTicketsQuery } from '../hooks'; 
+} from "@react-navigation/native";
+import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../navigation/AppNavigator";
+import { TabParamList } from "../navigation/TabNavigator";
+import { Loader } from "../components/LazyLoaders/loader";
+import { EmptyState } from "../components/ui/Errors/EmptyState";
+import ScreenHeader from "../components/ui/ScreenHeader";
+import TabSelector from "../components/navigation/TabSelector";
+import { TabKey, TabItem, TAB_KEYS, TAB_CONFIG } from "../types/TabSegment";
+import { filterTicketsByDate } from "../utils/domain/filterUtils";
+import { useTicketsQuery } from "../hooks";
 
 // Define the navigation tab
 type TicketsScreenNavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<TabParamList, 'My Tickets'>,
+  BottomTabNavigationProp<TabParamList, "My Tickets">,
   NativeStackNavigationProp<RootStackParamList>
 >;
 
@@ -79,7 +69,7 @@ export default function TicketsScreen() {
   ];
 
   const handleTicketPress = (ticket: Ticket) => {
-    navigation.navigate('TicketDetails', { id: ticket.id });
+    navigation.navigate("TicketDetails", { id: ticket.id });
   };
 
   // Use RQ's `refetch` function
@@ -91,18 +81,18 @@ export default function TicketsScreen() {
     <EmptyState
       icon={
         selectedTab === TAB_KEYS.UPCOMING
-          ? 'ticket-outline'
-          : 'checkmark-done-outline'
+          ? "ticket-outline"
+          : "checkmark-done-outline"
       }
       title={
         selectedTab === TAB_KEYS.UPCOMING
-          ? 'No Upcoming Tickets'
-          : 'No Past Tickets'
+          ? "No Upcoming Tickets"
+          : "No Past Tickets"
       }
       message={
         selectedTab === TAB_KEYS.UPCOMING
-          ? 'Tickets for future events will appear here.'
-          : 'Your completed event tickets.'
+          ? "Tickets for future events will appear here."
+          : "Your completed event tickets."
       }
     />
   );
@@ -120,7 +110,7 @@ export default function TicketsScreen() {
       <ScreenHeader
         title="My Tickets"
         subtitle={`${tickets.length} purchased ticket${
-          tickets.length !== 1 ? 's' : ''
+          tickets.length !== 1 ? "s" : ""
         }`}
       />
 
@@ -170,15 +160,15 @@ export default function TicketsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
   },
   content: {
     flex: 1,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   listContent: {
     marginHorizontal: 20,
@@ -187,8 +177,8 @@ const styles = StyleSheet.create({
   },
   emptyStateContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingBottom: 60,
   },
 });

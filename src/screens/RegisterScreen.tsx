@@ -111,17 +111,17 @@ export default function RegisterScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.headerWrapper}>
-          <LinearGradient
-            colors={["#6366f1", "#8b5cf6"]}
-            style={styles.header}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <View style={styles.headerText}>
-              <Text style={styles.title}>Create Account</Text>
-              <Text style={styles.subtitle}>Sign up to get started</Text>
-            </View>
-          </LinearGradient>
+            <LinearGradient
+              colors={["#6366f1", "#8b5cf6"]}
+              style={styles.header}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.headerText}>
+                <Text style={styles.title}>Create Account</Text>
+                <Text style={styles.subtitle}>Sign up to get started</Text>
+              </View>
+            </LinearGradient>
           </View>
           <View style={styles.formContainer}>
             <View style={styles.fieldContainer}>
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
   },
-  
+
   headerText: {
     backgroundColor: "transparent",
     marginVertical: Platform.OS === "ios" ? 120 : 100,
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
   formContainer: {
     flex: 1,
     padding: 24,
-    marginVertical: -60
+    marginVertical: -60,
   },
   fieldContainer: {
     marginBottom: 16,
