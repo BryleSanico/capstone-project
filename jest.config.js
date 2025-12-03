@@ -21,11 +21,22 @@ module.exports = {
     '!src/index.js', // Entry point
   ],
 
-    // A map from regular expressions to paths to transformers.
+  // Coverage thresholds
+  coverageThresholds: {
+    global: {
+      statements: 80,
+      branches: 70,
+      functions: 80,
+      lines: 80,
+    },
+  },
+
+  // A map from regular expressions to paths to transformers.
   // This ensures .ts and .tsx files are processed by babel-jest.
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
   },
+
   // The test environment that will be used for testing
   testEnvironment: 'node',
   // An array of regexp pattern strings that are matched against all source file paths,
@@ -39,11 +50,15 @@ module.exports = {
   // that allow to stub out resources with a single module.
   moduleNameMapper: {
     // Handle TypeScript path alias
-    '^@/(.*)$': '<rootDir>/$1',
+    '^@/(.*)$': '<rootDir>/src/$1',
 
   },
 
   // An array of file extensions your modules use.
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+
+  // Fail tests on console errors/warnings
+  testFailureExitCode: 1,
+  verbose: true,
 };
 
