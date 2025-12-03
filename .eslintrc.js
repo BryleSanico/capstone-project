@@ -91,7 +91,7 @@ module.exports = {
     'prefer-const': 'error',
     'no-var': 'error',
     eqeqeq: ['error', 'always'],
-    curly: ['error', 'all'],
+    curly: ['error', 'multi-line'], 
   },
   settings: {
     react: { version: 'detect' },
