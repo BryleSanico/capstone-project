@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState, useEffect } from "react";
+import React, { useLayoutEffect, useState, useEffect, useMemo, startTransition } from "react";
 import {
   View,
   Text,
@@ -103,57 +103,62 @@ export default function EventFormScreen() {
     });
   }, [navigation]);
 
+  // Memoize the event data to prevent re-renders
+  const eventData = useMemo(() => {
+    if (isEditMode && eventId && !isLoadingMyEvents && myEvents) {
+      return myEvents.find((e) => e.id === eventId);
+    }
+    return null;
+  }, [isEditMode, eventId, isLoadingMyEvents, myEvents]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (
-      isEditMode &&
-      eventId &&
-      !isLoadingMyEvents &&
-      myEvents &&
-      !hasPopulated
-    ) {
-      const event = myEvents.find((e) => e.id === eventId);
+    if (isEditMode && eventData && !hasPopulated) {
+      // Prepare all state values first
+      const eventDate = new Date(eventData.startTime);
+      const closedStatus = eventData.isClosed || false;
+      const newFormData = {
+        title: eventData.title,
+        description: eventData.description,
+        location: eventData.location,
+        address: eventData.address || "",
+        price: eventData.price.toString(),
+        category: eventData.category,
+        capacity: eventData.capacity?.toString() || "",
+        tags: eventData.tags?.join(", ") || "",
+        userMaxTicketPurchase:
+          eventData.userMaxTicketPurchase?.toString() || "10",
+        isClosed: closedStatus,
+        isApproved: eventData.isApproved || false,
+      };
 
-      if (event) {
-        const eventDate = new Date(event.startTime);
+      // Use startTransition to mark updates as non-urgent
+      startTransition(() => {
         setSelectedDateTime(eventDate);
-        setCurrentImageUrl(event.imageUrl || null);
-        setIsClosed(event.isClosed || false);
-
-        setFormData({
-          title: event.title,
-          description: event.description,
-          location: event.location,
-          address: event.address || "",
-          price: event.price.toString(),
-          category: event.category,
-          capacity: event.capacity?.toString() || "",
-          tags: event.tags?.join(", ") || "",
-          userMaxTicketPurchase:
-            event.userMaxTicketPurchase?.toString() || "10",
-          isClosed: event.isClosed || false,
-          isApproved: event.isApproved || false,
-        });
+        setCurrentImageUrl(eventData.imageUrl || null);
+        setFormData(newFormData);
+        setIsClosed(closedStatus);
         setIsLoading(false);
         setHasPopulated(true);
-      } else if (!isLoadingMyEvents) {
-        Alert.alert("Error", "Could not find event details.");
-        navigation.goBack();
-      }
-    } else if (!isEditMode) {
+      });
+    } else if (isEditMode && !eventData && !isLoadingMyEvents && !hasPopulated) {
+      Alert.alert("Error", "Could not find event details.");
+      navigation.goBack();
+    } else if (!isEditMode && !hasPopulated) {
       const now = new Date();
       now.setHours(now.getHours() + 1);
       now.setMinutes(0);
-      setSelectedDateTime(now);
-      setIsLoading(false);
+      startTransition(() => {
+        setSelectedDateTime(now);
+        setIsLoading(false);
+        setHasPopulated(true);
+      });
     }
   }, [
-    eventId,
+    eventData,
     isEditMode,
     navigation,
     isLoadingMyEvents,
-    myEvents,
-    setCurrentImageUrl,
-    setSelectedDateTime,
     hasPopulated,
   ]);
 
@@ -695,7 +700,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  pickerIcon: { marginRight: 10, color: "#6B7280" },
   pickerText: { fontSize: 16, color: "#111827", flex: 1 },
   submitButton: {
     backgroundColor: "#6366f1",
@@ -908,3 +912,4 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 });
+
