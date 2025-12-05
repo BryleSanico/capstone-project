@@ -4,6 +4,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import { AdminLog } from "../../../types/admin";
 import { formatRelativeTime } from "../../../utils/formatters/relativeTimeFormatter";
 import { getActionConfig } from "../../../utils/ui/adminLogConfig";
+import { Colors } from "../../../constants/colors";
 
 interface RecentLogsCardProps {
   logs: AdminLog[];
@@ -72,10 +73,10 @@ export const RecentLogsCard: React.FC<RecentLogsCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     borderRadius: 16,
     marginBottom: 24,
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -88,12 +89,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
+    borderBottomColor: Colors.gray100,
   },
   title: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#1f2937",
+    color: Colors.gray800,
   },
   headerLink: {
     flexDirection: "row",
@@ -102,7 +103,7 @@ const styles = StyleSheet.create({
   headerLinkText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#6366f1",
+    color: Colors.primary,
     marginRight: 4,
   },
   list: {
@@ -115,7 +116,7 @@ const styles = StyleSheet.create({
   },
   borderBottom: {
     borderBottomWidth: 1,
-    borderBottomColor: "#f9fafb",
+    borderBottomColor: Colors.gray50,
   },
   iconBox: {
     width: 36,
@@ -132,23 +133,23 @@ const styles = StyleSheet.create({
   logTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#111827",
+    color: Colors.gray900,
     marginBottom: 2,
   },
   logDetail: {
     fontSize: 13,
-    color: "#4b5563",
+    color: Colors.gray600,
     marginBottom: 4,
     lineHeight: 18,
   },
   logMeta: {
     fontSize: 11,
-    color: "#9ca3af",
+    color: Colors.gray400,
   },
   emptyText: {
     padding: 20,
     textAlign: "center",
-    color: "#9ca3af",
+    color: Colors.gray400,
     fontStyle: "italic",
   },
 });

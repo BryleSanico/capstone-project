@@ -116,7 +116,7 @@ export function useFavoriteEventsQuery() {
   const isLoading =
     isLoadingIds || (isLoadingEvents && (favoriteEventIds?.length ?? 0) > 0);
 
-  if (!isLoadingIds && favoriteEventIds && favoriteEventIds.length === 0) {
+  if (!isLoadingIds && favoriteEventIds?.length === 0) {
     return {
       favoriteEvents: [],
       isLoading: false,

@@ -18,6 +18,7 @@ import { RecentLogsCard } from "../../components/ui/Cards/RecentLogsCard";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AdminStackParamList } from "../../navigation/AdminNavigator";
+import { Colors } from "../../constants/colors";
 
 type AdminDashboardNavigationProp =
   NativeStackNavigationProp<AdminStackParamList>;
@@ -127,12 +128,12 @@ export default function AdminDashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
+  container: { flex: 1, backgroundColor: Colors.background },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f8f9fa",
+    backgroundColor: Colors.background,
   },
   content: { padding: 20, paddingBottom: 40 },
 
@@ -144,15 +145,15 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: 14,
-    color: "#6b7280",
+    color: Colors.gray500,
     fontWeight: "600",
     textTransform: "uppercase",
   },
-  name: { fontSize: 24, fontWeight: "bold", color: "#1f2937" },
+  name: { fontSize: 24, fontWeight: "bold", color: Colors.gray800 },
 
   logoutIconBtn: {
     padding: 8,
-    backgroundColor: "#fee2e2",
+    backgroundColor: Colors.dangerLight,
     borderRadius: 12,
   },
 

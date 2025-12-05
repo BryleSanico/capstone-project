@@ -21,6 +21,7 @@ import {
 } from "../hooks/";
 import { formatFullDate } from "../utils/formatters/dateFormatter";
 import { AppNotification } from "../services/api/notificationService";
+import { Colors } from "../constants/colors";
 
 type NotificationScreenNavigationProp =
   NativeStackNavigationProp<RootStackParamList>;
@@ -137,7 +138,7 @@ export default function NotificationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: Colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -149,11 +150,11 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: "row",
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -161,9 +162,9 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   unreadCard: {
-    backgroundColor: "#f0fdf4", // Very light green tint for unread, or just white
+    backgroundColor: Colors.successLight,
     borderLeftWidth: 4,
-    borderLeftColor: "#6366f1",
+    borderLeftColor: Colors.primary,
   },
   iconContainer: {
     marginRight: 12,
@@ -175,29 +176,29 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
     marginBottom: 4,
   },
   cardMessage: {
     fontSize: 14,
-    color: "#4b5563",
+    color: Colors.gray600,
     lineHeight: 20,
     marginBottom: 8,
   },
   dateText: {
     fontSize: 12,
-    color: "#9ca3af",
+    color: Colors.gray400,
   },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#6366f1",
+    backgroundColor: Colors.primary,
     marginLeft: 8,
     marginTop: 6,
   },
   readAllBtn: {
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: Colors.whiteTransparent,
     padding: 8,
     borderRadius: 20,
   },

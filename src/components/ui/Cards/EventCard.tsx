@@ -22,6 +22,8 @@ import {
   useAddFavorite,
   useRemoveFavorite,
 } from "../../../hooks/data/useFavorites";
+import { Colors } from "../../../constants/colors";
+
 interface EventCardProps {
   event: Event;
   onPress: () => void;
@@ -140,9 +142,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     borderRadius: 16,
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -169,7 +171,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 12,
     right: 12,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: Colors.blackTransparent,
     borderRadius: 20,
     padding: 8,
   },
@@ -177,13 +179,13 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 12,
     left: 12,
-    backgroundColor: "rgba(99, 102, 241, 0.9)",
+    backgroundColor: Colors.primaryAlpha90,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
   },
   categoryText: {
-    color: "#fff",
+    color: Colors.white,
     fontSize: 12,
     fontWeight: "600",
   },
@@ -193,7 +195,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
     marginBottom: 12,
     lineHeight: 24,
   },
@@ -204,7 +206,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
-    color: "#666",
+    color: Colors.textSecondary,
     marginLeft: 8,
     flex: 1,
   },
@@ -215,15 +217,15 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: "#f0f0f0",
+    borderTopColor: Colors.borderLight,
   },
   price: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#6366f1",
+    color: Colors.primary,
   },
   organizer: {
     fontSize: 12,
-    color: "#999",
+    color: Colors.textTertiary,
   },
 });

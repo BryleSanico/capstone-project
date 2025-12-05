@@ -25,6 +25,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import TabSelector, { TabItem } from "../../components/navigation/TabSelector";
 import ScreenHeader from "../../components/ui/ScreenHeader";
+import { Colors } from "../../constants/colors";
 
 type EventApprovalsScreenNavigationProp =
   NativeStackNavigationProp<RootStackParamList>;
@@ -107,12 +108,13 @@ export default function EventApprovalsScreen() {
     }
   };
 
-  if (isLoading)
+  if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <Loader />
       </View>
     );
+  }
 
   const renderAdminActions = (event: Event) => (
     <View style={styles.actionRow}>
@@ -169,7 +171,7 @@ export default function EventApprovalsScreen() {
                 tintColor="#6366f1"
               />
             }
-            contentContainerStyle={{ paddingBottom: 20, paddingTop: 10 }}
+            contentContainerStyle={styles.flatListContent}
             renderItem={({ item }) => (
               <ActionableEventCard
                 event={item}
@@ -280,27 +282,28 @@ export default function EventApprovalsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Platform.OS === "ios" ? "#f8f9fa" : "#e1e1e8ff",
+    backgroundColor:
+      Platform.OS === "ios"
+        ? Colors.background
+        : Colors.platformBackgroundAndroid,
   },
   content: { flex: 1 },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f8f9fa",
+    backgroundColor: Colors.background,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    padding: 20,
-    color: "#1f2937",
-    paddingBottom: 10,
+  flatListContent: {
+    paddingBottom: 20,
+    paddingTop: 10,
   },
 
   actionRow: {
     flexDirection: "row",
     borderTopWidth: 1,
-    borderTopColor: Platform.OS === "ios" ? "#e9ecef" : "#e1e2e3ff",
+    borderTopColor:
+      Platform.OS === "ios" ? Colors.border : Colors.platformBorderAndroid,
   },
   btn: {
     flex: 1,
@@ -309,19 +312,28 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 14,
   },
-  rejectBtn: { backgroundColor: "#ef4444" },
-  approveBtn: { backgroundColor: "#10b981" },
-  btnText: { color: "#fff", fontWeight: "600", marginLeft: 6, fontSize: 16 },
+  rejectBtn: { backgroundColor: Colors.danger },
+  approveBtn: { backgroundColor: Colors.success },
+  btnText: {
+    color: Colors.white,
+    fontWeight: "600",
+    marginLeft: 6,
+    fontSize: 16,
+  },
 
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: Colors.overlay,
     justifyContent: "center",
     padding: 20,
   },
-  modalContent: { backgroundColor: "#fff", borderRadius: 16, padding: 24 },
+  modalContent: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 24,
+  },
   modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 4 },
-  modalSubtitle: { fontSize: 14, color: "#6b7280", marginBottom: 16 },
+  modalSubtitle: { fontSize: 14, color: Colors.gray500, marginBottom: 16 },
 
   typeSelector: { flexDirection: "row", gap: 10, marginBottom: 12 },
   typeOption: {
@@ -332,27 +344,30 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#f9fafb",
+    borderColor: Colors.gray200,
+    backgroundColor: Colors.gray50,
   },
-  typeOptionActive: { backgroundColor: "#f59e0b", borderColor: "#f59e0b" }, // Amber for revision
+  typeOptionActive: {
+    backgroundColor: Colors.warning,
+    borderColor: Colors.warning,
+  },
   typeOptionActiveDelete: {
-    backgroundColor: "#ef4444",
-    borderColor: "#ef4444",
-  }, // Red for delete
-  typeText: { marginLeft: 8, fontWeight: "600", color: "#4b5563" },
-  typeTextActive: { color: "#fff" },
+    backgroundColor: Colors.danger,
+    borderColor: Colors.danger,
+  },
+  typeText: { marginLeft: 8, fontWeight: "600", color: Colors.gray600 },
+  typeTextActive: { color: Colors.white },
 
   helperText: {
     fontSize: 12,
-    color: "#6b7280",
+    color: Colors.gray500,
     marginBottom: 12,
     fontStyle: "italic",
   },
 
   input: {
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: Colors.gray200,
     borderRadius: 8,
     padding: 12,
     height: 100,
@@ -367,8 +382,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 8,
   },
-  bgRevision: { backgroundColor: "#f59e0b" },
-  bgDelete: { backgroundColor: "#ef4444" },
-  modalBtnTextCancel: { color: "#6b7280", fontWeight: "600" },
-  modalBtnTextConfirm: { color: "#fff", fontWeight: "600" },
+  bgRevision: { backgroundColor: Colors.warning },
+  bgDelete: { backgroundColor: Colors.danger },
+  modalBtnTextCancel: { color: Colors.gray500, fontWeight: "600" },
+  modalBtnTextConfirm: { color: Colors.white, fontWeight: "600" },
 });

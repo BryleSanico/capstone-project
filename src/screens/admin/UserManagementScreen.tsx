@@ -22,6 +22,7 @@ import SearchBar from "../../components/ui/SearchBar";
 import { useDebounce } from "../../hooks/";
 import TabSelector, { TabItem } from "../../components/navigation/TabSelector";
 import { AdminUser } from "../../types/admin";
+import { Colors } from "../../constants/colors";
 
 // Tab Constants
 const TAB_ALL = "all";
@@ -168,10 +169,7 @@ export default function UserManagementScreen() {
       <View style={[styles.userRow, isBanned && styles.bannedRow]}>
         <View style={styles.leftSection}>
           <View
-            style={[
-              styles.avatarPlaceholder,
-              isBanned && { backgroundColor: "#fee2e2" },
-            ]}
+            style={[styles.avatarPlaceholder, isBanned && styles.bannedAvatar]}
           >
             <Icon
               name={isBanned ? "ban" : "person"}
@@ -180,15 +178,7 @@ export default function UserManagementScreen() {
             />
           </View>
           <View style={styles.userInfo}>
-            <Text
-              style={[
-                styles.userName,
-                isBanned && {
-                  color: "#9ca3af",
-                  textDecorationLine: "line-through",
-                },
-              ]}
-            >
+            <Text style={[styles.userName, isBanned && styles.bannedUserName]}>
               {item.full_name || "No Name"} {isMe && "(You)"}
             </Text>
             <Text style={styles.userEmail}>{item.email}</Text>
@@ -208,7 +198,7 @@ export default function UserManagementScreen() {
               name="chevron-down"
               size={12}
               color={isBanned ? "#ef4444" : "#6b7280"}
-              style={{ marginLeft: 4 }}
+              style={styles.chevronIcon}
             />
           )}
         </TouchableOpacity>
@@ -255,7 +245,7 @@ export default function UserManagementScreen() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>
-              No users found matching "{searchQuery}"
+              No users found matching &ldquo;{searchQuery}&rdquo;
             </Text>
           </View>
         }
@@ -270,12 +260,12 @@ export default function UserManagementScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
+  container: { flex: 1, backgroundColor: Colors.background },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f8f9fa",
+    backgroundColor: Colors.background,
   },
   list: { padding: 20 },
 
@@ -288,17 +278,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 1,
   },
   bannedRow: {
-    backgroundColor: "#fff1f2", // Light red tint for banned users row
+    backgroundColor: Colors.offlineAlt,
     opacity: 0.9,
   },
   leftSection: { flexDirection: "row", alignItems: "center", flex: 1 },
@@ -306,14 +296,21 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#e0e7ff",
+    backgroundColor: Colors.infoBackground,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
+  bannedAvatar: {
+    backgroundColor: "#fee2e2",
+  },
   userInfo: { flex: 1, marginRight: 8 },
-  userName: { fontSize: 16, fontWeight: "600", color: "#1f2937" },
-  userEmail: { fontSize: 13, color: "#6b7280" },
+  userName: { fontSize: 16, fontWeight: "600", color: Colors.gray800 },
+  bannedUserName: {
+    color: Colors.gray400,
+    textDecorationLine: "line-through",
+  },
+  userEmail: { fontSize: 13, color: Colors.gray500 },
   roleBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -321,34 +318,37 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 12,
   },
-  bgSuper: { backgroundColor: "#fef3c7" },
-  bgAdmin: { backgroundColor: "#dbeafe" },
-  bgUser: { backgroundColor: "#f3f4f6" },
+  bgSuper: { backgroundColor: Colors.roleSuperBg },
+  bgAdmin: { backgroundColor: Colors.roleAdminBg },
+  bgUser: { backgroundColor: Colors.roleUserBg },
   bgBanned: {
-    backgroundColor: "#fee2e2",
+    backgroundColor: Colors.roleBannedBg,
     borderWidth: 1,
-    borderColor: "#fecaca",
+    borderColor: Colors.dangerBorder,
   },
   roleText: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#374151",
+    color: Colors.gray700,
     textTransform: "capitalize",
   },
-  textSuper: { color: "#d97706" },
-  textAdmin: { color: "#2563eb" },
-  textUser: { color: "#374151" },
-  textBanned: { color: "#dc2626" },
+  textSuper: { color: Colors.roleSuper },
+  textAdmin: { color: Colors.roleAdmin },
+  textUser: { color: Colors.roleUser },
+  textBanned: { color: Colors.roleBanned },
+  chevronIcon: {
+    marginLeft: 4,
+  },
   loadingOverlay: {
     position: "absolute",
     bottom: 40,
     alignSelf: "center",
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     padding: 10,
     borderRadius: 20,
     elevation: 5,
   },
   emptyState: { alignItems: "center", marginTop: 40 },
-  emptyText: { color: "#6b7280", fontSize: 16 },
+  emptyText: { color: Colors.gray500, fontSize: 16 },
   footerLoader: { paddingVertical: 20, alignItems: "center" },
 });

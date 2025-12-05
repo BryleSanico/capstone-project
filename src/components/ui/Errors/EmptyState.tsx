@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
+import { Colors } from "../../../constants/colors";
 
 interface EmptyStateProps {
   hasAction?: boolean;
@@ -56,7 +57,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       {hasAction
         ? renderEmptyStateWithAction(
             icon,
@@ -71,6 +72,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   emptyState: {
     flex: 1,
     justifyContent: "center",
@@ -80,13 +84,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
     marginTop: 24,
     marginBottom: 12,
   },
   emptySubtitle: {
     fontSize: 16,
-    color: "#666",
+    color: Colors.textSecondary,
     textAlign: "center",
     lineHeight: 24,
   },
@@ -94,18 +98,18 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#f0f0f0",
+    borderColor: Colors.borderLight,
   },
   exploreButton: {
-    backgroundColor: "#6366f1",
+    backgroundColor: Colors.primary,
     paddingHorizontal: 32,
     paddingVertical: 16,
     borderRadius: 12,
-    shadowColor: "#6366f1",
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -115,6 +119,6 @@ const styles = StyleSheet.create({
   exploreButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#fff",
+    color: Colors.white,
   },
 });

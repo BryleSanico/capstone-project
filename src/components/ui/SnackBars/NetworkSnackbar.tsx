@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Snackbar } from "react-native-paper";
 import { useNetworkStatus } from "../../../stores/network-store";
+import { Colors } from "../../../constants/colors";
 
 /**
  * Determines the snackbar color based on the message.
  * Green for success ("Back online!"), Red for errors.
  */
 const getSnackbarColor = (message: string | null): string => {
-  if (!message) return "#333333"; // Default gray
+  if (!message) return Colors.neutral333;
 
   const lowerCaseMessage = message.toLowerCase();
 
@@ -18,7 +19,7 @@ const getSnackbarColor = (message: string | null): string => {
     lowerCaseMessage.includes("failed") ||
     lowerCaseMessage.includes("wrong")
   ) {
-    return "#b91c1c"; // Red
+    return Colors.errorDark;
   }
 
   // Explicitly check for success
@@ -26,10 +27,10 @@ const getSnackbarColor = (message: string | null): string => {
     lowerCaseMessage.includes("online") ||
     lowerCaseMessage.includes("connected")
   ) {
-    return "#16a34a"; // Green
+    return Colors.successDark;
   }
 
-  return "#333333"; // Default gray
+  return Colors.neutral333;
 };
 
 export const NetworkSnackbar = () => {
@@ -41,17 +42,22 @@ export const NetworkSnackbar = () => {
   useEffect(() => {
     if (message && message !== currentMessage) {
       if (visible) {
-        setVisible(false);
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-        // Wait briefly before showing the next snackbar
+        // Defer state updates to avoid synchronous setState in effect
         timeoutRef.current = setTimeout(() => {
+          setVisible(false);
+          // Wait briefly before showing the next snackbar
+          setTimeout(() => {
+            setCurrentMessage(message);
+            setVisible(true);
+          }, 300);
+        }, 0);
+      } else {
+        setTimeout(() => {
           setCurrentMessage(message);
           setVisible(true);
-        }, 300);
-      } else {
-        setCurrentMessage(message);
-        setVisible(true);
+        }, 0);
       }
     }
   }, [message, currentMessage, visible]);

@@ -16,6 +16,7 @@ import { useNetworkStatus } from "../stores/network-store";
 import { OfflineState } from "../components/ui/Errors/offlineState";
 import { EmptyState } from "../components/ui/Errors/EmptyState";
 import { useFavoriteEventsQuery } from "../hooks/data/useFavorites";
+import { Colors } from "../constants/colors";
 
 type FavoritesScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -107,7 +108,7 @@ export default function FavoritesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: Colors.background,
   },
   loadingContainer: {
     flex: 1,

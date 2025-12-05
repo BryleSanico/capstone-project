@@ -26,6 +26,7 @@ import TabSelector from "../components/navigation/TabSelector";
 import { TabKey, TabItem, TAB_KEYS, TAB_CONFIG } from "../types/TabSegment";
 import { filterEventsByDate } from "../utils/domain/filterUtils";
 import { useMyEventsQuery, useDeleteEvent } from "../hooks";
+import { Colors } from "../constants/colors";
 
 type MyEventsScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, "My Events">,
@@ -215,16 +216,19 @@ export default function MyEventsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Platform.OS === "ios" ? "#f8f9fa" : "#e1e1e8ff",
+    backgroundColor:
+      Platform.OS === "ios"
+        ? Colors.background
+        : Colors.platformBackgroundAndroid,
   },
   createButton: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,

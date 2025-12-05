@@ -10,7 +10,7 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import { RootStackParamList } from "@/src/navigation/AppNavigator";
+import { RootStackParamList } from "@/navigation/AppNavigator";
 import { useNavigation } from "@react-navigation/native";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -18,6 +18,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "../stores/auth-store";
 import { Loader } from "../components/LazyLoaders/loader";
 import { isEmail, isRequired } from "../utils/validations/validation";
+import { Colors } from "../constants/colors";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -249,7 +250,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
   },
   keyboardView: {
     flex: 1,
@@ -264,7 +265,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     ...Platform.select({
       ios: {
-        shadowColor: "#6366f1",
+        shadowColor: Colors.primary,
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.25,
         shadowRadius: 12,
@@ -290,12 +291,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: "700",
-    color: "#fff",
+    color: Colors.white,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: "rgba(255,255,255,0.8)",
+    color: Colors.whiteTransparent80,
   },
   formContainer: {
     flex: 0,
@@ -308,15 +309,15 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f8f9fa",
+    backgroundColor: Colors.background,
     borderRadius: 12,
     paddingHorizontal: 16,
     height: 56,
     borderWidth: 1,
-    borderColor: "transparent",
+    borderColor: Colors.transparent,
   },
   errorInputContainer: {
-    borderColor: "#ff4757",
+    borderColor: Colors.error,
   },
   inputIcon: {
     marginRight: 12,
@@ -324,13 +325,13 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
   },
   eyeIcon: {
     padding: 4,
   },
   errorText: {
-    color: "#ff4757",
+    color: Colors.error,
     fontSize: 12,
     marginBottom: 4,
     marginLeft: 4,
@@ -341,7 +342,7 @@ const styles = StyleSheet.create({
   },
   forgotPasswordText: {
     fontSize: 14,
-    color: "#6366f1",
+    color: Colors.primary,
     fontWeight: "600",
   },
   buttonContainer: {
@@ -353,7 +354,7 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: 12,
     overflow: "hidden",
-    shadowColor: "#6366f1",
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -369,7 +370,7 @@ const styles = StyleSheet.create({
   loginButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#fff",
+    color: Colors.white,
   },
   divider: {
     flexDirection: "row",
@@ -379,12 +380,12 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "#e0e0e0",
+    backgroundColor: Colors.borderDark,
   },
   dividerText: {
     marginHorizontal: 16,
     fontSize: 14,
-    color: "#999",
+    color: Colors.textTertiary,
     fontWeight: "500",
   },
   signupContainer: {
@@ -394,11 +395,11 @@ const styles = StyleSheet.create({
   },
   signupText: {
     fontSize: 14,
-    color: "#666",
+    color: Colors.textSecondary,
   },
   signupLink: {
     fontSize: 14,
-    color: "#6366f1",
+    color: Colors.primary,
     fontWeight: "600",
   },
 });

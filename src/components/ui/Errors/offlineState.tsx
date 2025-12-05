@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
+import { Colors } from "../../../constants/colors";
 
 interface OfflineStateProps {
   message: string;
@@ -29,18 +30,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: Colors.background,
   },
   errorTitle: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
     marginTop: 24,
     marginBottom: 8,
   },
   errorText: {
     fontSize: 16,
-    color: "#666",
+    color: Colors.textSecondary,
     textAlign: "center",
     marginBottom: 24,
   },

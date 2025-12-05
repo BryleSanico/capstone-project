@@ -24,6 +24,7 @@ import {
   minLength,
   passwordsMatch,
 } from "../utils/validations/validation";
+import { Colors } from "../constants/colors";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -59,11 +60,14 @@ export default function RegisterScreen() {
     if (!isRequired(name)) newErrors.name = "Full name is required";
     if (!isRequired(email)) newErrors.email = "Email is required";
     else if (!isEmail(email)) newErrors.email = "Please enter a valid email";
-    if (!isRequired(password)) newErrors.password = "Password is required";
-    else if (!minLength(password, 6))
+    if (!isRequired(password)) {
+      newErrors.password = "Password is required";
+    } else if (!minLength(password, 6)) {
       newErrors.password = "Password must be at least 6 characters";
-    if (!passwordsMatch(password, confirmPassword))
+    }
+    if (!passwordsMatch(password, confirmPassword)) {
       newErrors.confirmPassword = "Passwords do not match";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -293,7 +297,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
   },
   keyboardView: {
     flex: 1,
@@ -307,7 +311,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     ...Platform.select({
       ios: {
-        shadowColor: "#6366f1",
+        shadowColor: Colors.primary,
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.25,
         shadowRadius: 12,
@@ -334,12 +338,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: "700",
-    color: "#fff",
+    color: Colors.white,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: "rgba(255,255,255,0.8)",
+    color: Colors.whiteTransparent80,
   },
   formContainer: {
     flex: 1,
@@ -352,15 +356,15 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f8f9fa",
+    backgroundColor: Colors.background,
     borderRadius: 12,
     paddingHorizontal: 16,
     height: 56,
     borderWidth: 1,
-    borderColor: "transparent",
+    borderColor: Colors.transparent,
   },
   errorInputContainer: {
-    borderColor: "#ff4757",
+    borderColor: Colors.error,
   },
   inputIcon: {
     marginRight: 12,
@@ -368,13 +372,13 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
   },
   eyeIcon: {
     padding: 4,
   },
   errorText: {
-    color: "#ff4757",
+    color: Colors.error,
     fontSize: 12,
     marginBottom: 4,
     marginLeft: 4,
@@ -389,7 +393,7 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: 12,
     overflow: "hidden",
-    shadowColor: "#6366f1",
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -405,7 +409,7 @@ const styles = StyleSheet.create({
   registerButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#fff",
+    color: Colors.white,
   },
   loginContainer: {
     flexDirection: "row",
@@ -415,11 +419,11 @@ const styles = StyleSheet.create({
   },
   loginText: {
     fontSize: 14,
-    color: "#666",
+    color: Colors.textSecondary,
   },
   loginLink: {
     fontSize: 14,
-    color: "#6366f1",
+    color: Colors.primary,
     fontWeight: "600",
   },
 });

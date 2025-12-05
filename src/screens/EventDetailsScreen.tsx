@@ -26,6 +26,7 @@ import { useEventByIdQuery } from "../hooks/";
 import { useTicketsQuery, usePurchaseTicket } from "../hooks/";
 import { useFavoritesQuery, useAddFavorite, useRemoveFavorite } from "../hooks";
 import useEventSubscription from "../hooks/data/useEventSubscription";
+import { Colors } from "../constants/colors";
 
 type EventDetailsScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -284,7 +285,7 @@ export default function EventDetailsScreen() {
                 name="time-outline"
                 size={16}
                 color="#fff"
-                style={{ marginRight: 4 }}
+                style={styles.pendingIcon}
               />
               <Text style={styles.pendingText}>Under Review</Text>
             </View>
@@ -425,7 +426,7 @@ export default function EventDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
   },
   blurHeader: {
     position: "absolute",
@@ -436,13 +437,13 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   androidBlurFallback: {
-    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    backgroundColor: Colors.whiteTransparent85,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
   },
   imageContainer: {
     position: "relative",
@@ -464,18 +465,18 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 60,
     left: 16,
-    backgroundColor: "rgba(99, 102, 241, 0.9)",
+    backgroundColor: Colors.primaryAlpha90,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 16,
   },
   categoryText: {
-    color: "#fff",
+    color: Colors.white,
     fontSize: 14,
     fontWeight: "600",
   },
   pendingBadge: {
-    backgroundColor: "#f59e0b",
+    backgroundColor: Colors.warning,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -485,16 +486,19 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   pendingText: {
-    color: "#fff",
+    color: Colors.white,
     fontSize: 12,
     fontWeight: "600",
+  },
+  pendingIcon: {
+    marginRight: 4,
   },
   headerButtons: {
     flexDirection: "row",
     gap: 12,
   },
   headerButton: {
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: Colors.blackTransparent,
     borderRadius: 20,
     padding: 8,
   },
@@ -504,13 +508,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
     marginBottom: 8,
     lineHeight: 36,
   },
   organizer: {
     fontSize: 16,
-    color: "#666",
+    color: Colors.textSecondary,
     marginBottom: 8,
   },
   infoSection: {
@@ -528,17 +532,17 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
     marginBottom: 4,
   },
   infoText: {
     fontSize: 15,
-    color: "#333",
+    color: Colors.neutral333,
     marginBottom: 2,
   },
   infoSubtext: {
     fontSize: 14,
-    color: "#666",
+    color: Colors.textSecondary,
   },
   descriptionSection: {
     marginBottom: 32,
@@ -546,12 +550,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
     marginBottom: 12,
   },
   description: {
     fontSize: 16,
-    color: "#333",
+    color: Colors.neutral333,
     lineHeight: 24,
   },
   tagsSection: {
@@ -563,22 +567,22 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tag: {
-    backgroundColor: "#f8f9fa",
+    backgroundColor: Colors.background,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#e9ecef",
+    borderColor: Colors.border,
   },
   tagText: {
     fontSize: 14,
-    color: "#6366f1",
+    color: Colors.primary,
     fontWeight: "500",
   },
   bottomSection: {
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     borderTopWidth: 1,
-    borderTopColor: "#f0f0f0",
+    borderTopColor: Colors.borderLight,
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 32,
@@ -592,23 +596,23 @@ const styles = StyleSheet.create({
   ticketLabel: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
   },
   quantitySelector: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f8f9fa",
+    backgroundColor: Colors.background,
     borderRadius: 12,
     padding: 4,
   },
   quantityButton: {
     width: 36,
     height: 36,
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -617,12 +621,12 @@ const styles = StyleSheet.create({
   quantityButtonText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#6366f1",
+    color: Colors.primary,
   },
   quantity: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
     marginHorizontal: 20,
   },
   purchaseSection: {
@@ -635,36 +639,36 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 14,
-    color: "#666",
+    color: Colors.textSecondary,
     marginBottom: 4,
   },
   totalPrice: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
   },
   buyButton: {
-    backgroundColor: "#6366f1",
+    backgroundColor: Colors.primary,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderRadius: 12,
     gap: 8,
-    shadowColor: "#6366f1",
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
   },
   buyButtonText: {
-    color: "#fff",
+    color: Colors.white,
     fontSize: 16,
     fontWeight: "700",
   },
   disabledButton: {
-    backgroundColor: "#a5b4fc",
-    shadowColor: "transparent",
+    backgroundColor: Colors.primaryLight,
+    shadowColor: Colors.transparent,
     elevation: 0,
   },
   errorContainer: {
@@ -675,7 +679,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 18,
-    color: "#666",
+    color: Colors.textSecondary,
     textAlign: "center",
   },
 });

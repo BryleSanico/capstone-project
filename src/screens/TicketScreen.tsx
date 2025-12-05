@@ -19,6 +19,7 @@ import TabSelector from "../components/navigation/TabSelector";
 import { TabKey, TabItem, TAB_KEYS, TAB_CONFIG } from "../types/TabSegment";
 import { filterTicketsByDate } from "../utils/domain/filterUtils";
 import { useTicketsQuery } from "../hooks";
+import { Colors } from "../constants/colors";
 
 // Define the navigation tab
 type TicketsScreenNavigationProp = CompositeNavigationProp<
@@ -160,7 +161,7 @@ export default function TicketsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: Colors.background,
   },
   content: {
     flex: 1,

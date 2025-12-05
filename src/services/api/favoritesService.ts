@@ -57,8 +57,9 @@ export async function getFavorites(): Promise<number[]> {
 
 export async function addFavorite(eventId: number): Promise<void> {
   const isConnected = useNetworkStatus.getState().isConnected;
-  if (!isConnected)
+  if (!isConnected) {
     throw new Error("You are offline. Cannot update favorites.");
+  }
 
   const { error } = await supabase.rpc("add_favorite", { p_event_id: eventId });
   if (error) throw error;
@@ -72,8 +73,9 @@ export async function addFavorite(eventId: number): Promise<void> {
 
 export async function removeFavorite(eventId: number): Promise<void> {
   const isConnected = useNetworkStatus.getState().isConnected;
-  if (!isConnected)
+  if (!isConnected) {
     throw new Error("You are offline. Cannot update favorites.");
+  }
 
   const { error } = await supabase.rpc("remove_favorite", {
     p_event_id: eventId,

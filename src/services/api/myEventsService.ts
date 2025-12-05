@@ -39,7 +39,7 @@ async function _uploadEventImage(
     .from(BUCKET_NAME)
     .getPublicUrl(data.path);
 
-  if (!urlData || !urlData.publicUrl) {
+  if (!urlData?.publicUrl) {
     throw new Error("Image uploaded, but failed to get public URL.");
   }
   return urlData.publicUrl;

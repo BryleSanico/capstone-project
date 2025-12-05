@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
+import { Colors } from "../../../constants/colors";
 
 interface StatCardProps {
   title: string;
@@ -29,10 +30,10 @@ export const StatCard: React.FC<StatCardProps> = ({
 const styles = StyleSheet.create({
   statCard: {
     width: "47%",
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     padding: 16,
     borderRadius: 16,
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 2,
@@ -50,12 +51,12 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#111827",
+    color: Colors.gray900,
     textAlign: "center",
   },
   statTitle: {
     fontSize: 13,
-    color: "#6b7280",
+    color: Colors.gray500,
     marginTop: 4,
     textAlign: "center",
   },

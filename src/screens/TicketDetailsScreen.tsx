@@ -17,6 +17,7 @@ import QRCode from "react-native-qrcode-svg";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { formatFullDate } from "../utils/formatters/dateFormatter";
 import { Loader } from "../components/LazyLoaders/loader";
+import { Colors } from "../constants/colors";
 
 import { useTicketsQuery } from "../hooks/";
 
@@ -190,9 +191,8 @@ export default function TicketDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: Colors.background,
   },
-  // --- NEW STYLE ---
   centerScreen: {
     justifyContent: "center",
     alignItems: "center",
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   ticketCard: {
     borderRadius: 20,
     marginBottom: 20,
-    shadowColor: "#6366f1",
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#fff",
+    color: Colors.white,
     marginBottom: 8,
     lineHeight: 32,
     margin: 15,
@@ -245,39 +245,39 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 14,
-    color: "rgba(255,255,255,0.7)",
+    color: Colors.whiteTransparent70,
     fontWeight: "500",
     marginBottom: 4,
   },
   detailText: {
     fontSize: 16,
-    color: "#fff",
+    color: Colors.white,
     fontWeight: "600",
     marginBottom: 2,
   },
   detailSubtext: {
     fontSize: 14,
-    color: "rgba(255,255,255,0.8)",
+    color: Colors.whiteTransparent80,
   },
   priceSection: {
     borderTopWidth: 1,
-    borderTopColor: "rgba(255, 255, 255, 0.2)",
+    borderTopColor: Colors.whiteTransparent,
     paddingTop: 16,
     margin: 25,
   },
   totalPaid: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#fff",
+    color: Colors.white,
     textAlign: "center",
   },
   qrSection: {
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     borderRadius: 20,
     padding: 24,
     alignItems: "center",
     marginBottom: 24,
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -286,20 +286,20 @@ const styles = StyleSheet.create({
   qrTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
     marginBottom: 8,
   },
   qrSubtitle: {
     fontSize: 14,
-    color: "#666",
+    color: Colors.textSecondary,
     textAlign: "center",
     marginBottom: 24,
   },
   qrContainer: {
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     padding: 20,
     borderRadius: 16,
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -308,15 +308,15 @@ const styles = StyleSheet.create({
   },
   qrCode: {
     fontSize: 12,
-    color: "#999",
+    color: Colors.textTertiary,
     fontFamily: "monospace",
     textAlign: "center",
   },
   infoSection: {
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     borderRadius: 16,
     padding: 20,
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -325,12 +325,12 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
     marginBottom: 12,
   },
   infoText: {
     fontSize: 14,
-    color: "#666",
+    color: Colors.textSecondary,
     lineHeight: 20,
   },
   errorContainer: {
@@ -340,6 +340,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 18,
-    color: "#666",
+    color: Colors.textSecondary,
   },
 });

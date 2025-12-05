@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
+import { Colors } from "../../constants/colors";
 
 interface CategoryFilterProps {
   selectedCategory: string;
@@ -64,9 +65,9 @@ export default function CategoryFilter({
 const styles = StyleSheet.create({
   container: {
     paddingVertical: 12,
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    borderBottomColor: Colors.borderLight,
   },
   scrollContent: {
     paddingHorizontal: 16,
@@ -76,20 +77,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: Colors.background,
     borderWidth: 1,
-    borderColor: "#e9ecef",
+    borderColor: Colors.border,
   },
   selectedCategory: {
-    backgroundColor: "#6366f1",
-    borderColor: "#6366f1",
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   categoryText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#666",
+    color: Colors.textSecondary,
   },
   selectedCategoryText: {
-    color: "#fff",
+    color: Colors.white,
   },
 });

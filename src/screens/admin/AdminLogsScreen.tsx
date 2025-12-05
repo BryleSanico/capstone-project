@@ -22,8 +22,9 @@ import { formatRelativeTime } from "../../utils/formatters/relativeTimeFormatter
 import ScreenHeader from "../../components/ui/ScreenHeader";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "@/src/navigation/AppNavigator";
+import { RootStackParamList } from "@/navigation/AppNavigator";
 import { getActionConfig } from "../../utils/ui/adminLogConfig";
+import { Colors } from "../../constants/colors";
 
 type AdminLogsScreenNavigationProp =
   NativeStackNavigationProp<RootStackParamList>;
@@ -72,7 +73,7 @@ export default function AdminLogsScreen() {
               name={config.icon}
               size={14}
               color={config.color}
-              style={{ marginRight: 6 }}
+              style={styles.badgeIcon}
             />
             <Text style={[styles.badgeText, { color: config.color }]}>
               {config.title}
@@ -225,27 +226,27 @@ export default function AdminLogsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
+  container: { flex: 1, backgroundColor: Colors.background },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f8f9fa",
+    backgroundColor: Colors.background,
   },
   listContent: { padding: 16 },
 
   logCard: {
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     padding: 16,
     borderRadius: 16,
     marginBottom: 12,
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
     borderWidth: 1,
-    borderColor: "#f3f4f6",
+    borderColor: Colors.gray100,
   },
   headerRow: {
     flexDirection: "row",
@@ -260,28 +261,29 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
   },
+  badgeIcon: { marginRight: 6 },
   badgeText: { fontSize: 13, fontWeight: "700" },
-  dateText: { fontSize: 12, color: "#9ca3af" },
+  dateText: { fontSize: 12, color: Colors.gray400 },
 
   detailsText: {
     fontSize: 15,
-    color: "#374151",
+    color: Colors.gray700,
     lineHeight: 22,
     marginBottom: 12,
   },
 
   adminRow: { flexDirection: "row", alignItems: "center", marginTop: 4 },
-  adminName: { fontSize: 13, color: "#6b7280", marginLeft: 6 },
+  adminName: { fontSize: 13, color: Colors.gray500, marginLeft: 6 },
 
   // Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: Colors.overlay,
     justifyContent: "center",
     padding: 20,
   },
   modalContent: {
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     borderRadius: 20,
     maxHeight: "80%",
     padding: 24,
@@ -292,34 +294,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
-  modalTitle: { fontSize: 20, fontWeight: "bold", color: "#111827" },
+  modalTitle: { fontSize: 20, fontWeight: "bold", color: Colors.gray900 },
   modalBody: {},
   detailItem: { marginBottom: 20 },
   detailLabel: {
     fontSize: 12,
-    color: "#6b7280",
+    color: Colors.gray500,
     textTransform: "uppercase",
     marginBottom: 4,
     fontWeight: "600",
     letterSpacing: 0.5,
   },
-  detailValue: { fontSize: 16, color: "#1f2937", fontWeight: "500" },
-  detailSubValue: { fontSize: 14, color: "#9ca3af", marginTop: 2 },
+  detailValue: { fontSize: 16, color: Colors.gray800, fontWeight: "500" },
+  detailSubValue: { fontSize: 14, color: Colors.gray400, marginTop: 2 },
 
-  messageText: { fontSize: 15, color: "#374151", lineHeight: 22 },
+  messageText: { fontSize: 15, color: Colors.gray700, lineHeight: 22 },
 
   reasonBox: {
-    backgroundColor: "#fefefeff",
+    backgroundColor: Colors.backgroundCard,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#7b7a7aff",
+    borderColor: Colors.borderGray,
     borderLeftWidth: 4,
-    borderLeftColor: "#434242ff",
+    borderLeftColor: Colors.borderDarkGray,
   },
   reasonText: {
     fontSize: 15,
-    color: "#030303ff",
+    color: Colors.textQuaternary,
     lineHeight: 22,
     fontStyle: "italic",
   },

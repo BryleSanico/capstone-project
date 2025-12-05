@@ -25,6 +25,7 @@ import { useEventsInfiniteQuery } from "../hooks/";
 import { Loader } from "../components/LazyLoaders/loader";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { TabParamList } from "../navigation/TabNavigator";
+import { Colors } from "../constants/colors";
 
 // Define the types for route and navigation
 // Note: The screen name here must match the one in AppNavigator.tsx
@@ -161,7 +162,7 @@ export default function DiscoverScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F7",
+    backgroundColor: Colors.background,
   },
   listContent: {
     paddingTop: 8,

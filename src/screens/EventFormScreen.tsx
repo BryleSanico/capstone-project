@@ -1,4 +1,10 @@
-import React, { useLayoutEffect, useState, useEffect, useMemo, startTransition } from "react";
+import React, {
+  useLayoutEffect,
+  useState,
+  useEffect,
+  useMemo,
+  startTransition,
+} from "react";
 import {
   View,
   Text,
@@ -30,6 +36,7 @@ import { useImagePicker } from "../hooks/";
 import LinearGradient from "react-native-linear-gradient";
 import { useMyEventsQuery, useCreateEvent, useUpdateEvent } from "../hooks/";
 import { Loader } from "../components/LazyLoaders/loader";
+import { Colors } from "../constants/colors";
 
 type EventFormScreenRouteProp = RouteProp<RootStackParamList, "EventForm">;
 type EventFormScreenNavigationProp = NativeStackNavigationProp<
@@ -111,7 +118,6 @@ export default function EventFormScreen() {
     return null;
   }, [isEditMode, eventId, isLoadingMyEvents, myEvents]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (isEditMode && eventData && !hasPopulated) {
       // Prepare all state values first
@@ -141,7 +147,12 @@ export default function EventFormScreen() {
         setIsLoading(false);
         setHasPopulated(true);
       });
-    } else if (isEditMode && !eventData && !isLoadingMyEvents && !hasPopulated) {
+    } else if (
+      isEditMode &&
+      !eventData &&
+      !isLoadingMyEvents &&
+      !hasPopulated
+    ) {
       Alert.alert("Error", "Could not find event details.");
       navigation.goBack();
     } else if (!isEditMode && !hasPopulated) {
@@ -154,13 +165,7 @@ export default function EventFormScreen() {
         setHasPopulated(true);
       });
     }
-  }, [
-    eventData,
-    isEditMode,
-    navigation,
-    isLoadingMyEvents,
-    hasPopulated,
-  ]);
+  }, [eventData, isEditMode, navigation, isLoadingMyEvents, hasPopulated]);
 
   useEffect(() => {
     if (imageError) {
@@ -267,7 +272,11 @@ export default function EventFormScreen() {
     <View style={styles.safeArea}>
       <View style={styles.header}>
         <LinearGradient
-          colors={["#8B5CF6", "#6366F1", "#fff"]}
+          colors={[
+            Colors.gradientEventForm1,
+            Colors.gradientEventForm2,
+            Colors.white,
+          ]}
           start={{ x: 1, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.headerGradient}
@@ -637,22 +646,22 @@ export default function EventFormScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#F5F5F7" },
+  safeArea: { flex: 1, backgroundColor: Colors.background },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F9FAFB",
+    backgroundColor: Colors.backgroundInput,
   },
   keyboardView: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: 40 },
   formContainer: { paddingHorizontal: 20, paddingTop: 16 },
   fieldGroup: {
     marginBottom: 24,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.white,
     borderRadius: 16,
     padding: 20,
-    shadowColor: "#4B5563",
+    shadowColor: Colors.gray600,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -662,53 +671,53 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     fontSize: 20,
     fontWeight: "600" as const,
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
   },
   inputGroup: { marginBottom: 16 },
   label: {
     fontSize: 13,
     fontWeight: "600" as const,
-    color: "#3C3C43",
+    color: Colors.textQuaternary,
     marginBottom: 10,
     textTransform: "uppercase" as const,
     letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: "#F9FAFB",
+    backgroundColor: Colors.backgroundInput,
     borderRadius: 8,
     paddingVertical: 14,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: "#111827",
+    color: Colors.gray900,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: Colors.gray300,
     minHeight: 50,
   },
-  inputError: { borderColor: "#EF4444" },
-  errorText: { color: "#EF4444", fontSize: 13, marginTop: 5 },
+  inputError: { borderColor: Colors.danger },
+  errorText: { color: Colors.danger, fontSize: 13, marginTop: 5 },
   textArea: { minHeight: 100, paddingTop: 14, textAlignVertical: "top" },
   row: { flexDirection: "row", gap: 16 },
   halfWidth: { flex: 1 },
   pickerInput: {
-    backgroundColor: "#F9FAFB",
+    backgroundColor: Colors.backgroundInput,
     borderRadius: 8,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: Colors.gray300,
     minHeight: 50,
     flexDirection: "row",
     alignItems: "center",
   },
-  pickerText: { fontSize: 16, color: "#111827", flex: 1 },
+  pickerText: { fontSize: 16, color: Colors.gray900, flex: 1 },
   submitButton: {
-    backgroundColor: "#6366f1",
+    backgroundColor: Colors.primary,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
     marginTop: 16,
     marginBottom: 16,
-    shadowColor: "#4f46e5",
+    shadowColor: Colors.primaryDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
@@ -717,14 +726,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   submitButtonDisabled: {
-    backgroundColor: "#A5B4FC",
+    backgroundColor: Colors.primaryLight,
     elevation: 0,
     shadowOpacity: 0,
   },
-  submitButtonText: { fontSize: 16, fontWeight: "600", color: "#FFFFFF" },
+  submitButtonText: { fontSize: 16, fontWeight: "600", color: Colors.white },
   disclaimer: {
     fontSize: 13,
-    color: "#6B7280",
+    color: Colors.gray500,
     textAlign: "center",
     lineHeight: 18,
     marginBottom: 20,
@@ -733,7 +742,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#F3F0FF",
+    backgroundColor: Colors.iconBadge,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -743,16 +752,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
-    color: "#111827",
+    color: Colors.gray900,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
+    borderBottomColor: Colors.gray200,
   },
   header: {
     marginHorizontal: 0,
     borderRadius: 20,
     ...Platform.select({
       ios: {
-        shadowColor: "#6366f1",
+        shadowColor: Colors.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 12,
@@ -779,12 +788,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 32,
     fontWeight: "800" as const,
-    color: "#fff",
+    color: Colors.white,
     marginBottom: 8,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: "rgba(255,255,255,0.9)",
+    color: Colors.whiteTransparent90,
     fontWeight: "500" as const,
   },
   backButton: {
@@ -794,13 +803,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.3)",
+    backgroundColor: Colors.whiteTransparent20Alpha,
     justifyContent: "center",
     alignItems: "center",
   },
   backButtonText: {
     fontSize: 24,
-    color: "#fff",
+    color: Colors.white,
     fontWeight: "400" as const,
   },
   sparkleIcon: {
@@ -810,9 +819,9 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 200,
     borderRadius: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.white,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: Colors.gray300,
     borderStyle: "dashed",
     justifyContent: "center",
     alignItems: "center",
@@ -824,9 +833,9 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     fontWeight: "600" as const,
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
   },
-  imageSizeText: { marginTop: 4, fontSize: 12, color: "#9CA3AF" },
+  imageSizeText: { marginTop: 4, fontSize: 12, color: Colors.gray400 },
   toggleRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -840,43 +849,43 @@ const styles = StyleSheet.create({
   toggleLabel: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
     marginBottom: 4,
   },
   toggleDescription: {
     fontSize: 13,
-    color: "#6B7280",
+    color: Colors.gray500,
     lineHeight: 18,
   },
   // Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: Colors.overlay,
     justifyContent: "center",
     padding: 20,
   },
   modalContent: {
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     borderRadius: 20,
     padding: 24,
     alignItems: "center",
   },
   iconContainer: {
     marginBottom: 16,
-    backgroundColor: "#EEF2FF",
+    backgroundColor: Colors.modalIconBg,
     padding: 16,
     borderRadius: 40,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#111827",
+    color: Colors.gray900,
     marginBottom: 8,
     textAlign: "center",
   },
   modalText: {
     fontSize: 15,
-    color: "#6B7280",
+    color: Colors.gray500,
     textAlign: "center",
     lineHeight: 22,
     marginBottom: 24,
@@ -891,25 +900,24 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: Colors.gray300,
     alignItems: "center",
   },
   modalConfirmButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 10,
-    backgroundColor: "#6366f1",
+    backgroundColor: Colors.primary,
     alignItems: "center",
   },
   modalCancelText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#374151",
+    color: Colors.gray700,
   },
   modalConfirmText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#fff",
+    color: Colors.white,
   },
 });
-

@@ -10,6 +10,7 @@ import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Ticket } from "../../../types/ticket";
 import { formatDateMMDDYY } from "../../../utils/formatters/dateFormatter";
+import { Colors } from "../../../constants/colors";
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -37,7 +38,6 @@ export default function TicketCard({ ticket, onPress }: TicketCardProps) {
             <Text style={styles.eventTitle} numberOfLines={2}>
               {ticket.eventTitle}
             </Text>
-            {/* <Text style={styles.quantity}>{ticket.} ticket{ticket.quantity > 1 ? 's' : ''}</Text> */}
           </View>
           <View style={styles.qrIcon}>
             <Icon name="qr-code-outline" size={24} color="#fff" />
@@ -89,12 +89,12 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     borderRadius: 16,
     position: "relative",
-    shadowColor: "#6366f1",
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 12,
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: Colors.whiteTransparent05,
   },
   header: {
     flexDirection: "row",
@@ -111,17 +111,12 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#fff",
+    color: Colors.white,
     marginBottom: 4,
     lineHeight: 24,
   },
-  quantity: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.8)",
-    fontWeight: "500",
-  },
   qrIcon: {
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: Colors.whiteTransparent20Alpha,
     borderRadius: 12,
     padding: 8,
     marginRight: 30,
@@ -137,7 +132,7 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 14,
-    color: "rgba(255,255,255,0.9)",
+    color: Colors.whiteTransparent90,
     marginLeft: 8,
     flex: 1,
   },
@@ -150,12 +145,12 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#fff",
+    color: Colors.white,
     marginLeft: 25,
   },
   tapToView: {
     fontSize: 12,
-    color: "rgba(255,255,255,0.7)",
+    color: Colors.whiteTransparent70,
     fontStyle: "italic",
     paddingRight: 30,
   },
@@ -170,6 +165,7 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: Platform.OS === "ios" ? "#dde4eaff" : "#e8eff5ff",
+    backgroundColor:
+      Platform.OS === "ios" ? Colors.platformHole : Colors.platformHoleAndroid,
   },
 });

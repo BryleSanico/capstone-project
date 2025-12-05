@@ -267,8 +267,9 @@ class NotificationService {
             .update({ fcm_token: newToken })
             .eq("id", userId)
         );
-        if (refreshError)
+        if (refreshError) {
           console.error("Error saving refreshed FCM token:", refreshError);
+        }
       });
     } catch (error) {
       console.error("Error in registerFCMToken:", error);

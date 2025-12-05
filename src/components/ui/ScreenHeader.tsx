@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
+import { Colors } from "../../constants/colors";
 
 interface ScreenHeaderProps {
   title: string;
@@ -63,7 +64,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     ...Platform.select({
       ios: {
-        shadowColor: "#6366f1",
+        shadowColor: Colors.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 12,
@@ -95,18 +96,18 @@ const styles = StyleSheet.create({
   backButton: {
     marginRight: 12,
     padding: 4,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: Colors.whiteTransparent20Alpha,
     borderRadius: 12,
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: "800",
-    color: "#fff",
+    color: Colors.white,
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: "rgba(255, 255, 255, 0.9)",
+    color: Colors.whiteTransparent90,
     fontWeight: "500",
   },
   // Placeholder to keep title aligned left when no right content exists

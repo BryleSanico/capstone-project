@@ -11,6 +11,7 @@ import {
 import Icon from "react-native-vector-icons/Ionicons";
 import { Event } from "../../../types/event";
 import { formatFullDate } from "../../../utils/formatters/dateFormatter";
+import { Colors } from "../../../constants/colors";
 
 type ActionableEventCardProps = {
   event: Event;
@@ -98,18 +99,16 @@ const styles = StyleSheet.create({
   shadowContainer: {
     marginHorizontal: 16,
     marginBottom: 16,
-    // iOS Shadow
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    // Android Elevation
     elevation: 5,
   },
   card: {
     borderRadius: 16,
     overflow: "hidden",
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
   },
   topContainer: {
     flexDirection: "row",
@@ -119,7 +118,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 12,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: Colors.borderLight,
     marginRight: 16,
   },
   detailsContainer: {
@@ -129,7 +128,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
     marginBottom: 6,
   },
   detailRow: {
@@ -139,19 +138,20 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 13,
-    color: "#666",
+    color: Colors.textSecondary,
     marginLeft: 6,
     flexShrink: 1,
   },
   organizerText: {
     fontSize: 12,
-    color: "#999",
+    color: Colors.textTertiary,
     marginTop: 2,
   },
   actionsContainer: {
     flexDirection: "row",
     borderTopWidth: 1,
-    borderTopColor: Platform.OS === "ios" ? "#e9ecef" : "#e1e2e3ff",
+    borderTopColor:
+      Platform.OS === "ios" ? Colors.border : Colors.platformBorderAndroid,
   },
   actionButton: {
     flex: 1,
@@ -160,7 +160,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 14,
     backgroundColor:
-      Platform.OS === "ios" ? "#f8f9fa" : "rgba(240, 242, 244, 1)",
+      Platform.OS === "ios"
+        ? Colors.background
+        : Colors.platformBackgroundAndroidAlt,
   },
   actionText: {
     fontSize: 16,
@@ -169,13 +171,14 @@ const styles = StyleSheet.create({
   },
   editButton: {
     borderRightWidth: 1,
-    borderRightColor: Platform.OS === "ios" ? "#e9ecef" : "#e1e2e3ff",
+    borderRightColor:
+      Platform.OS === "ios" ? Colors.border : Colors.platformBorderAndroid,
   },
   editText: {
-    color: "#6366f1",
+    color: Colors.primary,
   },
   deleteButton: {},
   deleteText: {
-    color: "#ff4757",
+    color: Colors.error,
   },
 });

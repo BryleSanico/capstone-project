@@ -29,6 +29,7 @@ import { AppCacheService } from "../services/AppCacheService";
 import { useTicketsQuery } from "../hooks/";
 import { useFavoritesQuery } from "../hooks/";
 import { useUnreadCountQuery } from "../hooks/";
+import { Colors } from "../constants/colors";
 
 // Define the types for route and navigation
 type ProfileScreenNavigationProp = CompositeNavigationProp<
@@ -247,7 +248,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: Colors.background,
   },
   content: {
     flex: 1,
@@ -258,7 +259,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     ...Platform.select({
       ios: {
-        shadowColor: "#6366f1",
+        shadowColor: Colors.primary,
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.25,
         shadowRadius: 12,
@@ -280,7 +281,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: Colors.whiteTransparent,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
@@ -289,22 +290,22 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#fff",
+    color: Colors.white,
     marginBottom: 4,
   },
   userEmail: {
     fontSize: 16,
-    color: "rgba(255,255,255,0.8)",
+    color: Colors.whiteTransparent80,
     marginBottom: 25,
   },
   statsContainer: {
     flexDirection: "row",
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     marginHorizontal: 16,
     marginBottom: 24,
     borderRadius: 16,
     padding: 24,
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -316,27 +317,27 @@ const styles = StyleSheet.create({
   },
   statDivider: {
     width: 1,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: Colors.borderLight,
     marginHorizontal: 24,
   },
   statNumber: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
     marginTop: 8,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 14,
-    color: "#666",
+    color: Colors.textSecondary,
     fontWeight: "500",
   },
   menuSection: {
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     marginHorizontal: 16,
     borderRadius: 16,
     marginBottom: 24,
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -347,13 +348,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#f8f9fa",
+    borderBottomColor: Colors.background,
   },
   menuIcon: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: Colors.background,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 16,
@@ -364,43 +365,43 @@ const styles = StyleSheet.create({
   menuTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
     marginBottom: 4,
   },
   menuSubtitle: {
     fontSize: 14,
-    color: "#666",
+    color: Colors.textSecondary,
   },
   logoutButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     marginHorizontal: 16,
     marginBottom: 32,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#ff4757",
+    borderColor: Colors.error,
     gap: 8,
     minHeight: 50,
   },
   logoutText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#ff4757",
+    color: Colors.error,
   },
   loginButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#6366f1",
+    backgroundColor: Colors.primary,
     marginHorizontal: 16,
     marginBottom: 32,
     padding: 16,
     borderRadius: 12,
     gap: 8,
-    shadowColor: "#6366f1",
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -409,6 +410,6 @@ const styles = StyleSheet.create({
   loginButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#fff",
+    color: Colors.white,
   },
 });
