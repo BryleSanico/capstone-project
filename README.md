@@ -198,6 +198,102 @@ npm run test:coverage    # Generate coverage report
 npm run lint && npm run type-check && npm run format:check
 ```
 
+### Commit Message Format
+
+This project follows [Conventional Commits](https://www.conventionalcommits.org/) specification for clear and structured commit history.
+
+#### Format Structure
+
+```
+<type>(<scope>): <subject>
+
+[optional body]
+
+[optional footer]
+```
+
+#### Types
+
+- **feat**: A new feature
+- **fix**: A bug fix
+- **docs**: Documentation only changes
+- **style**: Changes that don't affect code meaning (whitespace, formatting)
+- **refactor**: Code change that neither fixes a bug nor adds a feature
+- **perf**: Performance improvement
+- **test**: Adding or updating tests
+- **chore**: Changes to build process or auxiliary tools
+- **ci**: Changes to CI configuration files and scripts
+- **build**: Changes that affect the build system or dependencies
+- **revert**: Reverts a previous commit
+
+#### Scopes (Optional)
+
+Common scopes in this project:
+- **auth**: Authentication related
+- **events**: Event management features
+- **tickets**: Ticket system
+- **admin**: Admin panel features
+- **ui**: UI components
+- **api**: API/backend integration
+- **db**: Database related
+- **lint**: Linting configuration
+- **navigation**: Navigation changes
+- **store**: State management (Zustand)
+- **query**: React Query changes
+
+#### Examples
+
+```bash
+# Feature
+feat(tickets): add QR code generation for purchased tickets
+
+# Bug fix
+fix(auth): resolve token refresh issue on app resume
+
+# Documentation
+docs(readme): update installation instructions
+
+# Refactoring
+refactor(events): simplify event filtering logic
+
+# Performance
+perf(discover): optimize event list rendering with virtualization
+
+# Multiple scopes
+feat(tickets,events): add ticket purchase flow with event details
+
+# Breaking change
+feat(api)!: migrate to Supabase RPC functions
+
+BREAKING CHANGE: Direct table queries replaced with RPC calls.
+Update all API calls to use new service layer.
+
+# With body
+fix(notifications): prevent duplicate FCM tokens
+
+Previously, tokens were registered on every app launch.
+Now checks for existing token before registration.
+
+Closes #123
+```
+
+#### Commit Message Tips
+
+✅ **Do:**
+- Use imperative mood ("add" not "added" or "adds")
+- Keep subject line under 72 characters
+- Capitalize first letter of subject
+- Don't end subject with a period
+- Separate subject from body with blank line
+- Use body to explain what and why (not how)
+- Reference issues in footer
+
+❌ **Don't:**
+- Use past tense
+- Be vague ("fix stuff", "update things")
+- Include unrelated changes in one commit
+- Make commits without meaningful messages
+
 ### Pre-Commit Checklist
 
 Before committing code, ensure:
