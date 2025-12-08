@@ -174,7 +174,7 @@ export default function UserManagementScreen() {
             <Icon
               name={isBanned ? "ban" : "person"}
               size={20}
-              color={isBanned ? "#ef4444" : "#6366f1"}
+              color={isBanned ? Colors.danger : Colors.primary}
             />
           </View>
           <View style={styles.userInfo}>
@@ -197,7 +197,7 @@ export default function UserManagementScreen() {
             <Icon
               name="chevron-down"
               size={12}
-              color={isBanned ? "#ef4444" : "#6b7280"}
+              color={isBanned ? Colors.danger : Colors.gray500}
               style={styles.chevronIcon}
             />
           )}
@@ -236,7 +236,7 @@ export default function UserManagementScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="#6366f1"
+            tintColor={Colors.primary}
           />
         }
         onEndReached={handleLoadMore}
@@ -252,7 +252,7 @@ export default function UserManagementScreen() {
       />
       {(roleMutation.isPending || banMutation.isPending) && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator color="#6366f1" />
+          <ActivityIndicator color={Colors.primary} />
         </View>
       )}
     </View>

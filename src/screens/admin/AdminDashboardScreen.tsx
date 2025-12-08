@@ -74,7 +74,7 @@ export default function AdminDashboardScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={handleRefresh}
-            tintColor="#6366f1"
+            tintColor={Colors.primary}
           />
         }
       >
@@ -86,7 +86,7 @@ export default function AdminDashboardScreen() {
             <Text style={styles.name}>{user?.user_metadata.full_name}</Text>
           </View>
           <TouchableOpacity style={styles.logoutIconBtn} onPress={handleLogout}>
-            <Icon name="log-out-outline" size={24} color="#ef4444" />
+            <Icon name="log-out-outline" size={24} color={Colors.danger} />
           </TouchableOpacity>
         </View>
 
@@ -95,25 +95,25 @@ export default function AdminDashboardScreen() {
             title="Total Users"
             value={stats?.total_users}
             icon="people"
-            color="#6366f1"
+            color={Colors.primary}
           />
           <StatCard
             title="Total Revenue"
             value={`$${stats?.total_revenue ?? 0}`}
             icon="cash"
-            color="#10b981"
+            color={Colors.success}
           />
           <StatCard
             title="Pending Events"
             value={stats?.pending_events}
             icon="time"
-            color="#f59e0b"
+            color={Colors.warning}
           />
           <StatCard
             title="Total Events"
             value={stats?.total_events}
             icon="calendar"
-            color="#3b82f6"
+            color={Colors.infoDark}
           />
         </View>
 

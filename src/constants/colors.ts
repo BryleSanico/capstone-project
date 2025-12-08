@@ -149,6 +149,11 @@ export const Colors = {
   roleUserBg: "#f3f4f6",
   roleBanned: "#dc2626",
   roleBannedBg: "#fee2e2",
+
+  // Icon and Input Colors
+  iconGray: "#666",
+  placeholderGray: "#999",
+  purple: "#8b5cf6",
 } as const;
 
 // Type for color keys
@@ -161,3 +166,4 @@ export const getPlatformColor = (
 ): string => {
   return Platform.OS === "ios" ? Colors[iosColor] : Colors[androidColor];
 };
+

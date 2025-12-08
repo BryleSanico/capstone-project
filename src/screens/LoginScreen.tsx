@@ -147,12 +147,12 @@ export default function LoginScreen() {
                 ]}
               >
                 <View style={styles.inputIcon}>
-                  <Icon name="mail-outline" size={20} color="#666" />
+                  <Icon name="mail-outline" size={20} color={Colors.iconGray} />
                 </View>
                 <TextInput
                   style={styles.input}
                   placeholder="Email"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={Colors.placeholderGray}
                   value={email}
                   onChangeText={handleEmailChange}
                   keyboardType="email-address"
@@ -174,12 +174,12 @@ export default function LoginScreen() {
                 ]}
               >
                 <View style={styles.inputIcon}>
-                  <Icon name="lock-closed-outline" size={20} color="#666" />
+                  <Icon name="lock-closed-outline" size={20} color={Colors.iconGray} />
                 </View>
                 <TextInput
                   style={styles.input}
                   placeholder="Password"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={Colors.placeholderGray}
                   value={password}
                   onChangeText={handlePasswordChange}
                   secureTextEntry={!showPassword}
@@ -192,9 +192,9 @@ export default function LoginScreen() {
                   onPress={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <Icon name="eye-off" size={20} color="#666" />
+                    <Icon name="eye-off" size={20} color={Colors.iconGray} />
                   ) : (
-                    <Icon name="eye" size={20} color="#666" />
+                    <Icon name="eye" size={20} color={Colors.iconGray} />
                   )}
                 </TouchableOpacity>
               </View>

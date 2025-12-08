@@ -182,13 +182,13 @@ export default function ProfileScreen() {
         {user && (
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Icon name="ticket-outline" size={24} color="#6366f1" />
+              <Icon name="ticket-outline" size={24} color={Colors.primary} />
               <Text style={styles.statNumber}>{tickets.length}</Text>
               <Text style={styles.statLabel}>Tickets</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <FontAwesomeIcon name="heart-o" size={24} color="#ff4757" />
+              <FontAwesomeIcon name="heart-o" size={24} color={Colors.error} />
               <Text style={styles.statNumber}>{favoriteEventIds.length}</Text>
               <Text style={styles.statLabel}>Favorites</Text>
             </View>
@@ -208,7 +208,7 @@ export default function ProfileScreen() {
                   <IconComponent
                     name={item.icon.name}
                     size={20}
-                    color="#6366f1"
+                    color={Colors.primary}
                   />
                 </View>
                 <View style={styles.menuContent}>
@@ -227,10 +227,10 @@ export default function ProfileScreen() {
             disabled={isLoggingOut} // Disable button while logging out
           >
             {isLoggingOut ? (
-              <ActivityIndicator color="#ff4757" />
+              <ActivityIndicator color={Colors.error} />
             ) : (
               <>
-                <Icon name="exit-outline" size={20} color="#ff4757" />
+                <Icon name="exit-outline" size={20} color={Colors.error} />
                 <Text style={styles.logoutText}>Logout</Text>
               </>
             )}

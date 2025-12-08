@@ -89,9 +89,9 @@ export default function AdminLogsScreen() {
         </Text>
 
         <View style={styles.adminRow}>
-          <Icon name="person-circle-outline" size={16} color="#9ca3af" />
+          <Icon name="person-circle-outline" size={16} color={Colors.gray400} />
           <Text style={styles.adminName}>
-            By {item.admin_name || item.admin_email?.split("@")[0] || "Unknown"}
+            By {item.admin_name ?? item.admin_email?.split("@")[0] ?? "Unknown"}
           </Text>
         </View>
       </TouchableOpacity>
@@ -136,7 +136,7 @@ export default function AdminLogsScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor="#6366f1"
+              tintColor={Colors.primary}
             />
           }
         />
@@ -154,7 +154,7 @@ export default function AdminLogsScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Log Details</Text>
               <TouchableOpacity onPress={() => setSelectedLog(null)}>
-                <Icon name="close" size={24} color="#6b7280" />
+                <Icon name="close" size={24} color={Colors.gray500} />
               </TouchableOpacity>
             </View>
 

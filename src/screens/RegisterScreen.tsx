@@ -139,12 +139,12 @@ export default function RegisterScreen() {
                 ]}
               >
                 <View style={styles.inputIcon}>
-                  <Icon2 name="user-o" size={20} color="#666" />
+                  <Icon2 name="user-o" size={20} color={Colors.iconGray} />
                 </View>
                 <TextInput
                   style={styles.input}
                   placeholder="Full Name"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={Colors.placeholderGray}
                   value={name}
                   onChangeText={createChangeHandler(setName, "name")}
                   autoCapitalize="words"
@@ -165,12 +165,12 @@ export default function RegisterScreen() {
                 ]}
               >
                 <View style={styles.inputIcon}>
-                  <Icon name="mail-outline" size={20} color="#666" />
+                  <Icon name="mail-outline" size={20} color={Colors.iconGray} />
                 </View>
                 <TextInput
                   style={styles.input}
                   placeholder="Email"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={Colors.placeholderGray}
                   value={email}
                   onChangeText={createChangeHandler(setEmail, "email")}
                   keyboardType="email-address"
@@ -192,12 +192,12 @@ export default function RegisterScreen() {
                 ]}
               >
                 <View style={styles.inputIcon}>
-                  <Icon name="lock-closed-outline" size={20} color="#666" />
+                  <Icon name="lock-closed-outline" size={20} color={Colors.iconGray} />
                 </View>
                 <TextInput
                   style={styles.input}
                   placeholder="Password"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={Colors.placeholderGray}
                   value={password}
                   onChangeText={createChangeHandler(setPassword, "password")}
                   secureTextEntry={!showPassword}
@@ -210,9 +210,9 @@ export default function RegisterScreen() {
                   onPress={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <Icon name="eye-off" size={20} color="#666" />
+                    <Icon name="eye-off" size={20} color={Colors.iconGray} />
                   ) : (
-                    <Icon name="eye" size={20} color="#666" />
+                    <Icon name="eye" size={20} color={Colors.iconGray} />
                   )}
                 </TouchableOpacity>
               </View>
@@ -229,12 +229,12 @@ export default function RegisterScreen() {
                 ]}
               >
                 <View style={styles.inputIcon}>
-                  <Icon name="lock-closed-outline" size={20} color="#666" />
+                  <Icon name="lock-closed-outline" size={20} color={Colors.iconGray} />
                 </View>
                 <TextInput
                   style={styles.input}
                   placeholder="Confirm Password"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={Colors.placeholderGray}
                   value={confirmPassword}
                   onChangeText={createChangeHandler(
                     setConfirmPassword,
@@ -250,9 +250,9 @@ export default function RegisterScreen() {
                   onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? (
-                    <Icon name="eye-off" size={20} color="#666" />
+                    <Icon name="eye-off" size={20} color={Colors.iconGray} />
                   ) : (
-                    <Icon name="eye" size={20} color="#666" />
+                    <Icon name="eye" size={20} color={Colors.iconGray} />
                   )}
                 </TouchableOpacity>
               </View>

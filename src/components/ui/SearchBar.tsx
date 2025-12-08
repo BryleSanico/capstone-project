@@ -20,7 +20,7 @@ export default function SearchBar({
         <Icon
           name="search-outline"
           size={20}
-          color="#666"
+          color={Colors.iconGray}
           style={styles.searchIcon}
         />
         <TextInput
@@ -28,11 +28,11 @@ export default function SearchBar({
           placeholder="Looking for..."
           value={value}
           onChangeText={onChangeText}
-          placeholderTextColor="#999"
+          placeholderTextColor={Colors.placeholderGray}
         />
       </View>
       <TouchableOpacity style={styles.filterButton} onPress={onFilterPress}>
-        <Icon name="swap-horizontal" size={20} color="#6366f1" />
+        <Icon name="swap-horizontal" size={20} color={Colors.primary} />
       </TouchableOpacity>
     </View>
   );

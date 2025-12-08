@@ -293,7 +293,7 @@ export default function EventDetailsScreen() {
 
           <View style={styles.infoSection}>
             <View style={styles.infoRow}>
-              <Icon name="calendar-outline" size={20} color="#6366f1" />
+              <Icon name="calendar-outline" size={20} color={Colors.primary} />
               <View style={styles.infoContent}>
                 <Text style={styles.infoTitle}>Date & Time</Text>
                 <Text style={styles.infoText}>
@@ -305,7 +305,7 @@ export default function EventDetailsScreen() {
               </View>
             </View>
             <View style={styles.infoRow}>
-              <Icon name="pin-outline" size={20} color="#6366f1" />
+              <Icon name="pin-outline" size={20} color={Colors.primary} />
               <View style={styles.infoContent}>
                 <Text style={styles.infoTitle}>Location</Text>
                 <Text style={styles.infoText}>{event.location}</Text>
@@ -313,7 +313,7 @@ export default function EventDetailsScreen() {
               </View>
             </View>
             <View style={styles.infoRow}>
-              <Icon name="people-outline" size={20} color="#6366f1" />
+              <Icon name="people-outline" size={20} color={Colors.primary} />
               <View style={styles.infoContent}>
                 <Text style={styles.infoTitle}>Attendees</Text>
                 <Text style={styles.infoText}>{event.attendees} going</Text>
@@ -323,7 +323,7 @@ export default function EventDetailsScreen() {
               </View>
             </View>
             <View style={styles.infoRow}>
-              <Icon name="ticket-outline" size={20} color="#6366f1" />
+              <Icon name="ticket-outline" size={20} color={Colors.primary} />
               <View style={styles.infoContent}>
                 <Text style={styles.infoTitle}>Ticket Limit</Text>
                 <Text
@@ -405,12 +405,12 @@ export default function EventDetailsScreen() {
             ) : (
               <>
                 {isPending ? (
-                  <Icon name="time-outline" size={20} color="#fff" />
+                  <Icon name="time-outline" size={20} color={Colors.white} />
                 ) : (
                   <Icon
                     name={isSoldOut ? "close-circle-outline" : "ticket-outline"}
                     size={20}
-                    color="#fff"
+                    color={Colors.white}
                   />
                 )}
                 <Text style={styles.buyButtonText}>{purchaseMessage}</Text>

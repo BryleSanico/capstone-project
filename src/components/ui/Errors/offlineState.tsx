@@ -14,7 +14,7 @@ export const OfflineState: React.FC<OfflineStateProps> = ({
 }) => {
   return (
     <View style={styles.centerContainer}>
-      <Icon name="cloud-offline-outline" size={64} color="#ccc" />
+      <Icon name="cloud-offline-outline" size={64} color={Colors.gray300} />
       <Text style={styles.errorTitle}>Connection Error</Text>
       <Text style={styles.errorText}>{message}</Text>
       <Text style={styles.errorText} onPress={onRefresh}>

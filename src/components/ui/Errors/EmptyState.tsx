@@ -15,7 +15,7 @@ interface EmptyStateProps {
 
 const renderEmptyState = (icon: string, title: string, message: string) => (
   <View style={styles.emptyState}>
-    <Icon name={icon} size={64} color="#ccc" />
+    <Icon name={icon} size={64} color={Colors.gray300} />
     <Text style={styles.emptyTitle}>{title}</Text>
     <Text style={styles.emptySubtitle}>{message}</Text>
   </View>
@@ -30,7 +30,7 @@ const renderEmptyStateWithAction = (
 ) => (
   <View style={styles.emptyState}>
     <View style={styles.emptyIconContainer}>
-      <Icon name={icon} size={64} color="#e0e0e0" />
+      <Icon name={icon} size={64} color={Colors.borderDark} />
     </View>
     <Text style={styles.emptyTitle}>{title}</Text>
     <Text style={styles.emptySubtitle}>{message}</Text>

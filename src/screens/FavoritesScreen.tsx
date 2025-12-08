@@ -72,7 +72,7 @@ export default function FavoritesScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={handleRefresh}
-              tintColor="#6366f1"
+              tintColor={Colors.primary}
             />
           }
         />

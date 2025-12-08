@@ -122,14 +122,14 @@ export default function EventApprovalsScreen() {
         style={[styles.btn, styles.rejectBtn]}
         onPress={() => handleRejectPress(event.id)}
       >
-        <Icon name="close-circle" size={18} color="#fff" />
+        <Icon name="close-circle" size={18} color={Colors.white} />
         <Text style={styles.btnText}>Reject</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.btn, styles.approveBtn]}
         onPress={() => handleApprove(event.id)}
       >
-        <Icon name="checkmark-circle" size={18} color="#fff" />
+        <Icon name="checkmark-circle" size={18} color={Colors.white} />
         <Text style={styles.btnText}>Approve</Text>
       </TouchableOpacity>
     </View>
@@ -167,8 +167,10 @@ export default function EventApprovalsScreen() {
             refreshControl={
               <RefreshControl
                 refreshing={isRefetching}
-                onRefresh={refetch}
-                tintColor="#6366f1"
+                onRefresh={() => {
+                  refetch();
+                }}
+                tintColor={Colors.primary}
               />
             }
             contentContainerStyle={styles.flatListContent}
@@ -204,7 +206,7 @@ export default function EventApprovalsScreen() {
                 <Icon
                   name="construct-outline"
                   size={20}
-                  color={rejectType === "revision" ? "#fff" : "#666"}
+                  color={rejectType === "revision" ? Colors.white : Colors.iconGray}
                 />
                 <Text
                   style={[
@@ -226,7 +228,7 @@ export default function EventApprovalsScreen() {
                 <Icon
                   name="trash-outline"
                   size={20}
-                  color={rejectType === "delete" ? "#fff" : "#666"}
+                  color={rejectType === "delete" ? Colors.white : Colors.iconGray}
                 />
                 <Text
                   style={[

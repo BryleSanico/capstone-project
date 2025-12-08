@@ -54,13 +54,13 @@ export default function NotificationScreen() {
   const getIcon = (type: string) => {
     switch (type) {
       case "error":
-        return { name: "alert-circle", color: "#ef4444" };
+        return { name: "alert-circle", color: Colors.danger };
       case "success":
-        return { name: "checkmark-circle", color: "#10b981" };
+        return { name: "checkmark-circle", color: Colors.success };
       case "warning":
-        return { name: "warning", color: "#f59e0b" };
+        return { name: "warning", color: Colors.warning };
       default:
-        return { name: "information-circle", color: "#6366f1" };
+        return { name: "information-circle", color: Colors.primary };
     }
   };
 
@@ -126,7 +126,7 @@ export default function NotificationScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor="#6366f1"
+              tintColor={Colors.primary}
             />
           }
         />

@@ -38,7 +38,7 @@ export default function ActionableEventCard({
           style={[styles.actionButton, styles.editButton]}
           onPress={onEdit}
         >
-          <Icon name="pencil-outline" size={18} color="#6366f1" />
+          <Icon name="pencil-outline" size={18} color={Colors.primary} />
           <Text style={[styles.actionText, styles.editText]}>Edit</Text>
         </TouchableOpacity>
       )}
@@ -47,7 +47,7 @@ export default function ActionableEventCard({
           style={[styles.actionButton, styles.deleteButton]}
           onPress={onDelete}
         >
-          <Icon name="trash-outline" size={18} color="#ff4757" />
+          <Icon name="trash-outline" size={18} color={Colors.error} />
           <Text style={[styles.actionText, styles.deleteText]}>Delete</Text>
         </TouchableOpacity>
       )}
@@ -68,19 +68,19 @@ export default function ActionableEventCard({
             <Text style={styles.title} numberOfLines={2}>
               {event.title}
             </Text>
-            <View style={styles.detailRow}>
-              <Icon name="calendar-outline" size={16} color="#666" />
+            <View style={styles.infoRow}>
+              <Icon name="calendar-outline" size={16} color={Colors.iconGray} />
               <Text style={styles.detailText}>
                 {formatFullDate(event.startTime)}
               </Text>
             </View>
-            <View style={styles.detailRow}>
-              <Icon name="location-outline" size={16} color="#666" />
+            <View style={styles.infoRow}>
+              <Icon name="location-outline" size={16} color={Colors.iconGray} />
               <Text style={styles.detailText} numberOfLines={1}>
                 {event.location}
               </Text>
             </View>
-            <View style={styles.detailRow}>
+            <View style={styles.infoRow}>
               <Text style={styles.organizerText}>
                 by {event.organizer?.fullName || "Unknown"}
               </Text>
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     marginBottom: 6,
   },
-  detailRow: {
+  infoRow: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 4,

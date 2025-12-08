@@ -145,9 +145,9 @@ export default function TicketsScreen() {
             ]}
             refreshControl={
               <RefreshControl
-                refreshing={isRefetching} // Use isRefetching
+                refreshing={isRefetching}
                 onRefresh={handleRefresh}
-                tintColor="#6366f1"
+                tintColor={Colors.primary}
               />
             }
             ListEmptyComponent={renderEmptyList}

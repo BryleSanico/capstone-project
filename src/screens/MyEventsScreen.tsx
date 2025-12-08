@@ -98,7 +98,7 @@ export default function MyEventsScreen() {
       style={styles.createButton}
       onPress={() => navigation.navigate("EventForm", {})}
     >
-      <FeatherIcon name="plus" size={24} color="#8b5cf6" />
+      <FeatherIcon name="plus" size={24} color={Colors.purple} />
     </TouchableOpacity>
   );
 
@@ -203,7 +203,7 @@ export default function MyEventsScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={handleRefresh}
-              tintColor="#6366f1"
+              tintColor={Colors.primary}
             />
           }
           ListEmptyComponent={renderEmptyList}

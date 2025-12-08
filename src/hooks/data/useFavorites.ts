@@ -42,7 +42,7 @@ export function useAddFavorite() {
       ]);
       return { previousFavorites };
     },
-    onError: (_err, eventId, context) => {
+    onError: (_err, _eventId, context) => {
       if (context?.previousFavorites) {
         queryClient.setQueryData(favoritesQueryKey, context.previousFavorites);
       }
@@ -72,8 +72,7 @@ export function useRemoveFavorite() {
       );
       return { previousFavorites };
     },
-    // FIX: Renamed err to _err
-    onError: (_err, eventId, context) => {
+    onError: (_err, _eventId, context) => {
       if (context?.previousFavorites) {
         queryClient.setQueryData(favoritesQueryKey, context.previousFavorites);
       }

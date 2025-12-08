@@ -291,7 +291,7 @@ export default function EventFormScreen() {
             <Icon
               name="sparkles-outline"
               size={32}
-              color="#fff"
+              color={Colors.white}
               style={styles.sparkleIcon}
             />
             <Text style={styles.headerTitle}>
@@ -317,7 +317,7 @@ export default function EventFormScreen() {
               <View style={styles.fieldGroup}>
                 <View style={styles.cardHeader}>
                   <View style={styles.iconBadge}>
-                    <Icon name="cog-outline" size={20} color="#8B5CF6" />
+                    <Icon name="cog-outline" size={20} color={Colors.purple} />
                   </View>
                   <Text style={styles.groupTitle}>Event Status</Text>
                 </View>
@@ -358,7 +358,7 @@ export default function EventFormScreen() {
                   />
                 ) : (
                   <View style={styles.imagePlaceholder}>
-                    <Icon name="image-outline" size={40} color="#8B5CF6" />
+                    <Icon name="image-outline" size={40} color={Colors.purple} />
                     <Text style={styles.imagePlaceholderText}>
                       Add Event Image
                     </Text>
@@ -376,7 +376,7 @@ export default function EventFormScreen() {
             <View style={styles.fieldGroup}>
               <View style={styles.cardHeader}>
                 <View style={styles.iconBadge}>
-                  <Icon name="pricetag-outline" size={20} color="#8B5CF6" />
+                  <Icon name="pricetag-outline" size={20} color={Colors.purple} />
                 </View>
                 <Text style={styles.groupTitle}>Event Information</Text>
               </View>
@@ -387,7 +387,7 @@ export default function EventFormScreen() {
                   value={formData.title}
                   onChangeText={(v) => handleInputChange("title", v)}
                   placeholder="e.g., Tech Conference 2026"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={Colors.gray400}
                 />
                 {errors.title && (
                   <Text style={styles.errorText}>{errors.title}</Text>
@@ -405,7 +405,7 @@ export default function EventFormScreen() {
                   onChangeText={(v) => handleInputChange("description", v)}
                   multiline
                   placeholder="Provide details..."
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={Colors.gray400}
                 />
                 {errors.description && (
                   <Text style={styles.errorText}>{errors.description}</Text>
@@ -418,7 +418,7 @@ export default function EventFormScreen() {
                   value={formData.category}
                   onChangeText={(v) => handleInputChange("category", v)}
                   placeholder="e.g., Music, Technology"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={Colors.gray400}
                 />
                 {errors.category && (
                   <Text style={styles.errorText}>{errors.category}</Text>
@@ -431,7 +431,7 @@ export default function EventFormScreen() {
                   value={formData.tags}
                   onChangeText={(v) => handleInputChange("tags", v)}
                   placeholder="Comma-separated (e.g., tech, free food)"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={Colors.gray400}
                 />
                 {errors.tags && (
                   <Text style={styles.errorText}>{errors.tags}</Text>
@@ -445,7 +445,7 @@ export default function EventFormScreen() {
                   <Icon
                     name="calendar-clear-outline"
                     size={20}
-                    color="#8B5CF6"
+                    color={Colors.purple}
                   />
                 </View>
                 <Text style={styles.groupTitle}>Date & Time</Text>
@@ -487,7 +487,7 @@ export default function EventFormScreen() {
             <View style={styles.fieldGroup}>
               <View style={styles.cardHeader}>
                 <View style={styles.iconBadge}>
-                  <Icon name="location-outline" size={20} color="#8B5CF6" />
+                  <Icon name="location-outline" size={20} color={Colors.purple} />
                 </View>
                 <Text style={styles.groupTitle}>Location</Text>
               </View>
@@ -498,7 +498,7 @@ export default function EventFormScreen() {
                   value={formData.location}
                   onChangeText={(v) => handleInputChange("location", v)}
                   placeholder="e.g., Grand Hall"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={Colors.gray400}
                 />
                 {errors.location && (
                   <Text style={styles.errorText}>{errors.location}</Text>
@@ -511,7 +511,7 @@ export default function EventFormScreen() {
                   value={formData.address}
                   onChangeText={(v) => handleInputChange("address", v)}
                   placeholder="Street, City (optional)"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={Colors.gray400}
                 />
                 {errors.address && (
                   <Text style={styles.errorText}>{errors.address}</Text>
@@ -522,7 +522,7 @@ export default function EventFormScreen() {
             <View style={styles.fieldGroup}>
               <View style={styles.cardHeader}>
                 <View style={styles.iconBadge}>
-                  <Icon name="logo-usd" size={20} color="#8B5CF6" />
+                  <Icon name="logo-usd" size={20} color={Colors.purple} />
                 </View>
                 <Text style={styles.groupTitle}>Pricing & Capacity</Text>
               </View>
@@ -535,7 +535,7 @@ export default function EventFormScreen() {
                     onChangeText={(v) => handleInputChange("price", v)}
                     keyboardType="decimal-pad"
                     placeholder="0.00"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={Colors.gray400}
                   />
                   {errors.price && (
                     <Text style={styles.errorText}>{errors.price}</Text>
@@ -549,7 +549,7 @@ export default function EventFormScreen() {
                     onChangeText={(v) => handleInputChange("capacity", v)}
                     keyboardType="number-pad"
                     placeholder="e.g., 100"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={Colors.gray400}
                   />
                   {errors.capacity && (
                     <Text style={styles.errorText}>{errors.capacity}</Text>
@@ -569,7 +569,7 @@ export default function EventFormScreen() {
                   }
                   keyboardType="number-pad"
                   placeholder="e.g., 5"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={Colors.gray400}
                 />
                 {errors.userMaxTicketPurchase && (
                   <Text style={styles.errorText}>
@@ -588,7 +588,7 @@ export default function EventFormScreen() {
               disabled={isSyncing}
             >
               {isSyncing ? (
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color={Colors.white} />
               ) : (
                 <Text style={styles.submitButtonText}>
                   {isEditMode ? "Save Changes" : "Create Event"}
@@ -616,7 +616,7 @@ export default function EventFormScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.iconContainer}>
-              <Icon name="information-circle" size={48} color="#6366f1" />
+              <Icon name="information-circle" size={48} color={Colors.primary} />
             </View>
             <Text style={styles.modalTitle}>Admin Review Required</Text>
             <Text style={styles.modalText}>

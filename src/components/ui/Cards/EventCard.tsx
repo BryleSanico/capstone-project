@@ -105,7 +105,7 @@ export default function EventCard({ event, onPress }: EventCardProps) {
           </Text>
 
           <View style={styles.infoRow}>
-            <Icon name="calendar-outline" size={14} color="#666" />
+            <Icon name="calendar-outline" size={14} color={Colors.iconGray} />
             <Text style={styles.infoText}>
               {/* Use startTime for both date and time */}
               {formatDateMMDD(event.startTime)} • {formatTime(event.startTime)}
@@ -113,14 +113,14 @@ export default function EventCard({ event, onPress }: EventCardProps) {
           </View>
 
           <View style={styles.infoRow}>
-            <Icon name="pin-outline" size={14} color="#666" />
+            <Icon name="pin-outline" size={14} color={Colors.iconGray} />
             <Text style={styles.infoText} numberOfLines={1}>
               {event.location}
             </Text>
           </View>
 
           <View style={styles.infoRow}>
-            <Icon name="people-outline" size={14} color="#666" />
+            <Icon name="people-outline" size={14} color={Colors.iconGray} />
             <Text style={styles.infoText}>{event.attendees} attending</Text>
           </View>
 

@@ -68,6 +68,12 @@ export const useImagePicker = () => {
         if (response.assets && response.assets.length > 0) {
           const asset = response.assets[0];
 
+          // Type guard: ensure asset exists
+          if (!asset) {
+            setImageError("Could not read image asset.");
+            return;
+          }
+
           // Use validation utils
           if (!validateFileType(asset.type, ALLOWED_IMAGE_TYPES)) {
             setImageError("Invalid file type. Please select a JPG or PNG.");

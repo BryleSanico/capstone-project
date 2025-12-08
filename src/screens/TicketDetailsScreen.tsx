@@ -69,13 +69,13 @@ export default function TicketDetailsScreen() {
           style={styles.headerButton}
           onPress={handleShareTicket}
         >
-          <Icon name="share-outline" size={20} color="#6366f1" />
+          <Icon name="share-outline" size={20} color={Colors.primary} />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.headerButton}
           onPress={handleDownloadTicket}
         >
-          <Icon name="download-outline" size={20} color="#6366f1" />
+          <Icon name="download-outline" size={20} color={Colors.primary} />
         </TouchableOpacity>
       </View>
     ),
@@ -130,7 +130,7 @@ export default function TicketDetailsScreen() {
                 <Icon
                   name="calendar-outline"
                   size={18}
-                  color="rgba(255,255,255,0.8)"
+                  color={Colors.whiteTransparent80}
                 />
                 <View style={styles.detailContent}>
                   <Text style={styles.detailLabel}>Date & Time</Text>
@@ -144,7 +144,7 @@ export default function TicketDetailsScreen() {
                 <Icon
                   name="pin-outline"
                   size={18}
-                  color="rgba(255,255,255,0.8)"
+                  color={Colors.whiteTransparent80}
                 />
                 <View style={styles.detailContent}>
                   <Text style={styles.detailLabel}>Location</Text>
@@ -167,8 +167,8 @@ export default function TicketDetailsScreen() {
               <QRCode
                 value={ticket.qrCode}
                 size={200}
-                backgroundColor="#fff"
-                color="#1a1a1a"
+                backgroundColor={Colors.white}
+                color={Colors.textPrimary}
               />
             </View>
             <Text style={styles.qrCode}>{ticket.qrCode}</Text>

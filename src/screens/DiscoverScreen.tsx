@@ -136,7 +136,7 @@ export default function DiscoverScreen() {
           <RefreshControl
             refreshing={isRefetching && !isFetchingNextPage}
             onRefresh={handleRefresh}
-            tintColor="#6366f1"
+            tintColor={Colors.primary}
           />
         }
       />
