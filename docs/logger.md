@@ -545,7 +545,7 @@ A: Yes, all logs appear in React Native Debugger in development mode.
 
 ## Changelog
 
-### v1.0.0 (2024)
+### v1.0.0 (2025)
 - Initial implementation
 - Support for info, warn, error levels
 - Production log suppression
