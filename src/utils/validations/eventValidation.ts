@@ -81,4 +81,3 @@ export const validateEventForm = (formData: EventFormData): EventFormErrors => {
 export const hasValidationErrors = (errors: EventFormErrors): boolean => {
   return Object.keys(errors).length > 0;
 };
-

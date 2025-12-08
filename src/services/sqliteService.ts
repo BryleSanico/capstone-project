@@ -398,4 +398,3 @@ export const getEventsByIds = async (eventIds: number[]): Promise<Event[]> => {
     return [];
   }
 };
-     

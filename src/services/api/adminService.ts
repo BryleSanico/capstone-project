@@ -133,4 +133,3 @@ export const adminService = {
     return data as AdminLog[];
   },
 };
-

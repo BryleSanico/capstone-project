@@ -16,4 +16,3 @@ export const prefetchImage = async (imageUrl: string): Promise<void> => {
 export const prefetchImages = async (urls: string[]): Promise<void> => {
   await Promise.all(urls.map((url) => prefetchImage(url)));
 };
-

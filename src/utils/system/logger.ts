@@ -1,7 +1,7 @@
 /**
  * Centralized logging utility that respects environment settings.
  * Follows SRP and provides a clean abstraction for all logging needs.
- * 
+ *
  * ALL LOGS ARE SUPPRESSED IN PRODUCTION for security and performance.
  */
 
@@ -48,7 +48,7 @@ class Logger {
    */
   log(level: LogLevel, message: string, ...args: unknown[]): void {
     if (!this.isDevMode) return;
-    
+
     switch (level) {
       case "info":
         this.info(message, ...args);

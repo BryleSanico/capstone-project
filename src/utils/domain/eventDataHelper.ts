@@ -53,4 +53,3 @@ export function parseTags(tagsString: string): string[] {
     .map((tag) => tag.trim()) // Remove whitespace
     .filter(Boolean); // Remove any empty strings (e.g., from "tag1,,tag2")
 }
-
