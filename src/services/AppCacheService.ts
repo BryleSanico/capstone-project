@@ -2,6 +2,7 @@ import storageService from "./storageService";
 import EncryptedStorage from "react-native-encrypted-storage";
 import { supabase } from "../lib/supabase";
 import { clearPrivateData } from "./sqliteService";
+import { logger } from "../utils/system/logger";
 
 /**
  * Clears all non-sensitive app cache data from AsyncStorage.
@@ -10,9 +11,9 @@ import { clearPrivateData } from "./sqliteService";
 async function clearAllAppCaches(): Promise<void> {
   try {
     await storageService.clearAll();
-    console.log("[AppCacheService] All app caches (AsyncStorage) cleared.");
+    logger.info("[AppCacheService] All app caches (AsyncStorage) cleared.");
   } catch (error) {
-    console.error("[AppCacheService] Failed to clear app caches:", error);
+    logger.error("[AppCacheService] Failed to clear app caches:", error);
   }
 }
 
@@ -24,17 +25,17 @@ async function clearAllAppCaches(): Promise<void> {
  */
 async function clearAllSecureStorage(): Promise<void> {
   if (!__DEV__) {
-    console.warn(
+    logger.warn(
       "[AppCacheService] clearAllSecureStorage was called in production. Aborting."
     );
     return;
   }
   try {
-    console.log("[AppCacheService] [DEV] Clearing all secure storage...");
+    logger.info("[AppCacheService] [DEV] Clearing all secure storage...");
     await EncryptedStorage.clear();
-    console.log("[AppCacheService] [DEV] All secure storage cleared.");
+    logger.info("[AppCacheService] [DEV] All secure storage cleared.");
   } catch (error) {
-    console.error(
+    logger.error(
       "[AppCacheService] [DEV] Error clearing secure storage:",
       error
     );
@@ -48,7 +49,7 @@ async function clearAllSecureStorage(): Promise<void> {
  * @param userId The ID of the user logging out.
  */
 async function handleLogout(_id: string): Promise<void> {
-  console.log("[AppCacheService] Handling logout procedures...");
+  logger.info("[AppCacheService] Handling logout procedures...");
   // Clear all non-sensitive cache data (tickets, favorites, etc.)
   await clearPrivateData();
 
@@ -59,12 +60,12 @@ async function handleLogout(_id: string): Promise<void> {
   const response = await supabase.auth.signOut();
 
   if (response.error) {
-    console.error(
+    logger.error(
       "[AppCacheService] Error during Supabase signOut:",
       response.error.message
     );
   } else {
-    console.log(
+    logger.info(
       "[AppCacheService] Supabase session signed out and secure storage cleared."
     );
   }

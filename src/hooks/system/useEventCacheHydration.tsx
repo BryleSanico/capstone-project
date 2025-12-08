@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import * as sqliteService from "../../services/sqliteService";
 import { eventsQueryKey } from "../data/useEvents";
+import { logger } from "../../utils/system/logger";
 
 export const useEventCacheHydration = () => {
   const [isHydrated, setIsHydrated] = useState(false);
@@ -14,7 +15,7 @@ export const useEventCacheHydration = () => {
         await sqliteService.initDB();
 
         // Hydrate Event Data ONLY
-        console.log("[Hydration] Hydrating event data...");
+        logger.info("[Hydration] Hydrating event data...");
         const cachedEvents = await sqliteService.getEvents();
         if (cachedEvents.length > 0) {
           queryClient.setQueryData([...eventsQueryKey, "list", "", "All"], {
@@ -28,11 +29,11 @@ export const useEventCacheHydration = () => {
             pageParams: [1],
           });
         }
-        console.log(
+        logger.info(
           `[Hydration] Hydrated ${cachedEvents.length} public events.`
         );
       } catch (error) {
-        console.error("[Hydration] Failed to hydrate event cache:", error);
+        logger.error("[Hydration] Failed to hydrate event cache:", error);
       } finally {
         setIsHydrated(true);
       }

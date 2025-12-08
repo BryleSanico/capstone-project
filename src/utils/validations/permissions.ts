@@ -6,6 +6,7 @@ import {
   RESULTS,
   Permission,
 } from "react-native-permissions";
+import { logger } from "../system/logger";
 
 const PLATFORM_PHOTO_LIBRARY_PERMISSIONS = {
   ios: PERMISSIONS.IOS.PHOTO_LIBRARY,
@@ -20,17 +21,17 @@ const requestPermission = async (permission: Permission): Promise<boolean> => {
     const result = await request(permission);
     switch (result) {
       case RESULTS.GRANTED:
-        console.log(`Permission ${permission} granted`);
+        logger.info(`Permission ${permission} granted`);
         return true;
       case RESULTS.DENIED:
-        console.log(`Permission ${permission} denied`);
+        logger.info(`Permission ${permission} denied`);
         Alert.alert(
           "Permission Denied",
           "Cannot access photos without permission."
         );
         return false;
       case RESULTS.BLOCKED:
-        console.log(`Permission ${permission} blocked`);
+        logger.info(`Permission ${permission} blocked`);
         Alert.alert(
           "Permission Blocked",
           "Photo library access is blocked. Please enable it in your device settings.",
@@ -38,10 +39,10 @@ const requestPermission = async (permission: Permission): Promise<boolean> => {
         );
         return false;
       case RESULTS.LIMITED: // iOS specific
-        console.log(`Permission ${permission} limited`);
+        logger.info(`Permission ${permission} limited`);
         return true; // Still allow access for limited selection
       case RESULTS.UNAVAILABLE:
-        console.log(`Permission ${permission} unavailable on this device`);
+        logger.info(`Permission ${permission} unavailable on this device`);
         Alert.alert(
           "Feature Unavailable",
           "Photo library access is not available on this device."
@@ -49,7 +50,7 @@ const requestPermission = async (permission: Permission): Promise<boolean> => {
         return false;
     }
   } catch (error) {
-    console.error(`Error requesting permission ${permission}:`, error);
+    logger.error(`Error requesting permission ${permission}:`, error);
     Alert.alert(
       "Permission Error",
       "Could not request photo library permission."
@@ -74,7 +75,7 @@ export const checkAndRequestPhotoPermission = async (): Promise<boolean> => {
   }
 
   if (!permission) {
-    console.error("Unsupported platform for photo permission");
+    logger.error("Unsupported platform for photo permission");
     return false;
   }
 
@@ -103,7 +104,7 @@ export const checkAndRequestPhotoPermission = async (): Promise<boolean> => {
       return false;
     }
   } catch (error) {
-    console.error(`Error checking permission ${permission}:`, error);
+    logger.error(`Error checking permission ${permission}:`, error);
     Alert.alert(
       "Permission Error",
       "Could not check photo library permission."

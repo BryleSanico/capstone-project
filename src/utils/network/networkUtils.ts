@@ -1,4 +1,5 @@
 import { useNetworkStatus } from "../../stores/network-store";
+import { logger } from "../system/logger";
 
 // Constants
 const DEFAULT_REQUEST_TIMEOUT = 8000; // 8 seconds per attempt
@@ -70,12 +71,12 @@ export const withRetry = async <T>(
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      console.log(`[withRetry] Attempt ${attempt}/${attempts}...`);
+      logger.info(`[withRetry] Attempt ${attempt}/${attempts}...`);
       // Wrap the function call (which returns a then-able) in a timeout
       const result = await withTimeout(asyncFn(), timeoutMs);
       return result; // Success
     } catch (error) {
-      console.warn(`[withRetry] Attempt ${attempt} failed:`, error);
+      logger.warn(`[withRetry] Attempt ${attempt} failed:`, error);
       lastError = error;
 
       // If it's a timeout error on the first attempt, show snackbar early
@@ -91,7 +92,7 @@ export const withRetry = async <T>(
   }
 
   // All attempts failed
-  console.error("[withRetry] All attempts failed.", lastError);
+  logger.error("[withRetry] All attempts failed.", lastError);
   // Show snackbar on final failure (if it wasn't shown already)
   if (!(lastError instanceof TimeoutError)) {
     useNetworkStatus.getState().setMessage(errorMessage);

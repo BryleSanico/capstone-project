@@ -2,6 +2,7 @@ import { supabase } from "../../lib/supabase";
 import * as sqliteService from "../sqliteService";
 import { useNetworkStatus } from "../../stores/network-store";
 import { fetchEventsByIds } from "./eventService";
+import { logger } from "../../utils/system/logger";
 
 export async function getFavorites(): Promise<number[]> {
   const isConnected = useNetworkStatus.getState().isConnected;
@@ -9,7 +10,7 @@ export async function getFavorites(): Promise<number[]> {
   // Try Network (if online)
   if (isConnected) {
     try {
-      console.log(
+      logger.info(
         "[favoritesService] Online. Fetching favorites from Supabase..."
       );
       const { data, error } = await supabase.rpc("get_user_favorites");
@@ -18,7 +19,7 @@ export async function getFavorites(): Promise<number[]> {
       const serverIds = data.map((fav: { event_id: any }) =>
         Number(fav.event_id)
       );
-      console.log(
+      logger.info(
         `[favoritesService] Received ${serverIds.length} IDs from server:`,
         serverIds
       );
@@ -28,28 +29,28 @@ export async function getFavorites(): Promise<number[]> {
 
       // Pre-cache Details (so offline view works immediately)
       if (serverIds.length > 0) {
-        console.log(`[favoritesService] Pre-caching details...`);
+        logger.info(`[favoritesService] Pre-caching details...`);
         try {
           await fetchEventsByIds(serverIds);
-          console.log("[favoritesService] Pre-caching complete.");
+          logger.info("[favoritesService] Pre-caching complete.");
         } catch (err) {
-          console.warn("[favoritesService] Failed to pre-cache details:", err);
+          logger.warn("[favoritesService] Failed to pre-cache details:", err);
         }
       }
 
       return serverIds;
     } catch (error) {
-      console.warn(
+      logger.warn(
         "[favoritesService] Network failed. Attempting cache fallback.",
         error
       );
     }
   }
 
+  logger.info("[favoritesService] Fetching from SQLite cache...");
   // Fallback to Cache
-  console.log("[favoritesService] Fetching from SQLite cache...");
   const cachedIds = await sqliteService.getFavoriteIds();
-  console.log(
+  logger.info(
     `[favoritesService] Returning ${cachedIds.length} IDs from cache.`
   );
   return cachedIds;

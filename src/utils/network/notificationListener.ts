@@ -1,6 +1,8 @@
 import { getMessaging, onMessage } from "@react-native-firebase/messaging";
 import notifee, { AndroidImportance } from "@notifee/react-native";
 import { DEFAULT_NOTIFICATION_CHANNEL } from "../../constants/firebaseConstants";
+import { logger } from "../system/logger";
+
 /**
  * Utility: Safely convert any value into string for display
  */
@@ -14,7 +16,7 @@ const toSafeString = (value: unknown, fallback: string): string => {
  * Handles foreground notification display
  */
 const handleForegroundMessage = async (remoteMessage: any) => {
-  console.log("📬 Foreground message:", remoteMessage);
+  logger.info("📬 Foreground message:", remoteMessage);
 
   const title = toSafeString(
     remoteMessage.notification?.title ?? remoteMessage.data?.title,
@@ -37,7 +39,7 @@ const handleForegroundMessage = async (remoteMessage: any) => {
 };
 
 export const handleBackgroundMessage = async (remoteMessage: any) => {
-  console.log(" Background message:", remoteMessage);
+  logger.info("🔵 Background message:", remoteMessage);
 
   const title = toSafeString(
     remoteMessage.notification?.title ?? remoteMessage.data?.title,

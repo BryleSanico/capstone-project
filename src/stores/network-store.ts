@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import NetInfo, { NetInfoState } from "@react-native-community/netinfo";
+import { logger } from "../utils/system/logger";
 
 type NetworkState = {
   isConnected: boolean;
@@ -30,7 +31,7 @@ export const useNetworkStatus = create<NetworkState>((set, get) => ({
         isConnected: state.isConnected ?? false,
         lastKnownState: state,
       });
-      console.log(
+      logger.info(
         state.isConnected
           ? "🟢 Connected to the internet"
           : "🔴 Disconnected from the internet"
@@ -47,18 +48,18 @@ export const useNetworkStatus = create<NetworkState>((set, get) => ({
 
       // Check for transitions
       if (!prevConnected && nowConnected) {
-        console.log("🟢 Reconnected to the internet");
+        logger.info("🟢 Reconnected to the internet");
         set({ message: "Back online!" });
         if (reconnectCallback) {
           try {
             await reconnectCallback();
-            console.log("[Network] Reconnect callback successful.");
+            logger.info("[Network] Reconnect callback successful.");
           } catch (err) {
-            console.error("[Network] Reconnect callback failed:", err);
+            logger.error("[Network] Reconnect callback failed:", err);
           }
         }
       } else if (prevConnected && !nowConnected) {
-        console.log("🔴 Disconnected from the internet");
+        logger.info("🔴 Disconnected from the internet");
         set({ message: "You're offline." });
       }
     });

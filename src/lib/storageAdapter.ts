@@ -1,6 +1,7 @@
 import EncryptedStorage from "react-native-encrypted-storage";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { SupportedStorage } from "@supabase/supabase-js";
+import { logger } from "../utils/system/logger";
 
 const MIGRATED_FLAG = "@storage_migrated_to_secure";
 let migrationChecked = false; // In-memory flag to prevent repeated checks
@@ -18,11 +19,11 @@ export const StorageAdapter: SupportedStorage = {
   async setItem(key: string, value: string): Promise<void> {
     try {
       await EncryptedStorage.setItem(key, value);
-      console.log(
+      logger.info(
         `[StorageAdapter] Saved to secure storage: ${key.substring(0, 30)}...`
       );
     } catch (error) {
-      console.error("[StorageAdapter] Error setting item:", error);
+      logger.error("[StorageAdapter] Error setting item:", error);
       throw error;
     }
   },
@@ -38,21 +39,21 @@ export const StorageAdapter: SupportedStorage = {
         const hasMigrated = await EncryptedStorage.getItem(MIGRATED_FLAG);
 
         if (!hasMigrated) {
-          console.log(
+          logger.info(
             "[StorageAdapter] First time - checking for migration..."
           );
           // Attempt migration from AsyncStorage
           const oldValue = await AsyncStorage.getItem(key);
 
           if (oldValue) {
-            console.log(
+            logger.info(
               "[StorageAdapter] Found data in AsyncStorage, migrating..."
             );
             // Move to secure storage
             await EncryptedStorage.setItem(key, oldValue);
             // Remove from insecure storage
             await AsyncStorage.removeItem(key);
-            console.log("[StorageAdapter] Migration complete");
+            logger.info("[StorageAdapter] Migration complete");
           }
 
           // Mark as migrated (both in memory and storage)
@@ -71,12 +72,12 @@ export const StorageAdapter: SupportedStorage = {
       const secureValue = await EncryptedStorage.getItem(key);
 
       if (secureValue) {
-        console.log(`[StorageAdapter] Retrieved from secure storage: FOUND`);
+        logger.info(`[StorageAdapter] Retrieved from secure storage: FOUND`);
       }
 
       return secureValue || null;
     } catch (error) {
-      console.error("[StorageAdapter] Error getting item:", error);
+      logger.error("[StorageAdapter] Error getting item:", error);
       return null;
     }
   },
@@ -89,13 +90,11 @@ export const StorageAdapter: SupportedStorage = {
       // Try to remove from secure storage
       try {
         await EncryptedStorage.removeItem(key);
-        // This log will only print on the FIRST successful call
-        console.log(
+        logger.info(
           `[StorageAdapter] Removed from secure storage: ${key.substring(0, 30)}...`
         );
       } catch (error: any) {
-        // Log it as info, not a warning.
-        console.log(
+        logger.info(
           `[StorageAdapter] Secure key not found or already removed: ${key.substring(0, 30)}...`,
           error.message
         );
@@ -104,19 +103,17 @@ export const StorageAdapter: SupportedStorage = {
       // Try to remove from AsyncStorage
       try {
         await AsyncStorage.removeItem(key);
-        console.log(
+        logger.info(
           `[StorageAdapter] Removed from async storage: ${key.substring(0, 30)}...`
         );
       } catch (error) {
-        // This catch is for other errors, like if storage is unavailable.
-        console.warn(
+        logger.warn(
           "[StorageAdapter] Error removing from async storage:",
           error
         );
       }
     } catch (error) {
-      console.error("[StorageAdapter] Unexpected error in removeItem:", error);
-      // Don't throw - we want logout to succeed even if storage cleanup fails
+      logger.error("[StorageAdapter] Unexpected error in removeItem:", error);
     }
   },
 };
@@ -127,12 +124,13 @@ export const StorageAdapter: SupportedStorage = {
  */
 export const clearAllSecureStorage = async (): Promise<void> => {
   try {
-    console.log("[StorageAdapter] 🧹 Clearing all secure storage...");
+    logger.info("[StorageAdapter] 🧹 Clearing all secure storage...");
     await EncryptedStorage.clear();
-    migrationChecked = false; // Reset migration flag
-    console.log("[StorageAdapter] All secure storage cleared");
+    migrationChecked = false;
+    logger.info("[StorageAdapter] All secure storage cleared");
   } catch (error) {
-    console.error("[StorageAdapter] Error clearing secure storage:", error);
+    logger.error("[StorageAdapter] Error clearing secure storage:", error);
     throw error;
   }
 };
+ 

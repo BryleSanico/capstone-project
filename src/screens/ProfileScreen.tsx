@@ -25,11 +25,11 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "../stores/auth-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AppCacheService } from "../services/AppCacheService";
-
 import { useTicketsQuery } from "../hooks/";
 import { useFavoritesQuery } from "../hooks/";
 import { useUnreadCountQuery } from "../hooks/";
 import { Colors } from "../constants/colors";
+import { logger } from "../utils/system/logger";
 
 // Define the types for route and navigation
 type ProfileScreenNavigationProp = CompositeNavigationProp<
@@ -67,7 +67,7 @@ export default function ProfileScreen() {
           try {
             await signOut();
           } catch (error) {
-            console.error("Logout failed:", error);
+            logger.error("Logout failed:", error);
             Alert.alert("Error", "Could not log out. Please try again.");
           } finally {
             setIsLoggingOut(false);
@@ -99,7 +99,7 @@ export default function ProfileScreen() {
                 "All storage cleared. Please restart the app."
               );
             } catch (error) {
-              console.error("Failed to clear storage:", error);
+              logger.error("Failed to clear storage:", error);
               Alert.alert("Error", "Failed to clear storage");
             }
           },
@@ -114,13 +114,13 @@ export default function ProfileScreen() {
       icon: { name: "settings-outline", library: "Ionicons" },
       title: "Settings",
       subtitle: "App preferences and privacy",
-      onPress: () => console.log("Settings"),
+      onPress: () => logger.info("Settings"),
     },
     {
       icon: { name: "help-circle-outline", library: "Ionicons" },
       title: "Help & Support",
       subtitle: "Get help with your account",
-      onPress: () => console.log("Help"),
+      onPress: () => logger.info("Help"),
     },
   ];
 

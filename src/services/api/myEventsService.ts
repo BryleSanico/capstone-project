@@ -6,6 +6,7 @@ import { Asset } from "react-native-image-picker";
 import { toByteArray } from "react-native-quick-base64";
 import { combineDateTime, parseTags } from "../../utils/domain/eventDataHelper";
 import * as sqliteService from "../sqliteService";
+import { logger } from "../../utils/system/logger";
 
 const BUCKET_NAME = "event-images";
 
@@ -57,7 +58,7 @@ async function _deleteOldImage(oldImageUrl: string, newImagePath: string) {
   if (!oldPath || oldPath === newImagePath) {
     return; // Skip deletion
   }
-  console.log(`[Storage Cleanup] Deleting old image: ${oldPath}`);
+  logger.info(`[Storage Cleanup] Deleting old image: ${oldPath}`);
   await supabase.storage.from(BUCKET_NAME).remove([oldPath]);
 }
 
@@ -186,3 +187,4 @@ export async function updateEvent(
 
   return updatedEvent;
 }
+

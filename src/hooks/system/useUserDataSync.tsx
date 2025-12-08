@@ -7,6 +7,7 @@ import { ticketsQueryKey } from "../data/useTickets";
 import { favoritesQueryKey } from "../data/useFavorites";
 import { myEventsQueryKey } from "../data/useMyEvents";
 import { eventsQueryKey } from "../data/useEvents";
+import { logger } from "../../utils/system/logger";
 
 /**
  * Manages the synchronization of user-specific data (Tickets, MyEvents, Favorites).
@@ -24,7 +25,7 @@ export function useUserDataSync(isPublicCacheHydrated: boolean) {
     }
 
     const loadUserData = async (isAppLaunch: boolean) => {
-      console.log(
+      logger.info(
         `[UserDataSync] Loading user data. App Launch: ${isAppLaunch}`
       );
 
@@ -44,15 +45,15 @@ export function useUserDataSync(isPublicCacheHydrated: boolean) {
             cachedFavorites.length > 0;
 
           if (hasPrivateCache) {
-            console.log("[UserDataSync] SQLite data found. Hydrating cache...");
+            logger.info("[UserDataSync] SQLite data found. Hydrating cache...");
             queryClient.setQueryData(myEventsQueryKey, cachedMyEvents);
             queryClient.setQueryData(ticketsQueryKey, cachedTickets);
             queryClient.setQueryData(favoritesQueryKey, cachedFavorites);
           } else {
-            console.log("[UserDataSync] SQLite is empty. Skipping hydration.");
+            logger.info("[UserDataSync] SQLite is empty. Skipping hydration.");
           }
         } catch (error) {
-          console.error("[UserDataSync] Failed to read from SQLite:", error);
+          logger.error("[UserDataSync] Failed to read from SQLite:", error);
         }
       }
 
@@ -60,15 +61,15 @@ export function useUserDataSync(isPublicCacheHydrated: boolean) {
       const isConnected = useNetworkStatus.getState().isConnected;
 
       if (isConnected) {
-        console.log("[UserDataSync] Online. Triggering query invalidation...");
+        logger.info("[UserDataSync] Online. Triggering query invalidation...");
         queryClient.invalidateQueries();
       } else {
-        console.log("[UserDataSync] Offline. Skipping network refresh.");
+        logger.info("[UserDataSync] Offline. Skipping network refresh.");
       }
     };
 
     const handleLogout = async () => {
-      console.log(
+      logger.info(
         "[UserDataSync] User logged out. Clearing user-specific caches."
       );
 
@@ -92,7 +93,7 @@ export function useUserDataSync(isPublicCacheHydrated: boolean) {
       // This triggers a background refetch on DiscoverScreen without showing a hard loading state
       queryClient.invalidateQueries({ queryKey: eventsQueryKey });
 
-      console.log("[UserDataSync] Logout cleanup complete.");
+      logger.info("[UserDataSync] Logout cleanup complete.");
     };
 
     if (!hasAuthBeenInitialized.current) {
@@ -102,7 +103,7 @@ export function useUserDataSync(isPublicCacheHydrated: boolean) {
         loadUserData(true);
       } else {
         // App Start + Logged Out -> Refresh Public Data Only
-        console.log("[UserDataSync] App start, user is logged out.");
+        logger.info("[UserDataSync] App start, user is logged out.");
         queryClient.invalidateQueries({ queryKey: ["events"] });
       }
       return;

@@ -3,6 +3,7 @@ import { AppState, AppStateStatus } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 import { useNetworkStatus } from "../../stores/network-store";
 import { useQueryClient } from "@tanstack/react-query";
+import { logger } from "../../utils/system/logger";
 
 export function useNetworkMonitor() {
   const { subscribe, registerReconnectCallback, isConnected } =
@@ -11,7 +12,7 @@ export function useNetworkMonitor() {
 
   useEffect(() => {
     const reconnectCallback = async () => {
-      console.log(
+      logger.info(
         "[NetworkMonitor] Reconnect detected. Invalidating queries..."
       );
       await queryClient.invalidateQueries();
@@ -23,7 +24,7 @@ export function useNetworkMonitor() {
     // When the app comes from background -> foreground, force a check.
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState === "active") {
-        console.log(
+        logger.info(
           "[NetworkMonitor] App became active. Forcing network check..."
         );
 
@@ -31,7 +32,7 @@ export function useNetworkMonitor() {
           // If the store detected offline, but the OS says online
           // Force an update to "unstick" it.
           if (state.isConnected && !isConnected) {
-            console.log(
+            logger.info(
               "[NetworkMonitor] unstuck: Force-updating state to ONLINE"
             );
             // This will trigger the store's listener, then call reconnectCallback

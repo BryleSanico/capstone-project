@@ -5,6 +5,7 @@ import { Alert } from "react-native";
 import HapticFeedback from "react-native-haptic-feedback";
 import { useAuth } from "../../stores/auth-store";
 import { Event } from "../../types/event";
+import { logger } from "../../utils/system/logger";
 
 export const favoritesQueryKey = ["favorites"];
 
@@ -101,7 +102,7 @@ export function useFavoriteEventsQuery() {
   } = useQuery<Event[], Error>({
     queryKey: ["favoriteEvents", favoriteEventIds],
     queryFn: async () => {
-      console.log(
+      logger.info(
         "[useFavoriteEventsQuery] Fetching details for IDs:",
         favoriteEventIds
       );
@@ -133,3 +134,4 @@ export function useFavoriteEventsQuery() {
     isError,
   };
 }
+

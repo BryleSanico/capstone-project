@@ -4,6 +4,7 @@ import { AuthError, Session, User } from "@supabase/supabase-js";
 import { AppCacheService } from "../services/AppCacheService";
 import { notificationService } from "../services/pushNotificationService";
 import { UserRole } from "../types/user";
+import { logger } from "../utils/system/logger";
 
 type AuthState = {
   session: Session | null;
@@ -30,11 +31,11 @@ export const useAuth = create<AuthState>((set, get) => ({
   isInitialized: false,
 
   initialize: () => {
-    console.log("[Auth] Initializing auth listener...");
+    logger.info("[Auth] Initializing auth listener...");
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        console.log("[Auth] Auth state changed:", _event);
+        logger.info("[Auth] Auth state changed:", _event);
 
         // Extract role from metadata (default to 'user')
         const rawRole = session?.user?.app_metadata?.role;
@@ -56,7 +57,7 @@ export const useAuth = create<AuthState>((set, get) => ({
     );
 
     return () => {
-      console.log("[Auth] Unsubscribing from auth state changes.");
+      logger.info("[Auth] Unsubscribing from auth state changes.");
       authListener?.subscription.unsubscribe();
     };
   },
@@ -86,7 +87,7 @@ export const useAuth = create<AuthState>((set, get) => ({
     const currentUser = get().user;
     if (!currentUser) return;
 
-    console.log("[Auth] Signing out...");
+    logger.info("[Auth] Signing out...");
 
     try {
       await notificationService.unregisterPushNotifications(currentUser.id);
@@ -95,7 +96,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       // Set local state immediately
       set({ session: null, user: null });
     } catch (error) {
-      console.error("[Auth] Unexpected error during sign out:", error);
+      logger.error("[Auth] Unexpected error during sign out:", error);
       set({ session: null, user: null, role: "user" });
     }
   },

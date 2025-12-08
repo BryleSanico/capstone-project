@@ -7,7 +7,7 @@ import { supabase } from "../lib/supabase";
 import { setupNotificationListeners } from "../utils/network/notificationListener";
 import storageService from "./storageService";
 import { storageKeys } from "../utils/cache/storageKeys";
-import "../lib/firebase"; // Initialize firebase
+import "../lib/firebase";
 import {
   getToken,
   getMessaging,
@@ -22,6 +22,7 @@ import {
   FIREBASE_PERMISSION_STATUS,
 } from "../constants/firebaseConstants";
 import { withRetry } from "../utils/network/networkUtils";
+import { logger } from "../utils/system/logger";
 
 type FirebaseAuthorizationStatusType =
   (typeof FIREBASE_PERMISSION_CODE)[keyof typeof FIREBASE_PERMISSION_CODE];
@@ -38,11 +39,11 @@ class NotificationService {
 
   async initialize(userId?: string) {
     if (this.isInitialized) {
-      console.log("NotificationService already initialized.");
+      logger.info("NotificationService already initialized.");
       if (userId) await this.registerFCMToken(userId);
       return;
     }
-    console.log("Initializing NotificationService...");
+    logger.info("Initializing NotificationService...");
 
     await this.createDefaultChannel();
     const permissionsEnabled = await this.checkAndRequestPermissions();
@@ -54,7 +55,7 @@ class NotificationService {
     // Setup listeners regardless of permission status, in case status changes later
     setupNotificationListeners();
     this.isInitialized = true;
-    console.log("NotificationService initialization complete.");
+    logger.info("NotificationService initialization complete.");
   }
 
   // Check current permission status
@@ -80,7 +81,7 @@ class NotificationService {
   }
 
   async checkAndRequestPermissions(): Promise<boolean> {
-    console.log("Checking notification permissions...");
+    logger.info("Checking notification permissions...");
 
     // Load rejection count
     const rejectionKey = storageKeys.getNotificationRejectionCountKey();
@@ -89,7 +90,7 @@ class NotificationService {
 
     // Check current status FIRST
     const currentStatus = await this.checkPermissions();
-    console.log(
+    logger.info(
       "Current Permissions - FCM:",
       currentStatus.fcmStatus,
       "Notifee:",
@@ -114,9 +115,9 @@ class NotificationService {
     ].includes(currentStatus.notifeeStatus);
 
     if (fcmGranted && notifeeGranted) {
-      console.log("Notification permissions already granted.");
+      logger.info("Notification permissions already granted.");
       if (rejectionCount > 0) {
-        console.log(
+        logger.info(
           "Resetting rejection count as permissions are now granted."
         );
         await storageService.setItem(rejectionKey, 0);
@@ -126,7 +127,7 @@ class NotificationService {
 
     // Check rejection limit (Only if not currently granted)
     if (rejectionCount >= MAX_PERMISSION_REJECTIONS) {
-      console.log(
+      logger.info(
         `Permission prompt skipped. Rejection limit (${MAX_PERMISSION_REJECTIONS}) previously reached.`
       );
       return false;
@@ -140,31 +141,31 @@ class NotificationService {
 
     // Request FCM
     if (!fcmGranted && (Platform.OS === "ios" || Platform.OS === "android")) {
-      console.log("Requesting FCM permission...");
+      logger.info("Requesting FCM permission...");
       didRequestFcm = true;
       try {
         // requestPermission() returns the numeric value
         const permissionStatusValue = await requestPermission(getMessaging());
         finalFcmStatus =
           permissionStatusValue as FirebaseAuthorizationStatusType;
-        console.log("FCM Permission Request Result:", finalFcmStatus);
+        logger.info("FCM Permission Request Result:", finalFcmStatus);
       } catch (error) {
-        console.error("Error requesting FCM permission:", error);
-        finalFcmStatus = FCM_DENIED; // Assume denied numeric value on error
+        logger.error("Error requesting FCM permission:", error);
+        finalFcmStatus = FCM_DENIED;
       }
     }
 
     // Request Notifee
     if (!notifeeGranted) {
-      console.log("Requesting Notifee permission...");
+      logger.info("Requesting Notifee permission...");
       didRequestNotifee = true;
       try {
         const settings = await notifee.requestPermission();
         finalNotifeeStatus = settings.authorizationStatus;
-        console.log("Notifee Permission Request Result:", finalNotifeeStatus);
+        logger.info("Notifee Permission Request Result:", finalNotifeeStatus);
       } catch (error) {
-        console.error("Error requesting Notifee permission:", error);
-        finalNotifeeStatus = NotifeeAuthStatus.DENIED; // Assume denied enum value on error
+        logger.error("Error requesting Notifee permission:", error);
+        finalNotifeeStatus = NotifeeAuthStatus.DENIED;
       }
     }
 
@@ -176,10 +177,10 @@ class NotificationService {
       didRequestNotifee && finalNotifeeStatus === NotifeeAuthStatus.DENIED;
 
     if (fcmDeniedAfterRequest || notifeeDeniedAfterRequest) {
-      console.log("Permission denied by user after prompt.");
+      logger.info("Permission denied by user after prompt.");
       rejectionCount++;
       await storageService.setItem(rejectionKey, rejectionCount);
-      console.log(`Rejection count updated to: ${rejectionCount}`);
+      logger.info(`Rejection count updated to: ${rejectionCount}`);
     }
 
     // 7. Check final enabled status
@@ -196,9 +197,9 @@ class NotificationService {
 
     // 8. Conditional alert & Reset Count on Grant
     if (enabled) {
-      console.log("✅ Notification permissions are enabled after request.");
+      logger.info("✅ Notification permissions are enabled after request.");
       if (rejectionCount > 0) {
-        console.log("Resetting rejection count after permission granted.");
+        logger.info("Resetting rejection count after permission granted.");
         await storageService.setItem(rejectionKey, 0);
       }
     } else {
@@ -208,7 +209,7 @@ class NotificationService {
           "Notifications might be disabled. Please check Settings to enable them for the best experience."
         );
       } else {
-        console.log(
+        logger.info(
           `Rejection limit (${MAX_PERMISSION_REJECTIONS}) reached after this denial. Alert suppressed.`
         );
       }
@@ -220,18 +221,17 @@ class NotificationService {
   async createDefaultChannel() {
     if (Platform.OS === "android") {
       try {
-        // Use the constant object imported from firebaseConstants
         await notifee.createChannel(DEFAULT_NOTIFICATION_CHANNEL);
-        console.log("Default notification channel created.");
+        logger.info("Default notification channel created.");
       } catch (error) {
-        console.error("Error creating notification channel:", error);
+        logger.error("Error creating notification channel:", error);
       }
     }
   }
 
   async registerFCMToken(userId?: string) {
     if (!userId) {
-      console.warn("Cannot register FCM token without userId.");
+      logger.warn("Cannot register FCM token without userId.");
       return;
     }
     try {
@@ -242,7 +242,7 @@ class NotificationService {
       const token = await getToken(messaging);
 
       if (token) {
-        console.log("FCM Token obtained:", token.substring(0, 10) + "..."); // Log truncated token
+        logger.info("FCM Token obtained:", token.substring(0, 10) + "...");
         const { error } = await withRetry(() =>
           supabase
             .from("profiles")
@@ -250,17 +250,16 @@ class NotificationService {
             .eq("id", userId)
         );
         if (error) {
-          console.error("Error saving FCM token:", error);
+          logger.error("Error saving FCM token:", error);
         } else {
-          console.log("FCM token saved successfully for user:", userId);
+          logger.info("FCM token saved successfully for user:", userId);
         }
       } else {
-        console.warn("Could not get FCM token.");
+        logger.warn("Could not get FCM token.");
       }
 
-      // Listen for token refresh
       onTokenRefresh(messaging, async (newToken) => {
-        console.log("FCM token refreshed:", newToken.substring(0, 10) + "...");
+        logger.info("FCM token refreshed:", newToken.substring(0, 10) + "...");
         const { error: refreshError } = await withRetry(() =>
           supabase
             .from("profiles")
@@ -268,11 +267,11 @@ class NotificationService {
             .eq("id", userId)
         );
         if (refreshError) {
-          console.error("Error saving refreshed FCM token:", refreshError);
+          logger.error("Error saving refreshed FCM token:", refreshError);
         }
       });
     } catch (error) {
-      console.error("Error in registerFCMToken:", error);
+      logger.error("Error in registerFCMToken:", error);
     }
   }
 
@@ -284,15 +283,15 @@ class NotificationService {
       );
 
       if (error) {
-        console.error("Failed to nullify FCM token on server:", error);
+        logger.error("Failed to nullify FCM token on server:", error);
       } else {
-        console.log(
+        logger.info(
           "Nullified FCM token on server successfully for user:",
           userId
         );
       }
     } catch (error) {
-      console.error("Failed to unregister push notifications:", error);
+      logger.error("Failed to unregister push notifications:", error);
     }
   }
 }

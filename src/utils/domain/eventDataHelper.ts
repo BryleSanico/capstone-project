@@ -1,3 +1,5 @@
+import { logger } from "../system/logger";
+
 /**
  * A centralized utility for handling data transformations related to event objects.
  * These pure functions are easily testable and separated from the service layer.
@@ -9,14 +11,15 @@
  * @param time HH:MM
  */
 export function combineDateTime(date: string, time: string): string {
+  logger.info("[combineDateTime] Input:", { date, time });
+
   // Return string or throw
-  console.log("[combineDateTime] Input:", { date, time });
   if (!date || !time) {
-    console.error("[combineDateTime] Date or Time is missing.");
+    logger.error("[combineDateTime] Date or Time is missing.");
     throw new Error("Date and Time are required.");
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) {
-    console.error(
+    logger.error(
       "[combineDateTime] Invalid date or time format received:",
       date,
       time
@@ -31,10 +34,10 @@ export function combineDateTime(date: string, time: string): string {
     if (isNaN(d.getTime())) {
       throw new Error("Invalid date/time combination resulted in NaN.");
     }
-    console.log("[combineDateTime] Output ISO:", d.toISOString());
+    logger.info("[combineDateTime] Output ISO:", d.toISOString());
     return d.toISOString();
   } catch (e: any) {
-    console.error("[combineDateTime] Error creating ISO string:", e.message);
+    logger.error("[combineDateTime] Error creating ISO string:", e.message);
     throw new Error(`Failed to process date/time: ${e.message}`);
   }
 }
@@ -50,3 +53,4 @@ export function parseTags(tagsString: string): string[] {
     .map((tag) => tag.trim()) // Remove whitespace
     .filter(Boolean); // Remove any empty strings (e.g., from "tag1,,tag2")
 }
+

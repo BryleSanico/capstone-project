@@ -6,6 +6,7 @@ import {
   hasBase64Data,
 } from "../../utils/validations/validation";
 import { checkAndRequestPhotoPermission } from "../../utils/validations/permissions";
+import { logger } from "../../utils/system/logger";
 
 const MAX_FILE_SIZE_MB = 2;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/jpg"];
@@ -25,18 +26,16 @@ export const useImagePicker = () => {
   };
 
   const handleChoosePhoto = async () => {
-    setImageError(null); // Clear previous errors
+    setImageError(null);
 
-    // Add the manual permission check
     try {
       const hasPermission = await checkAndRequestPhotoPermission();
       if (!hasPermission) {
-        // The permission function already shows an Alert on failure
-        console.log("[useImagePicker] Permission denied by user.");
-        return; // Stop if permission is not granted
+        logger.info("[useImagePicker] Permission denied by user.");
+        return;
       }
     } catch (error) {
-      console.error("[useImagePicker] Permission check failed:", error);
+      logger.error("[useImagePicker] Permission check failed:", error);
       setImageError("A problem occurred while checking permissions.");
       return;
     }
@@ -51,11 +50,11 @@ export const useImagePicker = () => {
       },
       (response) => {
         if (response.didCancel) {
-          console.log("User cancelled image picker");
+          logger.info("User cancelled image picker");
           return;
         }
         if (response.errorCode) {
-          console.error("ImagePicker Error: ", response.errorMessage);
+          logger.error("ImagePicker Error: ", response.errorMessage);
           if (response.errorCode === "permission") {
             setImageError(
               "Cannot access photos. Please enable permission in settings."
@@ -91,7 +90,7 @@ export const useImagePicker = () => {
           }
 
           setImageAsset(asset);
-          console.log("Image selected (base64 included):", asset.fileName);
+          logger.info("Image selected (base64 included):", asset.fileName);
         }
       }
     );

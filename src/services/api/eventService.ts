@@ -3,6 +3,7 @@ import { Event } from "../../types/event";
 import { eventMapper } from "../../utils/mappers/eventMapper";
 import * as sqliteService from "../sqliteService";
 import { useNetworkStatus } from "../../stores/network-store";
+import { logger } from "../../utils/system/logger";
 
 const EVENTS_PER_PAGE = 5;
 
@@ -29,7 +30,7 @@ export async function fetchEvents({
   }
 
   // If Online, Fetch from Server
-  console.log(`[eventService] Fetching page ${pageParam} from network...`);
+  logger.info(`[eventService] Fetching page ${pageParam} from network...`);
   const { data, error } = await supabase.rpc("get_paginated_events", {
     p_page: pageParam,
     p_limit: EVENTS_PER_PAGE,
@@ -72,7 +73,7 @@ export async function fetchEventsByIds(eventIds: number[]): Promise<Event[]> {
   // Online: Fetch, Map, SAVE to SQLite, Return
   if (isConnected) {
     try {
-      console.log(
+      logger.info(
         `[eventService] Online. Fetching ${eventIds.length} events...`
       );
       const { data, error } = await supabase.rpc("get_events_by_ids", {
@@ -86,7 +87,7 @@ export async function fetchEventsByIds(eventIds: number[]): Promise<Event[]> {
 
       // Save the details to SQLite so they exist offline
       if (events.length > 0) {
-        console.log(
+        logger.info(
           `[eventService] Caching ${events.length} fetched events to SQLite...`
         );
         await sqliteService.saveEvents(events);
@@ -94,22 +95,22 @@ export async function fetchEventsByIds(eventIds: number[]): Promise<Event[]> {
 
       return events;
     } catch (error) {
-      console.warn(
+      logger.warn(
         "[eventService] Network request failed. Falling back to cache.",
         error
       );
       // Fall through to cache logic below
     }
   } else {
-    console.log(`[eventService] Offline. Skipping network fetch.`);
+    logger.info(`[eventService] Offline. Skipping network fetch.`);
   }
-
+  
   // Offline (or Network Error): Read from SQLite
-  console.log(
+  logger.info(
     `[eventService] Fetching ${eventIds.length} events from SQLite cache...`
   );
   const cachedEvents = await sqliteService.getEventsByIds(eventIds);
-  console.log(`[eventService] Found ${cachedEvents.length} events in cache.`);
+  logger.info(`[eventService] Found ${cachedEvents.length} events in cache.`);
 
   return cachedEvents;
 }
@@ -129,9 +130,9 @@ async function fetchEventByIdFromNetwork(eventId: number): Promise<Event> {
   }
   const event = eventMapper(data[0]);
 
-  // Insert to SQLite database IMMEDIATELY
+    // Insert to SQLite database IMMEDIATELY
   await sqliteService.saveEvents([event]); // Upsert this event
-  console.log(`[eventService] Updated SQLite cache for event ${eventId}`);
+  logger.info(`[eventService] Updated SQLite cache for event ${eventId}`);
 
   return event;
 }
@@ -144,7 +145,7 @@ export async function fetchEventById(eventId: number): Promise<Event> {
   const isConnected = useNetworkStatus.getState().isConnected;
 
   if (isConnected) {
-    console.log(
+    logger.info(
       `[eventService] Online. Fetching event ${eventId} from network...`
     );
     // If online, get from network (which also saves to SQLite)
@@ -152,7 +153,7 @@ export async function fetchEventById(eventId: number): Promise<Event> {
   }
 
   // If offline, attempt to get from cache
-  console.log(
+  logger.info(
     `[eventService] Offline. Fetching event ${eventId} from cache...`
   );
   const cachedEvent = await sqliteService.getEventById(eventId);

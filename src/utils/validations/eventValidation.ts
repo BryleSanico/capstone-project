@@ -1,5 +1,6 @@
 import { EventFormData } from "../../types/event";
 import { isRequired } from "./validation";
+import { logger } from "../system/logger";
 
 export type EventFormErrors = {
   // Allow keys matching EventFormData fields
@@ -11,13 +12,11 @@ export type EventFormErrors = {
 
 // Basic validation rules
 export const validateEventForm = (formData: EventFormData): EventFormErrors => {
-  // ADD TRY/CATCH
   try {
-    console.log("[validateEventForm] Starting validation with data:", formData); // Log input data
+    logger.info("[validateEventForm] Starting validation with data:", formData);
     const errors: EventFormErrors = {};
 
     if (!isRequired(formData.title?.trim())) {
-      // Add optional chaining just in case
       errors.title = "Title is required.";
     }
     if (!isRequired(formData.description?.trim())) {
@@ -69,12 +68,12 @@ export const validateEventForm = (formData: EventFormData): EventFormErrors => {
       errors.userMaxTicketPurchase = "Ticket limit must be a positive integer.";
     }
 
-    console.log("[validateEventForm] Validation finished. Errors:", errors); // Log results
+    logger.info("[validateEventForm] Validation finished. Errors:", errors);
     return errors;
-  } catch (error: any) {
-    console.error("!!! CRASH INSIDE validateEventForm:", error);
-    // Return an error object indicating a crash occurred
-    return { general: `Validation function crashed: ${error.message}` };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error("!!! CRASH INSIDE validateEventForm:", error);
+    return { general: `Validation function crashed: ${errorMessage}` };
   }
 };
 
@@ -82,3 +81,4 @@ export const validateEventForm = (formData: EventFormData): EventFormErrors => {
 export const hasValidationErrors = (errors: EventFormErrors): boolean => {
   return Object.keys(errors).length > 0;
 };
+

@@ -3,6 +3,7 @@ import { eventMapper } from "../../utils/mappers/eventMapper";
 import { Event } from "../../types/event";
 import { UserRole } from "../../types/user";
 import { AdminLog, AdminStats, AdminUser } from "../../types/admin";
+import { logger } from "../../utils/system/logger";
 
 // Define the response shape for pagination
 export type PaginatedUsersResponse = {
@@ -25,11 +26,11 @@ export const adminService = {
    * Fetches all events waiting for approval via secure RPC (Bypassing RLS).
    */
   async getPendingEvents(): Promise<Event[]> {
-    console.log("[AdminService] Fetching pending events...");
+    logger.info("[AdminService] Fetching pending events...");
     const { data, error } = await supabase.rpc("get_pending_events_admin");
 
     if (error) {
-      console.error("[AdminService] RPC Error:", error);
+      logger.error("[AdminService] RPC Error:", error);
       throw error;
     }
     return (data || []).map(eventMapper);
@@ -132,3 +133,4 @@ export const adminService = {
     return data as AdminLog[];
   },
 };
+

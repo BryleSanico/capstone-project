@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { eventsQueryKey } from "./useEvents";
+import { logger } from "../../utils/system/logger";
 
 /**
  * A custom hook that subscribes to real-time updates for a single event.
@@ -15,7 +16,7 @@ export default function useEventSubscription(eventId: number | null) {
   useEffect(() => {
     if (!eventId) return;
 
-    console.log(`[EventSubscription] Subscribing to event ${eventId}...`);
+    logger.info(`[EventSubscription] Subscribing to event ${eventId}...`);
 
     const channel = supabase
       .channel(`event-details-${eventId}`)
@@ -28,7 +29,7 @@ export default function useEventSubscription(eventId: number | null) {
           filter: `id=eq.${eventId}`,
         },
         (payload) => {
-          console.log("🟢 Real-time event update received!", payload.new);
+          logger.info("🟢 Real-time event update received!", payload.new);
 
           // Invalidate to refetch fresh data (safest for relations)
           // This fetches the full event again including joined tables (organizer, etc.)
@@ -42,7 +43,7 @@ export default function useEventSubscription(eventId: number | null) {
       .subscribe();
 
     return () => {
-      console.log(`[EventSubscription] Unsubscribing from event ${eventId}`);
+      logger.info(`[EventSubscription] Unsubscribing from event ${eventId}`);
       supabase.removeChannel(channel);
     };
   }, [eventId, queryClient]);
