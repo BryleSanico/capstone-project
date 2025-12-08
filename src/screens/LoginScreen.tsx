@@ -174,7 +174,11 @@ export default function LoginScreen() {
                 ]}
               >
                 <View style={styles.inputIcon}>
-                  <Icon name="lock-closed-outline" size={20} color={Colors.iconGray} />
+                  <Icon
+                    name="lock-closed-outline"
+                    size={20}
+                    color={Colors.iconGray}
+                  />
                 </View>
                 <TextInput
                   style={styles.input}

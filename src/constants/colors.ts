@@ -166,4 +166,3 @@ export const getPlatformColor = (
 ): string => {
   return Platform.OS === "ios" ? Colors[iosColor] : Colors[androidColor];
 };
-

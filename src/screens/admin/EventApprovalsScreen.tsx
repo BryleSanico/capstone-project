@@ -206,7 +206,9 @@ export default function EventApprovalsScreen() {
                 <Icon
                   name="construct-outline"
                   size={20}
-                  color={rejectType === "revision" ? Colors.white : Colors.iconGray}
+                  color={
+                    rejectType === "revision" ? Colors.white : Colors.iconGray
+                  }
                 />
                 <Text
                   style={[
@@ -228,7 +230,9 @@ export default function EventApprovalsScreen() {
                 <Icon
                   name="trash-outline"
                   size={20}
-                  color={rejectType === "delete" ? Colors.white : Colors.iconGray}
+                  color={
+                    rejectType === "delete" ? Colors.white : Colors.iconGray
+                  }
                 />
                 <Text
                   style={[

@@ -358,7 +358,11 @@ export default function EventFormScreen() {
                   />
                 ) : (
                   <View style={styles.imagePlaceholder}>
-                    <Icon name="image-outline" size={40} color={Colors.purple} />
+                    <Icon
+                      name="image-outline"
+                      size={40}
+                      color={Colors.purple}
+                    />
                     <Text style={styles.imagePlaceholderText}>
                       Add Event Image
                     </Text>
@@ -376,7 +380,11 @@ export default function EventFormScreen() {
             <View style={styles.fieldGroup}>
               <View style={styles.cardHeader}>
                 <View style={styles.iconBadge}>
-                  <Icon name="pricetag-outline" size={20} color={Colors.purple} />
+                  <Icon
+                    name="pricetag-outline"
+                    size={20}
+                    color={Colors.purple}
+                  />
                 </View>
                 <Text style={styles.groupTitle}>Event Information</Text>
               </View>
@@ -487,7 +495,11 @@ export default function EventFormScreen() {
             <View style={styles.fieldGroup}>
               <View style={styles.cardHeader}>
                 <View style={styles.iconBadge}>
-                  <Icon name="location-outline" size={20} color={Colors.purple} />
+                  <Icon
+                    name="location-outline"
+                    size={20}
+                    color={Colors.purple}
+                  />
                 </View>
                 <Text style={styles.groupTitle}>Location</Text>
               </View>
@@ -616,7 +628,11 @@ export default function EventFormScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.iconContainer}>
-              <Icon name="information-circle" size={48} color={Colors.primary} />
+              <Icon
+                name="information-circle"
+                size={48}
+                color={Colors.primary}
+              />
             </View>
             <Text style={styles.modalTitle}>Admin Review Required</Text>
             <Text style={styles.modalText}>
