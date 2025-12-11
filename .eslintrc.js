@@ -70,8 +70,8 @@ module.exports = {
 
     // ---------- REACT ----------
     'react/react-in-jsx-scope': 'off',
-    'react/prop-types': 'off',
-    'react/jsx-uses-react': 'off',
+    'react/prop-types': 'warn',
+    'react/jsx-uses-react': 'warn',
     'react/jsx-uses-vars': 'error',
 
     // ---------- REACT HOOKS ----------
