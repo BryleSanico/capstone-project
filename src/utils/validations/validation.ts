@@ -17,7 +17,7 @@ export function isEmail(value: string): boolean {
  * @param value The value to check.
  */
 export function isRequired(value: string | null | undefined): boolean {
-  return value != null && value.trim() !== "";
+  return value !== null && value !== undefined && value.trim() !== "";
 }
 
 /**
@@ -71,6 +71,6 @@ export function validateFileSize(
  * @param base64 The base64 string from the asset.
  * @returns True if the base64 string is present and non-empty.
  */
-export function hasBase64Data(base64: string | undefined | null): boolean {
-  return !!base64;
-}
+export const hasBase64Data = (base64: string | undefined): boolean => {
+  return base64 !== undefined && base64 !== null && base64.length > 0;
+};

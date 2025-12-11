@@ -1,6 +1,7 @@
 // src/components/TabSelector.tsx
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Colors } from "../../constants/colors";
 
 export type TabItem = {
   key: string;
@@ -43,10 +44,10 @@ export default function TabSelector({
 const styles = StyleSheet.create({
   tabsContainer: {
     flexDirection: "row",
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    borderBottomColor: Colors.lightGray,
   },
   tab: {
     flex: 1,
@@ -58,10 +59,10 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#94a3b8",
+    color: Colors.gray500,
   },
   activeTabText: {
-    color: "#1a1a1a",
+    color: Colors.textPrimary,
     fontWeight: "700",
   },
   tabIndicator: {
@@ -70,7 +71,7 @@ const styles = StyleSheet.create({
     left: "15%",
     right: "15%",
     height: 3,
-    backgroundColor: "#10b981",
+    backgroundColor: Colors.success,
     borderRadius: 2,
   },
 });

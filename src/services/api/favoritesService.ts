@@ -4,6 +4,8 @@ import { useNetworkStatus } from "../../stores/network-store";
 import { fetchEventsByIds } from "./eventService";
 import { logger } from "../../utils/system/logger";
 
+type FavoriteEventRow = { event_id: number };
+
 export async function getFavorites(): Promise<number[]> {
   const isConnected = useNetworkStatus.getState().isConnected;
 
@@ -16,7 +18,7 @@ export async function getFavorites(): Promise<number[]> {
       const { data, error } = await supabase.rpc("get_user_favorites");
       if (error) throw error;
 
-      const serverIds = data.map((fav: { event_id: any }) =>
+      const serverIds = (data as FavoriteEventRow[]).map((fav) =>
         Number(fav.event_id)
       );
       logger.info(
@@ -88,3 +90,15 @@ export async function removeFavorite(eventId: number): Promise<void> {
     currentIds.filter((id) => id !== eventId)
   );
 }
+
+export const favoritesService = {
+  async getFavoriteIds(): Promise<number[]> {
+    const { data, error } = await supabase
+      .from("favorite_events")
+      .select("event_id")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return (data ?? []).map((row: { event_id: number }) => row.event_id);
+  },
+};

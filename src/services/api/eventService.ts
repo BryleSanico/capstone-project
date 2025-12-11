@@ -41,8 +41,8 @@ export async function fetchEvents({
 
   if (error) throw error;
 
-  const result = data[0] || { events: [], total_count: 0 };
-  const events: Event[] = (result.events || []).map(eventMapper);
+  const result = data[0] ?? { events: [], total_count: 0 };
+  const events: Event[] = (result.events ?? []).map(eventMapper);
 
   // Insert to SQLite database
   if (pageParam === 1) {

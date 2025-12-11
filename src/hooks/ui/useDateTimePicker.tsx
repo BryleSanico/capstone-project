@@ -4,6 +4,7 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import { format } from "date-fns";
+import { Colors } from "../../constants/colors";
 
 /**
  * A custom hook to encapsulate all logic for handling date and time selection.
@@ -125,10 +126,10 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: Colors.modalOverlay,
   },
   modalContent: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.modalBackground,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingTop: 10,
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
-    backgroundColor: "#F9FAFB",
+    borderTopColor: Colors.border,
+    backgroundColor: Colors.backgroundGray,
   },
 });

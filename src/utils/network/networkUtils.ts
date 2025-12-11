@@ -67,7 +67,7 @@ export const withRetry = async <T>(
   const errorMessage =
     options?.errorMessage ?? "Slow internet connection... Something went wrong";
 
-  let lastError: Error | unknown = new Error("Request failed");
+  let lastError: unknown = new Error("Request failed");
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {

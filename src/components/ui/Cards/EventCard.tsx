@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -23,6 +23,7 @@ import {
   useRemoveFavorite,
 } from "../../../hooks/data/useFavorites";
 import { Colors } from "../../../constants/colors";
+import { logger } from "../../../utils/system/logger";
 
 interface EventCardProps {
   event: Event;
@@ -30,6 +31,8 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event, onPress }: EventCardProps) {
+  const [imageError, setImageError] = useState(false);
+
   // REACT QUERY DATA
   const { data: favoriteEventIds = [] } = useFavoritesQuery();
   const { session } = useAuth();
@@ -42,7 +45,7 @@ export default function EventCard({ event, onPress }: EventCardProps) {
   const isEventFavorite = favoriteEventIds.includes(event.id);
   const isMutating = isAdding || isRemoving;
 
-  const handleFavoritePress = (e: any) => {
+  const handleFavoritePress = (e: React.BaseSyntheticEvent) => {
     e.stopPropagation(); // Prevents the main onPress from firing
     if (!session) {
       Alert.alert(
@@ -65,6 +68,14 @@ export default function EventCard({ event, onPress }: EventCardProps) {
     }
   };
 
+  const handleImageError = (error: { nativeEvent: { error: string } }) => {
+    logger.warn(
+      `[EventCard] Image failed to load for event ${event.id}:`,
+      error.nativeEvent.error
+    );
+    setImageError(true);
+  };
+
   return (
     <TouchableOpacity
       style={styles.container}
@@ -73,7 +84,13 @@ export default function EventCard({ event, onPress }: EventCardProps) {
     >
       <View style={styles.card}>
         <View style={styles.imageContainer}>
-          <Image source={{ uri: event.imageUrl }} style={styles.image} />
+          {!imageError ? (
+            <Image
+              source={{ uri: event.imageUrl }}
+              style={styles.image}
+              onError={handleImageError}
+            />
+          ) : null}
           <LinearGradient
             colors={["transparent", "rgba(0,0,0,0.7)"]}
             style={styles.imageOverlay}

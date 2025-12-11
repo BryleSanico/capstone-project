@@ -81,7 +81,7 @@ export default function ProfileScreen() {
     navigation.navigate("Login");
   };
 
-  const handleClearStorage = async () => {
+  const handleClearStorage = () => {
     Alert.alert(
       "Clear Storage",
       "This will clear all secure storage and app cache. Use for development only. Continue?",
@@ -170,10 +170,10 @@ export default function ProfileScreen() {
               <FontAwesomeIcon name="user" size={40} color="#fff" />
             </View>
             <Text style={styles.userName}>
-              {user?.user_metadata.full_name || "Guest"}
+              {user?.user_metadata.full_name ?? "Guest"}
             </Text>
             <Text style={styles.userEmail}>
-              {user?.email || "Login to see your details"}
+              {user?.email ?? "Login to see your details"}
             </Text>
           </LinearGradient>
         </View>
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     paddingHorizontal: 0,
     borderRadius: 20,
-    backgroundColor: "transparent",
+    backgroundColor: Colors.transparent,
   },
   avatarContainer: {
     width: 80,

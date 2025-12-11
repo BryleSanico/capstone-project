@@ -122,20 +122,20 @@ export default function EventFormScreen() {
     if (isEditMode && eventData && !hasPopulated) {
       // Prepare all state values first
       const eventDate = new Date(eventData.startTime);
-      const closedStatus = eventData.isClosed || false;
+      const closedStatus = eventData.isClosed ?? false;
       const newFormData = {
         title: eventData.title,
         description: eventData.description,
         location: eventData.location,
-        address: eventData.address || "",
+        address: eventData.address ?? "",
         price: eventData.price.toString(),
         category: eventData.category,
-        capacity: eventData.capacity?.toString() || "",
-        tags: eventData.tags?.join(", ") || "",
+        capacity: eventData.capacity?.toString() ?? "",
+        tags: eventData.tags?.join(", ") ?? "",
         userMaxTicketPurchase:
-          eventData.userMaxTicketPurchase?.toString() || "10",
+          eventData.userMaxTicketPurchase?.toString() ?? "10",
         isClosed: closedStatus,
-        isApproved: eventData.isApproved || false,
+        isApproved: eventData.isApproved ?? false,
       };
 
       // Use startTransition to mark updates as non-urgent
@@ -165,7 +165,15 @@ export default function EventFormScreen() {
         setHasPopulated(true);
       });
     }
-  }, [eventData, isEditMode, navigation, isLoadingMyEvents, hasPopulated]);
+  }, [
+    eventData,
+    isEditMode,
+    navigation,
+    isLoadingMyEvents,
+    hasPopulated,
+    setCurrentImageUrl,
+    setSelectedDateTime,
+  ]);
 
   useEffect(() => {
     if (imageError) {
@@ -213,7 +221,7 @@ export default function EventFormScreen() {
   };
 
   // 2. Actual Submit Logic (Called from Modal "I Understood")
-  const handleConfirmSubmit = async () => {
+  const handleConfirmSubmit = () => {
     setShowReviewModal(false); // Close modal
 
     const dataToValidate: EventFormData = {
@@ -227,8 +235,8 @@ export default function EventFormScreen() {
         {
           eventId,
           formData: dataToValidate,
-          currentImageUrl: currentImageUrl || "",
-          imageAsset: imageAsset || null,
+          currentImageUrl: currentImageUrl ?? "",
+          imageAsset: imageAsset ?? null,
           isClosed: isClosed,
         },
         {
@@ -245,7 +253,7 @@ export default function EventFormScreen() {
       createEvent(
         {
           formData: dataToValidate,
-          imageAsset: imageAsset || null,
+          imageAsset: imageAsset ?? null,
         },
         {
           onSuccess: () => {

@@ -135,11 +135,11 @@ export const clearPrivateData = async () => {
 /**
  * A generic helper to INSERT OR REPLACE (upsert) a list of items.
  */
-const upsertItems = async (
+const upsertItems = async <T extends { id: number | string }>(
   table: string,
   idColumn: string,
   dataColumn: string,
-  items: any[]
+  items: T[]
 ) => {
   logger.info(
     `[SQLite] Attempting to SAVE ${items.length} items to table [${table}]`
@@ -201,9 +201,9 @@ const getItems = async <T>(table: string, dataColumn: string): Promise<T[]> => {
     );
 
     return data;
-  } catch (e: any) {
+  } catch (e: unknown) {
     logger.error(`[SQLite] FAILED to GET items from table [${table}]:`, e);
-    if (e.message.includes("no such table")) {
+    if (e instanceof Error && e.message.includes("no such table")) {
       logger.warn(`[SQLite] Table ${table} not found, re-initializing DB.`);
       // Re-run init and try one more time
       dbInitializationPromise = null; // Force re-init

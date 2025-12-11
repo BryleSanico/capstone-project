@@ -36,9 +36,10 @@ export function combineDateTime(date: string, time: string): string {
     }
     logger.info("[combineDateTime] Output ISO:", d.toISOString());
     return d.toISOString();
-  } catch (e: any) {
-    logger.error("[combineDateTime] Error creating ISO string:", e.message);
-    throw new Error(`Failed to process date/time: ${e.message}`);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    logger.error("[combineDateTime] Error creating ISO string:", message);
+    throw new Error(`Failed to process date/time: ${message}`);
   }
 }
 

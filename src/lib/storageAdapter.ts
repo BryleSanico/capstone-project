@@ -75,7 +75,7 @@ export const StorageAdapter: SupportedStorage = {
         logger.info(`[StorageAdapter] Retrieved from secure storage: FOUND`);
       }
 
-      return secureValue || null;
+      return secureValue ?? null;
     } catch (error) {
       logger.error("[StorageAdapter] Error getting item:", error);
       return null;
@@ -93,10 +93,12 @@ export const StorageAdapter: SupportedStorage = {
         logger.info(
           `[StorageAdapter] Removed from secure storage: ${key.substring(0, 30)}...`
         );
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
         logger.info(
           `[StorageAdapter] Secure key not found or already removed: ${key.substring(0, 30)}...`,
-          error.message
+          errorMessage
         );
       }
 

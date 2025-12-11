@@ -43,7 +43,7 @@ export const RecentLogsCard: React.FC<RecentLogsCardProps> = ({
             {displayDetail}
           </Text>
           <Text style={styles.logMeta}>
-            {log.admin_name || "Admin"} • {formatRelativeTime(log.created_at)}
+            {log.admin_name ?? "Admin"} • {formatRelativeTime(log.created_at)}
           </Text>
         </View>
       </View>

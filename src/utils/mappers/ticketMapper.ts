@@ -1,6 +1,18 @@
 import { Ticket } from "../../types/ticket";
 
-export const ticketMapper = (item: any): Ticket => {
+interface RawTicketData {
+  id: number;
+  event_id: number;
+  event_title: string;
+  event_date: string;
+  event_time: string;
+  event_location: string;
+  total_price: number;
+  purchase_date: string;
+  qr_code: string;
+}
+
+export const ticketMapper = (item: RawTicketData): Ticket => {
   if (!item || typeof item !== "object") {
     console.warn("[eventMapper] Invalid item received:", item);
     throw new Error("Invalid event data received from Supabase.");

@@ -12,8 +12,16 @@ import { NetworkSnackbar } from "./src/components/ui/SnackBars/NetworkSnackbar";
 import { useAuth } from "./src/stores/auth-store";
 import { useEventCacheHydration } from "./src/hooks";
 import { useUserDataSync } from "./src/hooks/";
+import { StyleSheet } from "react-native"; // ADDED
 
 const queryClient = new QueryClient();
+
+// ADDED STYLES
+const styles = StyleSheet.create({
+  rootContainer: {
+    flex: 1,
+  },
+});
 
 function AppContent() {
   useNetworkMonitor();
@@ -45,7 +53,7 @@ function AppContent() {
 
   return (
     <>
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView style={styles.rootContainer}> 
         <NavigationContainer>
           {isAdmin ? <AdminNavigator /> : <AppNavigator />}
         </NavigationContainer>
