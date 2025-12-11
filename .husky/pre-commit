@@ -3,27 +3,24 @@
 
 echo "🔍 Running pre-commit checks..."
 
-# Run ESLint
-echo "📋 Running ESLint..."
-npm run lint
+# 1. Run lint-staged
+# This automatically runs eslint --fix and prettier --write on staged files
+# and re-adds them to the commit.
+echo "🎯 Running lint-staged (auto-fix for staged files)..."
+npx lint-staged
 if [ $? -ne 0 ]; then
-  echo "❌ ESLint check failed. Run 'npm run lint:fix' to fix issues."
+  # lint-staged has its own output, so we just exit
+  echo "❌ Linting/Formatting failed. Please fix the errors above."
   exit 1
 fi
 
-# Run TypeScript type check
+# 2. Run TypeScript type check
+# We run this on the whole project because types depend on other files.
 echo "📘 Running TypeScript type check..."
 npm run type-check
 if [ $? -ne 0 ]; then
   echo "❌ TypeScript check failed."
-  exit 1
-fi
-
-# Run Prettier format check
-echo "✨ Running Prettier format check..."
-npm run format:check
-if [ $? -ne 0 ]; then
-  echo "❌ Code formatting issues found. Run 'npm run format' to fix."
+  echo "💡 Fix type errors and try again."
   exit 1
 fi
 
