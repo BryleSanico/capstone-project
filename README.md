@@ -7,6 +7,7 @@
 ![React Query](https://img.shields.io/badge/React_Query-Server_State-ff4154?logo=react-query&logoColor=white)
 ![Zustand](https://img.shields.io/badge/Zustand-Client_State-ff4154?logo=react-query&logoColor=white)
 ![Jest](https://img.shields.io/badge/Jest-Testing-C21325?logo=jest&logoColor=white)
+![Husky](https://img.shields.io/badge/Husky-Git_Hooks-000000?logo=github&logoColor=white)
 
 > **Offline-first cross-platform application for discovering events, managing tickets, and platform administration.**
 
@@ -21,7 +22,12 @@ This Capstone project is a mobile application built to handle the complete event
 * **Smart Synchronization:** Leverages `@tanstack/react-query` with custom hydration hooks to seamlessly sync local SQLite data with the Supabase backend when online.
 * **Role-Based Access Control:** Distinct flows for Users, Organizers, and Admins secured via Supabase Auth.
 * **Strict TypeScript:** Full type safety with strict mode enabled and comprehensive ESLint rules.
-* **Code Quality:** Comprehensive ESLint + Prettier + TypeScript strict mode + Jest testing configuration.
+* **Code Quality:** 
+  - ESLint (TypeScript rules + React Native rules)
+  - Prettier (Code formatting)
+  - TypeScript Strict Mode (Full type safety)
+  - Husky (Pre-commit hooks)
+  - lint-staged (Automatic fixes for staged files)
 
 ---
 
