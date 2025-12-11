@@ -106,7 +106,8 @@ export function useFavoriteEventsQuery() {
         "[useFavoriteEventsQuery] Fetching details for IDs:",
         favoriteEventIds
       );
-      return eventService.fetchEventsByIds(favoriteEventIds!);
+      // FIX: Replaced non-null assertion with type assertion (safe due to 'enabled' prop)
+      return eventService.fetchEventsByIds(favoriteEventIds as number[]);
     },
     enabled: !!favoriteEventIds && favoriteEventIds.length > 0,
     staleTime: 1000 * 60 * 5,

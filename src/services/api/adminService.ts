@@ -33,7 +33,7 @@ export const adminService = {
       logger.error("[AdminService] RPC Error:", error);
       throw error;
     }
-    return (data || []).map(eventMapper);
+    return (data ?? []).map(eventMapper);
   },
 
   async approveEvent(eventId: number): Promise<void> {
@@ -79,14 +79,24 @@ export const adminService = {
 
     if (error) throw error;
 
-    const users = (data || []).map((user: any) => ({
-      id: user.id,
-      email: user.email,
-      full_name: user.full_name,
-      role: user.role as UserRole,
-      banned_until: user.banned_until,
-      created_at: user.created_at,
-    }));
+    const users = (data ?? []).map(
+      (user: {
+        id: string;
+        email: string;
+        full_name: string;
+        role: string;
+        banned_until: string | null;
+        created_at: string;
+        total_count: number;
+      }) => ({
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role as UserRole,
+        banned_until: user.banned_until,
+        created_at: user.created_at,
+      })
+    );
 
     const totalCount =
       data && data.length > 0 ? Number(data[0].total_count) : 0;

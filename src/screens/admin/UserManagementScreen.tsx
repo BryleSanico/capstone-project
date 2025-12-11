@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   bannedAvatar: {
-    backgroundColor: "#fee2e2",
+    backgroundColor: Colors.roleBannedBg,
   },
   userInfo: { flex: 1, marginRight: 8 },
   userName: { fontSize: 16, fontWeight: "600", color: Colors.gray800 },

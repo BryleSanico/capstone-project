@@ -175,7 +175,7 @@ export default function AdminLogsScreen() {
                 <View style={styles.detailItem}>
                   <Text style={styles.detailLabel}>Performed By</Text>
                   <Text style={styles.detailValue}>
-                    {selectedLog.admin_name || "Unknown"}
+                    {selectedLog.admin_name ?? "Unknown"}
                   </Text>
                   <Text style={styles.detailSubValue}>
                     {selectedLog.admin_email}
@@ -195,7 +195,7 @@ export default function AdminLogsScreen() {
                 <View style={styles.detailItem}>
                   <Text style={styles.detailLabel}>Target ID</Text>
                   <Text style={styles.detailValue} selectable>
-                    {selectedLog.target_id || "N/A"}
+                    {selectedLog.target_id ?? "N/A"}
                   </Text>
                 </View>
 

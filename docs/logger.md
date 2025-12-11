@@ -1,8 +1,4 @@
-# Logger Utility Documentation
-
-## Overview
-
-The `logger` utility is a centralized logging system that provides environment-aware logging capabilities throughout the application. It follows the **Single Responsibility Principle (SRP)** and ensures that logs are only output during development, with complete suppression in production builds.
+The `logger` utility is a centralized logging system that provides environment-aware logging capabilities throughout the application. It ensures logs are only output during development, with suppression in production builds.
 
 ## Table of Contents
 
@@ -19,11 +15,11 @@ The `logger` utility is a centralized logging system that provides environment-a
 
 ## Features
 
-✅ **Environment-Aware**: Automatically detects `__DEV__` flag  
-✅ **Production-Safe**: Zero logs in production builds  
-✅ **Type-Safe**: Uses TypeScript with `unknown[]` for rest parameters  
+✅ **Environment-Aware**: Uses `__DEV__` flag  
+✅ **Production-Safe**: No logs in production builds  
+✅ **Type-Safe**: TypeScript with `unknown[]` for rest parameters  
 ✅ **Multiple Log Levels**: `info`, `warn`, `error`  
-✅ **Clean API**: Simple, intuitive method names  
+✅ **Clean API**: Simple method names  
 ✅ **Performance**: No overhead in production  
 ✅ **Security**: Prevents sensitive data leakage  
 
@@ -31,7 +27,8 @@ The `logger` utility is a centralized logging system that provides environment-a
 
 ## Installation
 
-The logger is already set up in the project. Simply import it:
+The logger is set up in the project. Import as:
+
 
 ```typescript
 import { logger } from '../utils/system/logger';

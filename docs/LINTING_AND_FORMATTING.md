@@ -5,6 +5,8 @@
 - [Tools](#tools)
 - [Configuration Files](#configuration-files)
 - [Running Commands](#running-commands)
+- [Pre-Commit Hooks (Husky)](#pre-commit-hooks-husky)
+- [lint-staged Configuration](#lint-staged-configuration)
 - [ESLint Rules](#eslint-rules)
 - [Prettier Configuration](#prettier-configuration)
 - [TypeScript Configuration](#typescript-configuration)
@@ -12,7 +14,7 @@
 
 ## Overview
 
-This project uses ESLint, Prettier, and TypeScript to enforce code quality, consistent formatting, and type safety across the entire React Native codebase.
+This project uses ESLint, Prettier, TypeScript, Husky, and lint-staged to enforce code quality, consistent formatting, and type safety across the entire React Native codebase.
 
 ### Key Benefits
 - ✅ **Consistent Code Style**: Enforced across all files and contributors
@@ -20,6 +22,8 @@ This project uses ESLint, Prettier, and TypeScript to enforce code quality, cons
 - ✅ **Type Safety**: Full TypeScript strict mode
 - ✅ **Best Practices**: React Native and React 19+ patterns
 - ✅ **Automated Fixes**: Many issues auto-fixable
+- ✅ **Pre-Commit Validation**: Prevents bad code from being committed
+- ✅ **Fast**: Only checks/fixes staged files
 
 ## Tools
 
@@ -37,6 +41,16 @@ This project uses ESLint, Prettier, and TypeScript to enforce code quality, cons
 - **Purpose**: Static type checking
 - **Mode**: Strict mode enabled
 - **Config**: `tsconfig.json`
+
+### Husky v8.0.0
+- **Purpose**: Git hooks management
+- **Hook**: Pre-commit validation
+- **Config**: `.husky/pre-commit`
+
+### lint-staged v15.2.0
+- **Purpose**: Run tasks on staged files only
+- **Integration**: Works with Husky
+- **Config**: `lint-staged` field in `package.json`
 
 ## Configuration Files
 
@@ -169,6 +183,176 @@ npm run lint && npm run type-check && npm run format:check
 # Fix everything
 npm run lint:fix && npm run format && npm run type-check
 ```
+
+## Pre-Commit Hooks (Husky)
+
+### Overview
+
+Husky manages Git hooks to enforce code quality before commits are allowed. This ensures that only properly formatted, linted, and type-safe code enters the repository.
+
+### Installation
+
+```bash
+# Install Husky
+npm install --save-dev husky
+
+# Initialize Husky (creates .husky folder)
+npx husky install
+
+# Add prepare script (auto-installs hooks after npm install)
+npm pkg set scripts.prepare="husky install"
+```
+
+### Configuration
+
+**File: `.husky/pre-commit`**
+
+```bash
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Run lint-staged for auto-fixing staged files
+echo "🎯 Running lint-staged (auto-fix for staged files)..."
+npx lint-staged
+if [ $? -ne 0 ]; then
+  echo "❌ Lint-staged failed. Some issues could not be auto-fixed."
+  echo "💡 Try running: npm run lint:fix && npm run format"
+  exit 1
+fi
+
+# Run TypeScript type check on entire project
+echo "📘 Running TypeScript type check..."
+npm run type-check
+if [ $? -ne 0 ]; then
+  echo "❌ TypeScript check failed."
+  echo "💡 Fix type errors and try again."
+  exit 1
+fi
+
+echo "✅ All pre-commit checks passed!"
+```
+
+### Making Hook Executable
+
+```bash
+# Make the hook executable
+chmod +x .husky/pre-commit
+
+# Verify it's executable
+ls -la .husky/pre-commit
+# Should show: -rwxr-xr-x
+```
+
+### How It Works
+
+1. **You stage files**: `git add src/MyComponent.tsx`
+2. **You commit**: `git commit -m "feat: add component"`
+3. **Husky intercepts**: Runs `.husky/pre-commit` script
+4. **lint-staged runs**: Auto-fixes staged files
+5. **Type-check runs**: Validates entire project
+6. **Commit proceeds**: Only if all checks pass
+
+### Bypassing Hooks
+
+**⚠️ Use sparingly - only for emergencies**
+
+```bash
+# Skip pre-commit checks
+git commit --no-verify -m "emergency fix"
+
+# Or disable Husky temporarily
+HUSKY=0 git commit -m "skip hooks"
+
+# Disable for entire session
+export HUSKY=0
+git commit -m "first commit"
+git commit -m "second commit"
+unset HUSKY
+```
+
+## lint-staged Configuration
+
+### Overview
+
+lint-staged runs linters and formatters **only on staged files**, making pre-commit checks extremely fast. It automatically fixes issues and adds fixed files back to the commit.
+
+### Configuration
+
+**File: `package.json`**
+
+```json
+{
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  }
+}
+```
+
+### What It Does
+
+#### For `.ts`, `.tsx`, `.js`, `.jsx` files:
+1. Runs `eslint --fix` to auto-fix linting issues
+2. Runs `prettier --write` to format code
+3. Automatically adds fixed files back to staging
+
+#### For `.json`, `.md` files:
+1. Runs `prettier --write` to format code
+2. Automatically adds fixed files back to staging
+
+### Example Workflow
+
+```bash
+# 1. Create/modify file with issues
+echo "const x=1;const y=2" > src/test.ts
+
+# 2. Stage the file
+git add src/test.ts
+
+# 3. Commit (lint-staged runs automatically)
+git commit -m "test: add test file"
+
+# Output:
+# 🔍 Running pre-commit checks...
+# 🎯 Running lint-staged (auto-fix for staged files)...
+# ✔ Preparing lint-staged...
+# ✔ Running tasks for staged files...
+#   ✔ *.{js,jsx,ts,tsx} — 2 files
+#     ✔ eslint --fix
+#     ✔ prettier --write
+# ✔ Applying modifications from tasks...
+# ✔ Cleaning up temporary files...
+# 📘 Running TypeScript type check...
+# ✅ All pre-commit checks passed!
+
+# File is automatically formatted and committed!
+```
+
+### Manual Execution
+
+```bash
+# Run lint-staged manually
+npx lint-staged
+
+# Run on all staged files
+git add .
+npx lint-staged
+```
+
+### Benefits
+
+✅ **Fast**: Only processes staged files (not entire codebase)  
+✅ **Automatic**: Fixes issues without manual intervention  
+✅ **Safe**: Won't modify unstaged changes  
+✅ **Smart**: Auto-adds fixed files to commit  
+✅ **Configurable**: Easy to add/remove tasks
 
 ## ESLint Rules
 
@@ -410,6 +594,11 @@ npm run format:check      # Check only
 # Type Check
 npm run type-check        # Check types
 
+# Husky & lint-staged
+npx lint-staged           # Run lint-staged manually
+git commit                # Triggers pre-commit hook
+git commit --no-verify    # Skip pre-commit hook (not recommended)
+
 # All Together
 npm run lint:fix && npm run format && npm run type-check
 
@@ -478,4 +667,4 @@ useEffect(() => {
 ---
 
 **Last Updated**: January 2025  
-**Version**: 1.0.0
+**Version**: 1.1.0 - Added Husky and lint-staged

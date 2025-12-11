@@ -11,7 +11,7 @@ import {
 import Icon from "react-native-vector-icons/Ionicons";
 import { Event } from "../../../types/event";
 import { formatFullDate } from "../../../utils/formatters/dateFormatter";
-import { Colors } from "../../../constants/colors";
+import { Colors, getPlatformColor } from "../../../constants/colors";
 
 type ActionableEventCardProps = {
   event: Event;
@@ -159,10 +159,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 14,
-    backgroundColor:
-      Platform.OS === "ios"
-        ? Colors.background
-        : Colors.platformBackgroundAndroidAlt,
+    backgroundColor: getPlatformColor(
+      "platformBackground",
+      "platformBackgroundAndroid"
+    ),
   },
   actionText: {
     fontSize: 16,

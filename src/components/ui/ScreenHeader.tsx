@@ -51,7 +51,7 @@ export default function ScreenHeader({
             </View>
           </View>
           {/* If rightContent is provided, render it */}
-          {rightContent ? rightContent : <View style={styles.placeholder} />}
+          {rightContent ?? <View style={styles.placeholder} />}
         </View>
       </LinearGradient>
     </View>

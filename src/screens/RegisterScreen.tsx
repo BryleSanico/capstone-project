@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   },
 
   headerText: {
-    backgroundColor: "transparent",
+    backgroundColor: Colors.transparent,
     marginVertical: Platform.OS === "ios" ? 120 : 100,
     marginBottom: 80,
     marginLeft: 40,

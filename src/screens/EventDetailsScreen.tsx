@@ -130,12 +130,12 @@ export default function EventDetailsScreen() {
     });
   }, [navigation, event, HeaderRight]);
 
-  const handleBuyTickets = async () => {
+  const handleBuyTickets = () => {
     if (!event) return;
     if (!session) {
       Alert.alert("Login Required", "Please log in to purchase tickets.", [
         { text: "Cancel", style: "cancel" },
-        { text: "Login", onPress: () => navigation.navigate("Login") },
+        { text: "Log In", onPress: () => navigation.navigate("Login") },
       ]);
       return;
     }

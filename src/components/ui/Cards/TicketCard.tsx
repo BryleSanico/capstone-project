@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 12,
-    backgroundColor: Colors.whiteTransparent05,
+    backgroundColor: Colors.whiteTransparent50,
   },
   header: {
     flexDirection: "row",

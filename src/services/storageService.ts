@@ -1,10 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { logger } from "../utils/system/logger";
 
 /**
  * A generic service to handle all interactions with AsyncStorage.
  * This centralizes the logic for serialization and deserialization.
  */
-const storageService = {
+export const storageService = {
   /**
    * Retrieves and deserializes a JSON item from AsyncStorage.
    * @param key The key of the item to retrieve.
@@ -15,7 +16,7 @@ const storageService = {
       const jsonValue = await AsyncStorage.getItem(key);
       return jsonValue != null ? (JSON.parse(jsonValue) as T) : null;
     } catch (e) {
-      console.error(`Failed to get item with key "${key}" from storage`, e);
+      logger.error(`Failed to get ${key}:`, e);
       return null;
     }
   },
@@ -30,7 +31,7 @@ const storageService = {
       const jsonValue = JSON.stringify(value);
       await AsyncStorage.setItem(key, jsonValue);
     } catch (e) {
-      console.error(`Failed to set item with key "${key}" in storage`, e);
+      logger.error(`Failed to save ${key}:`, e);
     }
   },
 
@@ -42,7 +43,7 @@ const storageService = {
     try {
       await AsyncStorage.removeItem(key);
     } catch (e) {
-      console.error(`Failed to remove item with key "${key}" from storage`, e);
+      logger.error(`Failed to remove ${key}:`, e);
     }
   },
 
@@ -51,7 +52,7 @@ const storageService = {
     try {
       await AsyncStorage.clear();
     } catch (e) {
-      console.error("Failed to clear all data from storage", e);
+      logger.error("Failed to clear storage:", e);
     }
   },
 };

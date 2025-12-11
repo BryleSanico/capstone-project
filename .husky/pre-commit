@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# 1. Run lint-staged
+# This automatically runs eslint --fix and prettier --write on staged files
+# and re-adds them to the commit.
+echo "🎯 Running lint-staged (auto-fix for staged files)..."
+npx lint-staged
+if [ $? -ne 0 ]; then
+  # lint-staged has its own output, so we just exit
+  echo "❌ Linting/Formatting failed. Please fix the errors above."
+  exit 1
+fi
+
+# 2. Run TypeScript type check
+# We run this on the whole project because types depend on other files.
+echo "📘 Running TypeScript type check..."
+npm run type-check
+if [ $? -ne 0 ]; then
+  echo "❌ TypeScript check failed."
+  echo "💡 Fix type errors and try again."
+  exit 1
+fi
+
+echo "✅ All pre-commit checks passed!"

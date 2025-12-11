@@ -150,10 +150,12 @@ export async function updateEvent(
   if (imageAsset) {
     try {
       imageUrl = await _uploadEventImage(imageAsset, userId);
-      newImagePath = _extractFilePath(imageUrl) || "";
+      newImagePath = _extractFilePath(imageUrl) ?? "";
       await _deleteOldImage(currentImageUrl, newImagePath);
-    } catch (uploadError: any) {
-      throw new Error(`Image upload failed: ${uploadError.message}`);
+    } catch (uploadError) {
+      const errorMessage =
+        uploadError instanceof Error ? uploadError.message : "Unknown error";
+      throw new Error(`Image upload failed: ${errorMessage}`);
     }
   }
 

@@ -6,6 +6,8 @@
 ![SQLite](https://img.shields.io/badge/SQLite-Offline_Persistence-003B57?logo=sqlite&logoColor=white)
 ![React Query](https://img.shields.io/badge/React_Query-Server_State-ff4154?logo=react-query&logoColor=white)
 ![Zustand](https://img.shields.io/badge/Zustand-Client_State-ff4154?logo=react-query&logoColor=white)
+![Jest](https://img.shields.io/badge/Jest-Testing-C21325?logo=jest&logoColor=white)
+![Husky](https://img.shields.io/badge/Husky-Git_Hooks-000000?logo=github&logoColor=white)
 
 > **Offline-first cross-platform application for discovering events, managing tickets, and platform administration.**
 
@@ -19,7 +21,13 @@ This Capstone project is a mobile application built to handle the complete event
 * **Offline-First Architecture:** Uses `react-native-sqlite-storage` to cache data locally, ensuring the app works without an internet connection.
 * **Smart Synchronization:** Leverages `@tanstack/react-query` with custom hydration hooks to seamlessly sync local SQLite data with the Supabase backend when online.
 * **Role-Based Access Control:** Distinct flows for Users, Organizers, and Admins secured via Supabase Auth.
-* **Code Quality:** Comprehensive ESLint + Prettier + TypeScript strict mode configuration.
+* **Strict TypeScript:** Full type safety with strict mode enabled and comprehensive ESLint rules.
+* **Code Quality:** 
+  - ESLint (TypeScript rules + React Native rules)
+  - Prettier (Code formatting)
+  - TypeScript Strict Mode (Full type safety)
+  - Husky (Pre-commit hooks)
+  - lint-staged (Automatic fixes for staged files)
 
 ---
 
@@ -35,20 +43,20 @@ This Capstone project is a mobile application built to handle the complete event
 
 ### 👤 For Attendees
 * **Discovery:** Search events with category filters, debounced search, and infinite scrolling.
-* **Ticketing:** Seamless purchase flow, booking management, and QR code generation for entry.
+* **Ticketing:** Purchase flow, booking management, and QR code generation for entry.
 * **Offline Access:** View purchased tickets and browsed events even when offline.
 * **Social:** Save favorites and share events via deep links.
 * **Notifications:** Push notifications for event updates and reminders.
 
 ### 📅 For Organizers
 * **Event Management:** Create, edit, and manage events.
-* **Media Handling:** Upload cover images directly to Supabase Storage.
-* **Capacity Control:** Monitor ticket sales and close/open event availability.
+* **Media Handling:** Upload cover images to Supabase Storage.
+* **Capacity Control:** Monitor ticket sales and manage event availability.
 
 ### 🛡️ For Administrators
 * **Dashboard:** Real-time statistics (Revenue, User count, Event count).
 * **Moderation:** Approve/Reject pending events and ban/unban users.
-* **Audit Logs:** Full visibility into platform activity via admin logs.
+* **Audit Logs:** View platform activity via admin logs.
 
 ---
 
@@ -56,22 +64,26 @@ This Capstone project is a mobile application built to handle the complete event
 
 ### Client-Side
 * **Framework:** React Native (0.79.x)
-* **Language:** TypeScript
+* **Language:** TypeScript (Strict Mode)
 * **Navigation:** React Navigation (Stack, Bottom Tabs, Composite)
-* **Server State:** `@tanstack/react-query` (Caching, Invalidation, Optimistic Updates, `useInfiniteQuery`)
-* **Local State:** `Zustand` (Network connectivity & Auth session)
+* **Server State:** `@tanstack/react-query`
+* **Local State:** `Zustand`
 * **Persistence:** `react-native-sqlite-storage`
 * **UI/UX:** React Native Paper, Linear Gradient, Vector Icons
 * **Secure Storage:** `react-native-encrypted-storage`
-  - Keychain (iOS) and EncryptedSharedPreferences with Keystore (Android)
-* **Code Quality:** ESLint + Prettier + TypeScript strict mode
+* **Testing:** Jest + React Native Testing Library
+* **Code Quality:** 
+  - ESLint (TypeScript rules + React Native rules)
+  - Prettier (Code formatting)
+  - TypeScript Strict Mode (Full type safety)
+  - Husky (Pre-commit hooks)
 
 ### Backend (Supabase)
 * **Database:** PostgreSQL
 * **Auth:** Supabase Auth (JWT)
 * **Logic:** RPC Functions (Database) & Edge Functions (Serverless)
 * **Storage:** Supabase Buckets (Assets/Images)
-* **Push:** Firebase Cloud Messaging (FCM) triggered via Edge Functions
+* **Push:** Firebase Cloud Messaging (FCM) via Edge Functions
 
 ---
 
@@ -84,26 +96,27 @@ This Capstone project is a mobile application built to handle the complete event
 The project follows a flat, modular structure designed for scalability.
 ```
 /src
- ├── /components      # Reusable UI primitives (Cards, Loaders, EmptyState)
+ ├── /components      # Reusable UI primitives
  ├── /constants       # Color system and app constants
- ├── /hooks           # React Query hooks & Logic (useTickets, useAdmin, useSync)
- ├── /navigation      # AppNavigator, TabNavigator, AdminNavigator
+ ├── /hooks           # React Query hooks & Logic
+ ├── /navigation      # Navigators
  ├── /screens         # Feature screens
- │    ├── /admin      # Admin-specific screens (Dashboard, Logs)
- │    └── ...         # User screens (Discover, Ticket, Profile)
+ │    ├── /admin      # Admin-specific screens
+ │    └── ...         # User screens
  ├── /services
  │    ├── /api        # Supabase RPC & Edge Function calls
  │    └── sqliteService.ts # Local caching logic
- ├── /stores          # Zustand stores (network-store, auth-store)
+ ├── /stores          # Zustand stores
  ├── /types           # TypeScript interfaces
- └── /utils           # Helpers (Formatters, Mappers, Validations)
+ └── /utils           # Helpers
 
-/docs                 # Comprehensive documentation
- ├── LINTING_AND_FORMATTING.md  # ESLint, Prettier, TypeScript setup
- ├── COLOR_SYSTEM.md             # Color constants guide
- ├── CODE_PATTERNS.md            # Common patterns and examples
- ├── DEVELOPMENT_GUIDE.md        # Troubleshooting and CI/CD
- └── LINT_FIXES.md               # Common fixes and solutions
+/docs                 # Documentation
+ ├── LINTING_AND_FORMATTING.md
+ ├── COLOR_SYSTEM.md
+ ├── CODE_PATTERNS.md
+ ├── DEVELOPMENT_GUIDE.md
+ ├──LINT_FIXES.md
+ └── ...   
 ```
 </details>
 
@@ -159,13 +172,11 @@ The project follows a flat, modular structure designed for scalability.
 
 ## 📚 Documentation
 
-Comprehensive guides for developers:
-
 | Document | Description |
 |----------|-------------|
 | [**LINTING_AND_FORMATTING.md**](docs/LINTING_AND_FORMATTING.md) | ESLint, Prettier, and TypeScript configuration guide |
-| [**COLOR_SYSTEM.md**](docs/COLOR_SYSTEM.md) | Complete color constants system and theming guide |
-| [**CODE_PATTERNS.md**](docs/CODE_PATTERNS.md) | Common code patterns, best practices, and examples |
+| [**COLOR_SYSTEM.md**](docs/COLOR_SYSTEM.md) | Color constants system and theming guide |
+| [**CODE_PATTERNS.md**](docs/CODE_PATTERNS.md) | Code patterns, best practices, and examples |
 | [**DEVELOPMENT_GUIDE.md**](docs/DEVELOPMENT_GUIDE.md) | Development setup, troubleshooting, and CI/CD |
 | [**LINT_FIXES.md**](docs/LINT_FIXES.md) | Common ESLint errors and their solutions |
 

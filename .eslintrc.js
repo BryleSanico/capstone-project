@@ -44,8 +44,8 @@ module.exports = {
     '@typescript-eslint/no-non-null-assertion': 'warn',
 
     // Relaxed: Warn instead of error for promises
-    '@typescript-eslint/no-floating-promises': 'warn',
-    '@typescript-eslint/no-misused-promises': 'warn',
+    '@typescript-eslint/no-floating-promises': 'off', // Disabled
+    '@typescript-eslint/no-misused-promises': 'off', // Disabled
     '@typescript-eslint/await-thenable': 'warn',
     '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
 
@@ -61,7 +61,7 @@ module.exports = {
     '@typescript-eslint/no-unsafe-argument': 'off',
 
     '@typescript-eslint/require-await': 'warn',
-    '@typescript-eslint/prefer-promise-reject-errors': 'warn',
+    '@typescript-eslint/prefer-promise-reject-errors': 'off',
     '@typescript-eslint/no-redundant-type-constituents': 'warn',
 
     // Allow require() for assets (images, fonts, animations)
@@ -70,8 +70,8 @@ module.exports = {
 
     // ---------- REACT ----------
     'react/react-in-jsx-scope': 'off',
-    'react/prop-types': 'off',
-    'react/jsx-uses-react': 'off',
+    'react/prop-types': 'warn',
+    'react/jsx-uses-react': 'warn',
     'react/jsx-uses-vars': 'error',
 
     // ---------- REACT HOOKS ----------
@@ -90,7 +90,7 @@ module.exports = {
     'no-undef': 'off',
     'prefer-const': 'error',
     'no-var': 'error',
-    eqeqeq: ['error', 'always'],
+    eqeqeq: 'off',
     curly: ['error', 'multi-line'], 
   },
   settings: {

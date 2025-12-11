@@ -58,8 +58,10 @@ export function useApproveEvent() {
       queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.pendingEvents });
       queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.stats });
     },
-    onError: (error: any) => {
-      Alert.alert("Error", error.message || "Failed to approve event");
+    onError: (error: unknown) => {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to approve event";
+      Alert.alert("Error", errorMessage);
     },
   });
 }
@@ -84,8 +86,10 @@ export function useRejectEvent() {
       queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.pendingEvents });
       queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.stats });
     },
-    onError: (error: any) => {
-      Alert.alert("Error", error.message || "Failed to reject event");
+    onError: (error: unknown) => {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to reject event";
+      Alert.alert("Error", errorMessage);
     },
   });
 }
@@ -99,8 +103,10 @@ export function useUpdateUserRole() {
       Alert.alert("Success", "User role updated successfully.");
       queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.users });
     },
-    onError: (error: any) => {
-      Alert.alert("Error", error.message || "Failed to update role");
+    onError: (error: unknown) => {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update role";
+      Alert.alert("Error", errorMessage);
     },
   });
 }
@@ -127,8 +133,10 @@ export function useBanUser() {
       Alert.alert("Success", `User has been ${action}.`);
       queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.users });
     },
-    onError: (error: any) => {
-      Alert.alert("Error", error.message || "Failed to change ban status");
+    onError: (error: unknown) => {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to change ban status";
+      Alert.alert("Error", errorMessage);
     },
   });
 }
