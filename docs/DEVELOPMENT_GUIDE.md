@@ -5,6 +5,7 @@
 - [Editor Setup](#editor-setup)
 - [Troubleshooting](#troubleshooting)
 - [Pre-Commit Hooks (Husky)](#pre-commit-hooks-husky)
+- [CI Workflow (GitHub Actions)](#ci-workflow-github-actions)
 - [CI/CD Integration](#cicd-integration)
 - [Testing](#testing)
 
@@ -500,6 +501,38 @@ rm -rf android/build android/app/build
 adb kill-server && adb start-server
 ```
 
+## CI Workflow (GitHub Actions)
+
+### Overview
+
+Automated code quality checks are performed using GitHub Actions.  
+The workflow is defined in `.github/workflows/ci.yml`.
+
+**What it does:**
+- Installs dependencies with Node.js 20.x
+- Caches `node_modules` for faster builds
+- Runs lint, type-check, and format jobs in parallel
+- Triggers on push to `main`/`develop` and all pull requests
+- Supports manual runs via `workflow_dispatch`
+
+### How to Use
+
+- **Automatic:** Runs on every push and pull request.
+- **Manual:** Go to the Actions tab in GitHub, select "CI", and click "Run workflow" to trigger manually.
+
+**Jobs:**
+- `lint`: Runs ESLint
+- `type-check`: Runs TypeScript type-check
+- `format`: Checks Prettier formatting
+
+### Troubleshooting
+
+If CI fails on `npm ci`:
+- Ensure your `package-lock.json` is up to date (`npm install` locally, then commit and push).
+- Make sure your dependencies support Node.js 20.x.
+
+See `.github/workflows/ci.yml` for configuration details.
+
 ## CI/CD Integration
 
 ### Pre-commit Hook (Husky)
@@ -549,48 +582,6 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "✅ All pre-commit checks passed!"
-```
-
-### GitHub Actions
-
-**File: `.github/workflows/lint.yml`**
-```yaml
-name: Lint and Type Check
-
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
-
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run ESLint
-        run: npm run lint
-
-      - name: Run TypeScript check
-        run: npm run type-check
-
-      - name: Check Prettier formatting
-        run: npm run format:check
-
-      - name: Run tests
-        run: npm test
 ```
 
 ### Package.json Scripts
@@ -728,19 +719,103 @@ git commit -m "feat: add new feature"
 git push origin feature/my-feature
 ```
 
+
 ### Commit Message Format
 
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
+This project follows [Conventional Commits](https://www.conventionalcommits.org/) specification for clear and structured commit history.
+
+#### Format Structure
 
 ```
-feat: add new login screen
-fix: resolve navigation bug
-docs: update README
-style: format code with prettier
-refactor: simplify user service
-test: add tests for login
-chore: update dependencies
+<type>(<scope>): <subject>
+
+[optional body]
+
+[optional footer]
 ```
+
+#### Types
+
+- **feat**: A new feature
+- **fix**: A bug fix
+- **docs**: Documentation only changes
+- **style**: Changes that don't affect code meaning (whitespace, formatting)
+- **refactor**: Code change that neither fixes a bug nor adds a feature
+- **perf**: Performance improvement
+- **test**: Adding or updating tests
+- **chore**: Changes to build process or auxiliary tools
+- **ci**: Changes to CI configuration files and scripts
+- **build**: Changes that affect the build system or dependencies
+- **revert**: Reverts a previous commit
+
+#### Scopes (Optional)
+
+Common scopes in this project:
+- **auth**: Authentication related
+- **events**: Event management features
+- **tickets**: Ticket system
+- **admin**: Admin panel features
+- **ui**: UI components
+- **api**: API/backend integration
+- **db**: Database related
+- **lint**: Linting configuration
+- **navigation**: Navigation changes
+- **store**: State management (Zustand)
+- **query**: React Query changes
+
+#### Examples
+
+```bash
+# Feature
+feat(tickets): add QR code generation for purchased tickets
+
+# Bug fix
+fix(auth): resolve token refresh issue on app resume
+
+# Documentation
+docs(readme): update installation instructions
+
+# Refactoring
+refactor(events): simplify event filtering logic
+
+# Performance
+perf(discover): optimize event list rendering with virtualization
+
+# Multiple scopes
+feat(tickets,events): add ticket purchase flow with event details
+
+# Breaking change
+feat(api)!: migrate to Supabase RPC functions
+
+BREAKING CHANGE: Direct table queries replaced with RPC calls.
+Update all API calls to use new service layer.
+
+# With body
+fix(notifications): prevent duplicate FCM tokens
+
+Previously, tokens were registered on every app launch.
+Now checks for existing token before registration.
+
+Closes #123
+```
+
+#### Commit Message Tips
+
+✅ **Do:**
+- Use imperative mood ("add" not "added" or "adds")
+- Keep subject line under 72 characters
+- Capitalize first letter of subject
+- Don't end subject with a period
+- Separate subject from body with blank line
+- Use body to explain what and why (not how)
+- Reference issues in footer
+
+❌ **Don't:**
+- Use past tense
+- Be vague ("fix stuff", "update things")
+- Include unrelated changes in one commit
+- Make commits without meaningful messages
+
 
 ## Useful Commands
 

@@ -657,6 +657,17 @@ useEffect(() => {
 }
 ```
 
+## CI Integration
+
+All linting and formatting checks are automatically run in the CI workflow (`.github/workflows/ci.yml`) on every push and pull request.  
+This ensures code quality and consistency for all contributions.
+
+- **Lint:** `npm run lint`
+- **Format Check:** `npm run format:check`
+- **Type Check:** `npm run type-check`
+
+See [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md) for more on CI/CD.
+
 ## Related Documentation
 
 - [COLOR_SYSTEM.md](./COLOR_SYSTEM.md) - Color constants and theming

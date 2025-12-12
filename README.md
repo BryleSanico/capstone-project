@@ -1,4 +1,4 @@
-# 🎫 Capstone Project: Event Discovery & Ticketing
+# Capstone Project: Event Discovery & Ticketing
 
 ![React Native](https://img.shields.io/badge/React_Native-v0.79-blue?logo=react&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-Backend-green?logo=supabase&logoColor=white)
@@ -72,11 +72,13 @@ This Capstone project is a mobile application built to handle the complete event
 * **UI/UX:** React Native Paper, Linear Gradient, Vector Icons
 * **Secure Storage:** `react-native-encrypted-storage`
 * **Testing:** Jest + React Native Testing Library
+* **Native Module:** `react-native-image-picker`
 * **Code Quality:** 
   - ESLint (TypeScript rules + React Native rules)
   - Prettier (Code formatting)
   - TypeScript Strict Mode (Full type safety)
   - Husky (Pre-commit hooks)
+  - Github Actions (CI Workflow)
 
 ### Backend (Supabase)
 * **Database:** PostgreSQL
@@ -211,99 +213,20 @@ npm run lint && npm run type-check && npm run format:check
 
 ### Commit Message Format
 
-This project follows [Conventional Commits](https://www.conventionalcommits.org/) specification for clear and structured commit history.
-
-#### Format Structure
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
-<type>(<scope>): <subject>
-
-[optional body]
-
-[optional footer]
+feat: add new login screen
+fix: resolve navigation bug
+docs: update README
+style: format code with prettier
+refactor: simplify user service
+test: add tests for login
+chore: update dependencies
 ```
 
-#### Types
+> Read more [docs/development_guide](docs/DEVELOPMENT_GUIDE.md)
 
-- **feat**: A new feature
-- **fix**: A bug fix
-- **docs**: Documentation only changes
-- **style**: Changes that don't affect code meaning (whitespace, formatting)
-- **refactor**: Code change that neither fixes a bug nor adds a feature
-- **perf**: Performance improvement
-- **test**: Adding or updating tests
-- **chore**: Changes to build process or auxiliary tools
-- **ci**: Changes to CI configuration files and scripts
-- **build**: Changes that affect the build system or dependencies
-- **revert**: Reverts a previous commit
-
-#### Scopes (Optional)
-
-Common scopes in this project:
-- **auth**: Authentication related
-- **events**: Event management features
-- **tickets**: Ticket system
-- **admin**: Admin panel features
-- **ui**: UI components
-- **api**: API/backend integration
-- **db**: Database related
-- **lint**: Linting configuration
-- **navigation**: Navigation changes
-- **store**: State management (Zustand)
-- **query**: React Query changes
-
-#### Examples
-
-```bash
-# Feature
-feat(tickets): add QR code generation for purchased tickets
-
-# Bug fix
-fix(auth): resolve token refresh issue on app resume
-
-# Documentation
-docs(readme): update installation instructions
-
-# Refactoring
-refactor(events): simplify event filtering logic
-
-# Performance
-perf(discover): optimize event list rendering with virtualization
-
-# Multiple scopes
-feat(tickets,events): add ticket purchase flow with event details
-
-# Breaking change
-feat(api)!: migrate to Supabase RPC functions
-
-BREAKING CHANGE: Direct table queries replaced with RPC calls.
-Update all API calls to use new service layer.
-
-# With body
-fix(notifications): prevent duplicate FCM tokens
-
-Previously, tokens were registered on every app launch.
-Now checks for existing token before registration.
-
-Closes #123
-```
-
-#### Commit Message Tips
-
-✅ **Do:**
-- Use imperative mood ("add" not "added" or "adds")
-- Keep subject line under 72 characters
-- Capitalize first letter of subject
-- Don't end subject with a period
-- Separate subject from body with blank line
-- Use body to explain what and why (not how)
-- Reference issues in footer
-
-❌ **Don't:**
-- Use past tense
-- Be vague ("fix stuff", "update things")
-- Include unrelated changes in one commit
-- Make commits without meaningful messages
 
 ### Pre-Commit Checklist
 
@@ -318,28 +241,6 @@ Before committing code, ensure:
 - [ ] **No unused imports**: Clean up unused variables/imports
 - [ ] **Proper error handling**: All promises handled with `.catch()` or `try-catch`
 - [ ] **Console cleaned**: No `console.log` (use `console.error/warn/info/debug`)
-
-### Code Quality Standards
-
-✅ **Always Do:**
-- Use color constants from `@/constants/colors`
-- Use `StyleSheet.create()` for all styles
-- Handle all promises properly (use `void` or `.catch()`)
-- Use TypeScript strictly (avoid `any` unless necessary)
-- Follow React 19 patterns (no need to import React)
-- Prefix unused variables with underscore `_`
-- Use semantic color names (`Colors.textPrimary` not `Colors.gray900`)
-- Add JSDoc comments for public APIs
-- Write tests for new features
-
-❌ **Never Do:**
-- Hardcode colors (`'#fff'` → `Colors.white`)
-- Use inline styles
-- Use `console.log` (use `console.error/warn/info/debug`)
-- Ignore type errors or ESLint warnings
-- Leave unused imports or variables
-- Use `any` type casually
-- Commit unformatted code
 
 ---
 
