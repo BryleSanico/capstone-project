@@ -7,6 +7,7 @@ import TicketsScreen from "../screens/TicketScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import MyEventsScreen from "../screens/MyEventsScreen";
 import { useAuth } from "../stores/auth-store";
+import { Colors } from "../constants/colors";
 
 export type TabParamList = {
   Discover: undefined;
@@ -54,13 +55,13 @@ export default function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: "#6366f1",
-        tabBarInactiveTintColor: "#999",
+        tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: Colors.textTertiary,
         headerShown: true,
         tabBarStyle: {
-          backgroundColor: "#fff",
+          backgroundColor: Colors.white,
           borderTopWidth: 1,
-          borderTopColor: "#f0f0f0",
+          borderTopColor: Colors.borderLight,
           paddingTop: 8,
           paddingBottom: 8,
           paddingLeft: 15,

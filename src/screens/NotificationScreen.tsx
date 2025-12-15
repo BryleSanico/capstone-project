@@ -89,7 +89,7 @@ export default function NotificationScreen() {
 
   const headerRight = (
     <TouchableOpacity onPress={() => markAllRead()} style={styles.readAllBtn}>
-      <Icon name="checkmark-done-outline" size={24} color="#fff" />
+      <Icon name="checkmark-done-outline" size={24} color={Colors.white} />
     </TouchableOpacity>
   );
 

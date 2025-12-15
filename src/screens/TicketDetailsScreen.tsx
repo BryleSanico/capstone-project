@@ -119,7 +119,7 @@ export default function TicketDetailsScreen() {
       >
         <View style={styles.content}>
           <LinearGradient
-            colors={["#6366f1", "#8b5cf6"]}
+            colors={[Colors.primary, Colors.secondary]}
             style={styles.ticketCard}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}

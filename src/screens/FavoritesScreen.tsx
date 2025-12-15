@@ -33,7 +33,7 @@ export default function FavoritesScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       title: "My Favorites",
-      headerStyle: { backgroundColor: "#fff" },
+      headerStyle: { backgroundColor: Colors.white },
       headerTitleStyle: { fontWeight: "700", fontSize: 20 },
     });
   }, [navigation]);

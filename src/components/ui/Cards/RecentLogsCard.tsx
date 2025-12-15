@@ -56,7 +56,7 @@ export const RecentLogsCard: React.FC<RecentLogsCardProps> = ({
         <Text style={styles.title}>Recent Activity</Text>
         <TouchableOpacity onPress={onShowAll} style={styles.headerLink}>
           <Text style={styles.headerLinkText}>Show All</Text>
-          <Icon name="arrow-forward" size={14} color="#6366f1" />
+          <Icon name="arrow-forward" size={14} color={Colors.primary} />
         </TouchableOpacity>
       </View>
 

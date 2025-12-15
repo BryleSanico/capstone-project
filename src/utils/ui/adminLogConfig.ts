@@ -1,42 +1,44 @@
 /**
  * Returns the UI configuration (icon, color, title) for a given admin action type.
  */
+import { Colors } from "../../constants/colors";
+
 export const getActionConfig = (type: string) => {
   switch (type) {
     case "APPROVE_EVENT":
       return {
         icon: "checkmark-circle",
-        color: "#10b981",
+        color: Colors.success,
         title: "Event Approved",
       };
     case "REJECT_DELETE":
       return {
         icon: "trash",
-        color: "#ef4444",
+        color: Colors.danger,
         title: "Event Deleted",
       };
     case "REJECT_REVISION":
       return {
         icon: "construct",
-        color: "#f59e0b",
+        color: Colors.warning,
         title: "Revision Requested",
       };
     case "PROMOTE_USER":
       return {
         icon: "person-add",
-        color: "#3b82f6",
+        color: Colors.info,
         title: "User Promoted",
       };
     case "BAN_USER":
       return {
         icon: "ban",
-        color: "#ef4444",
+        color: Colors.danger,
         title: "User Ban Status",
       };
     default:
       return {
         icon: "information-circle",
-        color: "#6b7280",
+        color: Colors.textMuted,
         title: "Admin Action",
       };
   }

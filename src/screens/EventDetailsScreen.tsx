@@ -101,7 +101,7 @@ export default function EventDetailsScreen() {
           style={styles.headerButton}
           onPress={handleSharePress}
         >
-          <Icon name="share-outline" size={20} color="#fff" />
+          <Icon name="share-outline" size={20} color={Colors.white} />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.headerButton}
@@ -110,7 +110,7 @@ export default function EventDetailsScreen() {
           <Icon
             name={isFavorite ? "heart" : "heart-outline"}
             size={20}
-            color={isFavorite ? "#ff4757" : "#fff"}
+            color={isFavorite ? Colors.error : Colors.white}
           />
         </TouchableOpacity>
       </View>
@@ -124,7 +124,7 @@ export default function EventDetailsScreen() {
     navigation.setOptions({
       title: "",
       headerTransparent: true,
-      headerTintColor: "#000000ff",
+      headerTintColor: Colors.black,
       headerTitleStyle: { fontWeight: "700", fontSize: 20 },
       headerRight: HeaderRight, // Pass the stable component
     });
@@ -179,7 +179,7 @@ export default function EventDetailsScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6366f1" />
+        <ActivityIndicator size="large" color={Colors.primary} />
       </SafeAreaView>
     );
   }
@@ -284,7 +284,7 @@ export default function EventDetailsScreen() {
               <Icon
                 name="time-outline"
                 size={16}
-                color="#fff"
+                color={Colors.white}
                 style={styles.pendingIcon}
               />
               <Text style={styles.pendingText}>Under Review</Text>
@@ -401,7 +401,7 @@ export default function EventDetailsScreen() {
             disabled={isButtonDisabled}
           >
             {isBuying ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={Colors.white} />
             ) : (
               <>
                 {isPending ? (

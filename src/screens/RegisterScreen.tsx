@@ -51,7 +51,7 @@ export default function RegisterScreen() {
     navigation.setOptions({
       title: "",
       headerTransparent: true,
-      headerTintColor: "#fff",
+      headerTintColor: Colors.white,
     });
   }, [navigation]);
 
@@ -116,7 +116,7 @@ export default function RegisterScreen() {
         >
           <View style={styles.headerWrapper}>
             <LinearGradient
-              colors={["#6366f1", "#8b5cf6"]}
+              colors={[Colors.primary, Colors.secondary]}
               style={styles.header}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -276,7 +276,7 @@ export default function RegisterScreen() {
                   disabled={isLoading}
                 >
                   <LinearGradient
-                    colors={["#6366f1", "#8b5cf6"]}
+                    colors={[Colors.primary, Colors.secondary]}
                     style={styles.registerButtonGradient}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}

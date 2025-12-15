@@ -339,9 +339,12 @@ export default function EventFormScreen() {
                     </Text>
                   </View>
                   <Switch
-                    trackColor={{ false: "#E5E7EB", true: "#8B5CF6" }}
-                    thumbColor={isClosed ? "#6366F1" : "#f4f3f4"}
-                    ios_backgroundColor="#E5E7EB"
+                    trackColor={{
+                      false: Colors.gray200,
+                      true: Colors.gradientEventForm1,
+                    }}
+                    thumbColor={isClosed ? Colors.primary : Colors.lightGray}
+                    ios_backgroundColor={Colors.gray200}
                     onValueChange={setIsClosed}
                     value={isClosed}
                     disabled={isSyncing}

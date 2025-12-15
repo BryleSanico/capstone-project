@@ -28,7 +28,7 @@ export default function TicketCard({ ticket, onPress }: TicketCardProps) {
         // colors={['#6366f1', '#5c8dfeff']}
         // colors={['#5a72ea', '#7b9aff']}
         // colors={['#4f46e5', '#3b82f6']}
-        colors={["#5865f2", "#8897f5"]}
+        colors={[Colors.gradientPurple1, Colors.gradientPurple2]}
         style={styles.card}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -40,7 +40,7 @@ export default function TicketCard({ ticket, onPress }: TicketCardProps) {
             </Text>
           </View>
           <View style={styles.qrIcon}>
-            <Icon name="qr-code-outline" size={24} color="#fff" />
+            <Icon name="qr-code-outline" size={24} color={Colors.white} />
           </View>
         </View>
 
