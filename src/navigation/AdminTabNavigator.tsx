@@ -6,6 +6,7 @@ import EventApprovalsScreen from "../screens/admin/EventApprovalsScreen";
 import UserManagementScreen from "../screens/admin/UserManagementScreen";
 
 import { useAuth } from "../stores/auth-store";
+import { Colors } from "../constants/colors";
 
 // Types
 export type AdminTabParamList = {
@@ -45,8 +46,8 @@ export default function AdminTabNavigator() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#6366f1",
-        tabBarInactiveTintColor: "#9ca3af",
+        tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: Colors.gray400,
         tabBarStyle: {
           paddingTop: 8,
           paddingBottom: 8,

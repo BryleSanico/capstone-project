@@ -51,7 +51,7 @@ export default function ProfileScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       title: "Profile",
-      headerStyle: { backgroundColor: "#fff" },
+      headerStyle: { backgroundColor: Colors.white },
       headerTitleStyle: { fontWeight: "700", fontSize: 20 },
     });
   }, [navigation, user]);
@@ -161,13 +161,13 @@ export default function ProfileScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.profileHeaderWrapper}>
           <LinearGradient
-            colors={["#6366f1", "#8b5cf6"]}
+            colors={[Colors.primary, Colors.secondary]}
             style={styles.profileHeader}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
             <View style={styles.avatarContainer}>
-              <FontAwesomeIcon name="user" size={40} color="#fff" />
+              <FontAwesomeIcon name="user" size={40} color={Colors.white} />
             </View>
             <Text style={styles.userName}>
               {user?.user_metadata.full_name ?? "Guest"}

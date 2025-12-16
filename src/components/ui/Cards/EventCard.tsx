@@ -92,7 +92,7 @@ export default function EventCard({ event, onPress }: EventCardProps) {
             />
           ) : null}
           <LinearGradient
-            colors={["transparent", "rgba(0,0,0,0.7)"]}
+            colors={["transparent", Colors.overlayDark]}
             style={styles.imageOverlay}
           />
           <TouchableOpacity
@@ -102,12 +102,12 @@ export default function EventCard({ event, onPress }: EventCardProps) {
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             {isMutating ? (
-              <ActivityIndicator size="small" color="#fff" />
+              <ActivityIndicator size="small" color={Colors.white} />
             ) : (
               <Icon
                 name={isEventFavorite ? "heart" : "heart-outline"}
                 size={20}
-                color={isEventFavorite ? "#ff4757" : "#fff"}
+                color={isEventFavorite ? Colors.error : Colors.white}
               />
             )}
           </TouchableOpacity>

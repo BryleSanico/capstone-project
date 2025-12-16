@@ -123,7 +123,7 @@ export default function UserManagementScreen() {
     if (!isFetchingNextPage) return null;
     return (
       <View style={styles.footerLoader}>
-        <ActivityIndicator size="small" color="#6366f1" />
+        <ActivityIndicator size="small" color={Colors.primary} />
       </View>
     );
   };

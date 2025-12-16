@@ -29,7 +29,7 @@ export default function ScreenHeader({
   return (
     <View style={styles.header}>
       <LinearGradient
-        colors={["#8b5cf6", "#6366f1"]}
+        colors={[Colors.secondary, Colors.primary]}
         style={styles.headerGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -42,7 +42,7 @@ export default function ScreenHeader({
                 style={styles.backButton}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Icon name="arrow-back" size={24} color="#fff" />
+                <Icon name="arrow-back" size={24} color={Colors.white} />
               </TouchableOpacity>
             )}
             <View>

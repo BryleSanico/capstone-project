@@ -92,14 +92,14 @@ export const useDateTimePicker = (initialDate: Date) => {
                   is24Hour={true}
                   display="spinner"
                   onChange={onPickerChange}
-                  textColor="#000000"
+                  textColor={Colors.black}
                 />
               )}
               <View style={styles.modalButtons}>
                 <Button
                   title="Cancel"
                   onPress={handleIOSPickerCancel}
-                  color="#dc3545"
+                  color={Colors.danger}
                 />
                 <Button title="Done" onPress={handleIOSPickerConfirm} />
               </View>
